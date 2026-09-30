@@ -1,0 +1,1559 @@
+using System;
+using System.Collections.Generic;
+using Godot;
+using IdleExile.Core.Models;
+
+namespace IdleExile.UI.Components;
+
+/// <summary>
+/// Data structure representing an active in-flight projectile streak in 2D space.
+/// Pre-allocated in an object pool to guarantee zero runtime GC allocations.
+/// </summary>
+public struct ProjectileData
+{
+    public bool IsActive;
+    public Vector2 StartPosition;
+    public Vector2 TargetPosition;
+    public Vector2 CurrentPosition;
+    public float Progress;
+    public float Speed;
+    public DamageType DamageType;
+    public float StreakLength;
+    public Color BaseColor;
+    public Color GlowColor;
+}
+
+/// <summary>
+/// Data structure representing a monster's 2D top-down visual token.
+/// Maintained in a fixed-size pool for seamless rendering without node churning.
+/// </summary>
+public sealed class MonsterVisualToken
+{
+    public long InstanceId;
+    public string Name = string.Empty;
+    public MonsterRarity Rarity;
+    public float MaxLife;
+    public float CurrentLife;
+    public bool IsAlive;
+    public Vector2 Position;
+    public Vector2 BasePosition;
+    public float Scale = 1.0f;
+    public float HitFlashTimer;
+    public float DeathFadeTimer;
+    public float BobbingPhase;
+    public Color CustomColor;
+}
+
+/// <summary>
+/// Boss Slam Telegraph warning state.
+/// Implements the 2D circular shrinking indicator ring (1.2s - 1.5s wind-up) for lethal attacks (>70% EHP).
+/// </summary>
+public struct BossSlamTelegraph
+{
+    public bool IsActive;
+    public Vector2 Position;
+    public float Radius;
+    public float TotalDuration;
+    public float ElapsedDuration;
+    public float ThreatEhpPercent;
+    public float ScreenShakeIntensity;
+
+    public readonly float Progress => TotalDuration > 0f ? Mathf.Clamp(ElapsedDuration / TotalDuration, 0f, 1f) : 1f;
+    public readonly bool IsReadyToDetonate => ElapsedDuration >= TotalDuration;
+}
+
+/// <summary>
+/// 2D Top-Down Combat Arena renderer component for the Battle Viewport (440 x 208 px).
+/// Senior Game Design Shift:
+/// 1. 2D Top-Down / Angled Bird's-Eye (~60° Tilt) arena with stone paver flagstone floor & vignette.
+/// 2. Exile Character positioned at the Focal Center (220, 104) with 360° circular aura and dynamic auto-facing.
+/// 3. Monster packs arranged in 2D formations (Swarm surround, flanks, elite with minions, Boss with overhead bar).
+/// 4. 360° Projectile multi-vector flight, PoE 5-elemental color coding, and visual clamping (max 12).
+/// 5. True 2D circular Boss Slam Telegraph indicator (shrinking red ring) with screen shake impact.
+/// </summary>
+public partial class Arena2D : Node2D
+{
+    // ─────────────────────────────────────────────
+    //  Constants & Dimensions
+    // ─────────────────────────────────────────────
+    public const float ArenaWidth = 440f;
+    public const float ArenaHeight = 208f;
+    public static readonly Vector2 CenterPosition = new(ArenaWidth * 0.5f, ArenaHeight * 0.5f); // (220f, 104f)
+    public const float GroundBaselineY = 104f; // Legacy alias for CenterY in Top-Down
+    public const int MaxProjectiles = 12;
+    public const int MaxMonsters = 16;
+
+    // ─────────────────────────────────────────────
+    //  PoE 5 Elemental & Ailment Color Tokens
+    // ─────────────────────────────────────────────
+    public static readonly Color ColorPhysical = new(0.88f, 0.88f, 0.88f, 1.0f);
+    public static readonly Color ColorFire = new(1.0f, 0.34f, 0.13f, 1.0f);
+    public static readonly Color ColorCold = new(0.0f, 0.90f, 1.0f, 1.0f);
+    public static readonly Color ColorLightning = new(1.0f, 0.92f, 0.0f, 1.0f);
+    public static readonly Color ColorChaos = new(0.83f, 0.0f, 0.97f, 1.0f);
+
+    public static readonly Color ColorRareAura = new(1.0f, 0.84f, 0.0f, 0.45f);
+    public static readonly Color ColorMagicAura = new(0.25f, 0.65f, 1.0f, 0.40f);
+    public static readonly Color ColorBossAura = new(0.9f, 0.15f, 0.15f, 0.55f);
+
+    // ─────────────────────────────────────────────
+    //  Top-Down Floor & Atmospheric State
+    // ─────────────────────────────────────────────
+    private float _floorTime;
+    [Export] public float ParallaxSpeedFar = 8.0f; // Preserved for backwards compat
+    [Export] public float ParallaxSpeedMid = 22.0f;
+    [Export] public float ParallaxSpeedNear = 45.0f;
+
+    // ─────────────────────────────────────────────
+    //  Exile Character State (Top-Down)
+    // ─────────────────────────────────────────────
+    public Vector2 ExilePosition { get; set; } = CenterPosition;
+    private float _exileFacingAngle; // In radians
+    public float ExileFacingAngle => _exileFacingAngle;
+    private float _exileAttackRecoil;
+    private float _exileAuraPulsePhase;
+
+    /// <summary>
+    /// Explicit target position currently tracked by the Exile (e.g. from CombatEngine.CurrentTarget).
+    /// </summary>
+    public Vector2? TargetPosition { get; set; }
+
+    /// <summary>
+    /// Instance ID of the current target monster for priority Auto-Facing.
+    /// </summary>
+    public long? TargetMonsterInstanceId { get; set; }
+
+    // ─────────────────────────────────────────────
+    //  Equipped Weapons State (for accurate 2D rendering)
+    // ─────────────────────────────────────────────
+    public WeaponBaseDefinition? MainHandWeapon { get; private set; }
+    public IGearItem? OffHandItem { get; private set; }
+
+    /// <summary>
+    /// Updates the Exile's equipped weapon set and triggers a visual redraw.
+    /// </summary>
+    public void SetEquippedWeapons(WeaponBaseDefinition? mainHand, IGearItem? offHand)
+    {
+        MainHandWeapon = mainHand;
+        OffHandItem = offHand;
+        QueueRedraw();
+    }
+
+    // ─────────────────────────────────────────────
+    //  Entity & Projectile Pools (Zero GC per frame)
+    // ─────────────────────────────────────────────
+    private readonly ProjectileData[] _projectiles = new ProjectileData[MaxProjectiles];
+    private readonly MonsterVisualToken[] _monsters = new MonsterVisualToken[MaxMonsters];
+    private int _activeMonsterCount;
+
+    // ─────────────────────────────────────────────
+    //  Boss Slam Telegraph & Screen Shake State
+    // ─────────────────────────────────────────────
+    private BossSlamTelegraph _telegraph;
+    private float _screenShakeTimer;
+    private float _screenShakeMagnitude;
+    private Vector2 _shakeOffset = Vector2.Zero;
+
+    // ─────────────────────────────────────────────
+    //  Melee Strike AoE Indicators (Object Pool)
+    // ─────────────────────────────────────────────
+    public const int MaxMeleeIndicators = 8;
+    private readonly MeleeStrikeIndicator[] _meleeIndicators = new MeleeStrikeIndicator[MaxMeleeIndicators];
+
+    /// <summary>
+    /// Pooled data for a melee attack AoE indicator.
+    /// Renders as an expanding directional arc (120° sweep) from the monster's position toward the Exile,
+    /// colored by damage type, with crit attacks getting a wider/brighter indicator.
+    /// Lifetime is 0.3s — fast and punchy to match the 30Hz tick rhythm.
+    /// </summary>
+    public struct MeleeStrikeIndicator
+    {
+        public bool IsActive;
+        /// <summary>World position of the attacking monster.</summary>
+        public Vector2 Origin;
+        /// <summary>Angle in radians from monster toward Exile.</summary>
+        public float DirectionAngle;
+        /// <summary>Attack reach radius in pixels.</summary>
+        public float Range;
+        /// <summary>Total lifespan in seconds (0.3s default).</summary>
+        public float TotalDuration;
+        /// <summary>Elapsed time since trigger.</summary>
+        public float Elapsed;
+        /// <summary>Base color for the arc (damage type).</summary>
+        public Color ArcColor;
+        /// <summary>Arc aperture in radians (normal: 2.1 rad ≈ 120°, crit: 2.6 rad ≈ 150°).</summary>
+        public float ArcAngle;
+        /// <summary>True for crit strikes (wider, brighter).</summary>
+        public bool IsCrit;
+
+        public readonly float Progress => TotalDuration > 0f ? Mathf.Clamp(Elapsed / TotalDuration, 0f, 1f) : 1f;
+    }
+
+    // ─────────────────────────────────────────────
+    //  Events & Callbacks
+    // ─────────────────────────────────────────────
+    public event Action<Vector2, float>? OnBossSlamDetonated;
+    public event Action<Vector2, DamageType>? OnProjectileImpact;
+
+    // ─────────────────────────────────────────────
+    //  Subcomponents & Layers (Task 2.5)
+    // ─────────────────────────────────────────────
+    public FloatingTextManager? FloatingText { get; set; }
+
+    // ─────────────────────────────────────────────
+    //  Public Query Properties
+    // ─────────────────────────────────────────────
+    public bool IsTelegraphActive => _telegraph.IsActive;
+    public float TelegraphProgress => _telegraph.Progress;
+    public int ActiveProjectileCount
+    {
+        get
+        {
+            int count = 0;
+            for (int i = 0; i < _projectiles.Length; i++)
+            {
+                if (_projectiles[i].IsActive) count++;
+            }
+            return count;
+        }
+    }
+    public int ActiveMeleeIndicatorCount
+    {
+        get
+        {
+            int count = 0;
+            for (int i = 0; i < _meleeIndicators.Length; i++)
+            {
+                if (_meleeIndicators[i].IsActive) count++;
+            }
+            return count;
+        }
+    }
+    public int ActiveMonsterCount => _activeMonsterCount;
+
+    public override void _Ready()
+    {
+        // Pre-initialize monster tokens to avoid allocations during combat
+        for (int i = 0; i < MaxMonsters; i++)
+        {
+            _monsters[i] = new MonsterVisualToken();
+        }
+
+        // Initialize default mock monsters in 2D top-down arrangement
+        SpawnDefaultPackPreview();
+
+        // Connect floating text layer if present in scene tree
+        FloatingText ??= GetNodeOrNull<FloatingTextManager>("%FloatingCombatTextLayer")
+                         ?? GetNodeOrNull<FloatingTextManager>("FloatingCombatTextLayer");
+    }
+
+    public override void _Process(double delta)
+    {
+        float dt = (float)delta;
+        _floorTime += dt;
+
+        // 1. Update Exile Dynamic Facing towards nearest active monster
+        UpdateExileFacing(dt);
+
+        // 2. Update Exile Aura & Recoil
+        _exileAuraPulsePhase += dt * 2.5f;
+        if (_exileAttackRecoil > 0f)
+        {
+            _exileAttackRecoil = Mathf.Max(0f, _exileAttackRecoil - dt * 6.0f);
+        }
+
+        // 3. Update Monsters Animation States
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            var m = _monsters[i];
+            m.BobbingPhase += dt * 2.8f;
+            if (m.HitFlashTimer > 0f)
+            {
+                m.HitFlashTimer = Mathf.Max(0f, m.HitFlashTimer - dt * 7f);
+            }
+            if (!m.IsAlive && m.DeathFadeTimer > 0f)
+            {
+                m.DeathFadeTimer = Mathf.Max(0f, m.DeathFadeTimer - dt * 2.5f);
+            }
+        }
+
+        // 4. Update In-Flight 2D Projectiles
+        for (int i = 0; i < MaxProjectiles; i++)
+        {
+            if (!_projectiles[i].IsActive) continue;
+
+            ref var p = ref _projectiles[i];
+            float dist = p.StartPosition.DistanceTo(p.TargetPosition);
+            if (dist <= 0.001f)
+            {
+                p.IsActive = false;
+                continue;
+            }
+
+            p.Progress += (p.Speed * dt) / dist;
+            p.CurrentPosition = p.StartPosition.Lerp(p.TargetPosition, Mathf.Clamp(p.Progress, 0f, 1f));
+
+            if (p.Progress >= 1.0f)
+            {
+                p.IsActive = false;
+                TriggerProjectileImpact(p.TargetPosition, p.DamageType);
+            }
+        }
+
+        // 5. Update Boss Slam Telegraph Indicator
+        if (_telegraph.IsActive)
+        {
+            _telegraph.ElapsedDuration += dt;
+            if (_telegraph.IsReadyToDetonate)
+            {
+                DetonateBossSlam();
+            }
+        }
+
+        // 6. Update Melee Strike AoE Indicators
+        for (int i = 0; i < MaxMeleeIndicators; i++)
+        {
+            if (!_meleeIndicators[i].IsActive) continue;
+            _meleeIndicators[i].Elapsed += dt;
+            if (_meleeIndicators[i].Elapsed >= _meleeIndicators[i].TotalDuration)
+            {
+                _meleeIndicators[i].IsActive = false;
+            }
+        }
+
+        // 7. Update Screen Shake
+        if (_screenShakeTimer > 0f)
+        {
+            _screenShakeTimer -= dt;
+            if (_screenShakeTimer <= 0f)
+            {
+                _shakeOffset = Vector2.Zero;
+            }
+            else
+            {
+                float factor = _screenShakeTimer / 0.15f;
+                _shakeOffset = new Vector2(
+                    (float)(GD.Randf() * 2.0 - 1.0) * _screenShakeMagnitude * factor,
+                    (float)(GD.Randf() * 2.0 - 1.0) * _screenShakeMagnitude * factor
+                );
+            }
+            Position = _shakeOffset;
+        }
+
+        // 8. Request redraw
+        QueueRedraw();
+    }
+
+    private void UpdateExileFacing(float dt)
+    {
+        Vector2? target = GetCurrentTargetPosition();
+        if (target.HasValue)
+        {
+            Vector2 toTarget = target.Value - ExilePosition;
+            if (toTarget.LengthSquared() > 0.01f)
+            {
+                float desiredAngle = toTarget.Angle();
+                // Smooth angle interpolation
+                _exileFacingAngle = Mathf.LerpAngle(_exileFacingAngle, desiredAngle, dt * 10f);
+                _exileFacingAngle = Mathf.Wrap(_exileFacingAngle, -Mathf.Pi, Mathf.Pi);
+            }
+        }
+    }
+
+    public override void _Draw()
+    {
+        // 1. Draw Top-Down Flagstone Floor & Dungeon Tiles
+        DrawTopDownFloor();
+
+        // 2. Draw Boss Slam Telegraph Indicator (Underneath characters)
+        if (_telegraph.IsActive)
+        {
+            DrawBossSlamTelegraph();
+        }
+
+        // 3. Draw Melee Strike AoE Indicators (Underneath characters, above floor)
+        DrawMeleeStrikeIndicators();
+
+        // 4. Draw Monster Tokens, 360° Auras & Overhead Health Bars
+        DrawMonsters();
+
+        // 5. Draw Exile Character with 360° Aura & Facing Vector
+        DrawExileCharacter();
+
+        // 6. Draw 360° In-Flight Projectiles
+        DrawProjectiles();
+    }
+
+    // ─────────────────────────────────────────────
+    //  Rendering: Top-Down Dungeon Stone Floor
+    // ─────────────────────────────────────────────
+    private void DrawTopDownFloor()
+    {
+        // Base dark stone slab
+        DrawRect(new Rect2(0, 0, ArenaWidth, ArenaHeight), new Color(0.043f, 0.047f, 0.063f, 1.0f));
+
+        // 2D Flagstone Tiles (10 columns x 6 rows)
+        int cols = 10;
+        int rows = 6;
+        float tileW = ArenaWidth / cols;   // 44px
+        float tileH = ArenaHeight / rows;  // ~34.6px
+
+        Color groutColor = new(0.025f, 0.028f, 0.038f, 0.95f);
+        Color tileColorA = new(0.062f, 0.068f, 0.088f, 0.85f);
+        Color tileColorB = new(0.052f, 0.058f, 0.076f, 0.85f);
+
+        for (int r = 0; r < rows; r++)
+        {
+            float rowOffset = (r % 2 == 1) ? (tileW * 0.5f) : 0f;
+            for (int c = -1; c <= cols; c++)
+            {
+                float x = c * tileW + rowOffset;
+                float y = r * tileH;
+                Rect2 tileRect = new(x + 1f, y + 1f, tileW - 2f, tileH - 2f);
+
+                // Alternate subtle shading
+                Color col = ((c + r) % 2 == 0) ? tileColorA : tileColorB;
+                DrawRect(tileRect, col);
+            }
+        }
+
+        // Subtle horizontal & vertical grout grid seams
+        for (int r = 0; r <= rows; r++)
+        {
+            DrawLine(new Vector2(0, r * tileH), new Vector2(ArenaWidth, r * tileH), groutColor, 1.2f);
+        }
+
+        // Central Altar / Runic Circle beneath Exile
+        Vector2 center = ExilePosition;
+        Color runicOuter = new(0.18f, 0.28f, 0.44f, 0.30f);
+        Color runicInner = new(0.18f, 0.28f, 0.44f, 0.18f);
+
+        DrawCircle(center, 44f, runicInner);
+        DrawArc(center, 44f, 0, Mathf.Tau, 36, runicOuter, 1.5f);
+        DrawArc(center, 28f, 0, Mathf.Tau, 24, runicOuter, 1.0f);
+
+        // 8 Runic tick marks radiating outward
+        for (int i = 0; i < 8; i++)
+        {
+            float angle = i * (Mathf.Tau / 8f);
+            Vector2 dir = new(Mathf.Cos(angle), Mathf.Sin(angle));
+            DrawLine(center + dir * 28f, center + dir * 44f, runicOuter, 1.0f);
+        }
+
+        // Ambient drifting atmospheric dust motes in 2D
+        Color moteColor = new(0.42f, 0.50f, 0.68f, 0.35f);
+        for (int i = 0; i < 8; i++)
+        {
+            float mx = (i * 55f + _floorTime * (12f + (i % 3) * 6f)) % ArenaWidth;
+            float my = (25f + (i * 24f) + Mathf.Sin(_floorTime * 1.5f + i) * 8f) % ArenaHeight;
+            DrawCircle(new Vector2(mx, my), 1.2f, moteColor);
+        }
+
+        // Vignette edge shadows (Top-down dungeon lighting)
+        Color vignetteEdge = new(0.015f, 0.018f, 0.025f, 0.65f);
+        DrawRect(new Rect2(0, 0, ArenaWidth, 6), vignetteEdge);
+        DrawRect(new Rect2(0, ArenaHeight - 6, ArenaWidth, 6), vignetteEdge);
+        DrawRect(new Rect2(0, 0, 6, ArenaHeight), vignetteEdge);
+        DrawRect(new Rect2(ArenaWidth - 6, 0, 6, ArenaHeight), vignetteEdge);
+    }
+
+    // ─────────────────────────────────────────────
+    //  Rendering: Exile Character (Top-Down)
+    // ─────────────────────────────────────────────
+    private void DrawExileCharacter()
+    {
+        Vector2 facingDir = new(Mathf.Cos(_exileFacingAngle), Mathf.Sin(_exileFacingAngle));
+        Vector2 normalDir = new(-facingDir.Y, facingDir.X);
+
+        // Micro-recoil backwards on attack
+        Vector2 recoil = -facingDir * _exileAttackRecoil * 5f;
+        Vector2 pos = ExilePosition + recoil;
+
+        // 1. Pulsing 360° Aura on the ground
+        float auraPulse = 0.35f + Mathf.Sin(_exileAuraPulsePhase) * 0.15f;
+        Color auraInner = new(0.12f, 0.42f, 0.85f, auraPulse * 0.35f);
+        Color auraRing = new(0.35f, 0.75f, 1.0f, auraPulse + 0.25f);
+
+        DrawCircle(pos, 22f, auraInner);
+        DrawArc(pos, 22f, 0, Mathf.Tau, 32, auraRing, 1.5f);
+
+        // 2. Ground Shadow (Top-down soft oval)
+        DrawCircle(pos + new Vector2(0, 3), 11f, new Color(0, 0, 0, 0.45f));
+
+        // 3. Top-Down Hooded Cloak & Shoulders
+        Color cloakDark = new(0.10f, 0.12f, 0.17f, 1.0f);
+        Color cloakHighlight = new(0.24f, 0.30f, 0.42f, 1.0f);
+
+        // Shoulder / Mantle polygon oriented in facing direction
+        Vector2[] mantlePoints =
+        [
+            pos - facingDir * 8f - normalDir * 9f,
+            pos - facingDir * 8f + normalDir * 9f,
+            pos + facingDir * 5f + normalDir * 7f,
+            pos + facingDir * 5f - normalDir * 7f
+        ];
+        DrawColoredPolygon(mantlePoints, cloakDark);
+
+        // Hood / Head token at center
+        DrawCircle(pos, 6.5f, cloakDark);
+        DrawCircle(pos + facingDir * 1.5f, 4.5f, cloakHighlight);
+
+        // Glowing Exile Eyes / Visor slit in facing direction (visual counterpart to monster eyes)
+        Vector2 exileEyeOffset = facingDir * 3.8f;
+        Color exileEyeAura = new(0.2f, 0.7f, 1.0f, 0.4f);
+        Color exileEyeGlow = new(0.45f, 0.92f, 1.0f, 0.95f); // PoE Arcane Cyan
+        Color exileEyeCore = Colors.White;
+
+        // Eye glow aura
+        DrawCircle(pos + exileEyeOffset + normalDir * 2.0f, 2.0f, exileEyeAura);
+        DrawCircle(pos + exileEyeOffset - normalDir * 2.0f, 2.0f, exileEyeAura);
+
+        // Sharp glowing eyes with inner core highlights
+        DrawCircle(pos + exileEyeOffset + normalDir * 2.0f, 1.3f, exileEyeGlow);
+        DrawCircle(pos + exileEyeOffset + normalDir * 2.0f + facingDir * 0.3f, 0.6f, exileEyeCore);
+
+        DrawCircle(pos + exileEyeOffset - normalDir * 2.0f, 1.3f, exileEyeGlow);
+        DrawCircle(pos + exileEyeOffset - normalDir * 2.0f + facingDir * 0.3f, 0.6f, exileEyeCore);
+
+        // 4. Equipped Weapons (MainHand & OffHand) rendered with procedural top-down geometry
+        DrawEquippedWeapons(pos, facingDir, normalDir, cloakDark, cloakHighlight);
+    }
+
+    private void DrawEquippedWeapons(Vector2 pos, Vector2 facingDir, Vector2 normalDir, Color cloakDark, Color cloakHighlight)
+    {
+        Vector2 rightHand = pos + normalDir * 8.5f + facingDir * 2f;
+        Vector2 leftHand = pos - normalDir * 8.5f + facingDir * 2f;
+
+        float swingPhase = Mathf.Sin(_exileAttackRecoil * Mathf.Pi);
+        float swingAngle = swingPhase * 0.55f;
+
+        var mainWClass = MainHandWeapon?.WeaponClass;
+
+        if (mainWClass == WeaponClass.Bow)
+        {
+            DrawBowAndQuiver(pos, facingDir, normalDir, swingPhase);
+        }
+        else if (mainWClass == WeaponClass.TwoHandedSword)
+        {
+            DrawTwoHandedSword(pos, facingDir, normalDir, swingAngle);
+        }
+        else if (mainWClass == WeaponClass.TwoHandedAxe)
+        {
+            DrawTwoHandedAxe(pos, facingDir, normalDir, swingAngle);
+        }
+        else if (mainWClass == WeaponClass.TwoHandedMace)
+        {
+            DrawTwoHandedMace(pos, facingDir, normalDir, swingAngle);
+        }
+        else if (mainWClass == WeaponClass.Staff)
+        {
+            DrawStaff(rightHand, facingDir, normalDir, swingPhase);
+        }
+        else
+        {
+            // 1-Handed or Unarmed in Main Hand
+            DrawMainHandWeapon(rightHand, facingDir, normalDir, mainWClass, swingAngle, swingPhase);
+
+            // Off-Hand: Shield, Dual-Wield Weapon, or Quiver
+            DrawOffHandItem(leftHand, facingDir, normalDir, swingAngle, swingPhase);
+        }
+
+        // Draw Hands (Grip Tokens)
+        DrawCircle(rightHand, 2.8f, cloakDark);
+        DrawCircle(rightHand, 1.8f, cloakHighlight);
+
+        DrawCircle(leftHand, 2.8f, cloakDark);
+        DrawCircle(leftHand, 1.8f, cloakHighlight);
+    }
+
+    private void DrawBowAndQuiver(Vector2 pos, Vector2 facingDir, Vector2 normalDir, float swingPhase)
+    {
+        // 1. Quiver worn diagonally on Exile's back mantle
+        Vector2 quiverStart = pos - facingDir * 7f - normalDir * 5f;
+        Vector2 quiverEnd = pos - facingDir * 2f + normalDir * 4f;
+        DrawLine(quiverStart, quiverEnd, new Color(0.35f, 0.22f, 0.14f), 3.5f, antialiased: true);
+        DrawCircle(quiverStart, 1.8f, Colors.White);
+        DrawCircle(quiverStart + new Vector2(0.5f, -1.2f), 1.5f, new Color(0.4f, 0.85f, 0.55f));
+
+        // 2. Bow held in front
+        Vector2 bowCenter = pos + facingDir * 7f;
+        Vector2 leftTip = bowCenter - normalDir * 12f - facingDir * 3f;
+        Vector2 rightTip = bowCenter + normalDir * 12f - facingDir * 3f;
+        Vector2 midPoint = bowCenter + facingDir * 3.5f;
+
+        Color bowWood = new(0.55f, 0.38f, 0.22f);
+        Color bowHighlight = new(0.75f, 0.55f, 0.35f);
+        DrawLine(leftTip, midPoint, bowWood, 2.4f, antialiased: true);
+        DrawLine(midPoint, rightTip, bowWood, 2.4f, antialiased: true);
+        DrawLine(leftTip, midPoint, bowHighlight, 1.2f, antialiased: true);
+        DrawLine(midPoint, rightTip, bowHighlight, 1.2f, antialiased: true);
+
+        DrawCircle(leftTip, 1.8f, new Color(0.85f, 0.80f, 0.70f));
+        DrawCircle(rightTip, 1.8f, new Color(0.85f, 0.80f, 0.70f));
+
+        Color stringColor = new(0.92f, 0.92f, 0.96f, 0.85f);
+        Color arrowShaft = new(0.48f, 0.38f, 0.26f);
+
+        if (_exileAttackRecoil > 0.05f)
+        {
+            Vector2 pullPos = pos + normalDir * 2f - facingDir * (1f + swingPhase * 4.5f);
+            DrawLine(leftTip, pullPos, stringColor, 1.2f, antialiased: true);
+            DrawLine(pullPos, rightTip, stringColor, 1.2f, antialiased: true);
+
+            Vector2 arrowHead = midPoint + facingDir * 10f;
+            DrawLine(pullPos, arrowHead, arrowShaft, 1.8f, antialiased: true);
+            DrawCircle(arrowHead, 2.2f, Colors.White);
+        }
+        else
+        {
+            DrawLine(leftTip, midPoint - facingDir * 0.5f, stringColor, 1.2f, antialiased: true);
+            DrawLine(midPoint - facingDir * 0.5f, rightTip, stringColor, 1.2f, antialiased: true);
+
+            Vector2 arrowHead = midPoint + facingDir * 8f;
+            DrawLine(midPoint - facingDir * 2f, arrowHead, arrowShaft, 1.5f, antialiased: true);
+            DrawCircle(arrowHead, 1.8f, new Color(0.88f, 0.88f, 0.92f));
+        }
+    }
+
+    private void DrawTwoHandedSword(Vector2 pos, Vector2 facingDir, Vector2 normalDir, float swingAngle)
+    {
+        Vector2 grip = pos + normalDir * 3.5f + facingDir * 4f;
+        Vector2 bladeDir = facingDir.Rotated(swingAngle * 1.2f);
+        Vector2 bladeNormal = new(-bladeDir.Y, bladeDir.X);
+
+        // Wide crossguard
+        DrawLine(grip - bladeNormal * 5.5f, grip + bladeNormal * 5.5f, new Color(0.45f, 0.48f, 0.55f), 2.8f, antialiased: true);
+        // Pommel
+        DrawCircle(grip - bladeDir * 4f, 2.2f, new Color(0.45f, 0.48f, 0.55f));
+
+        // Greatsword blade
+        Vector2 bladeTip = grip + bladeDir * 24f;
+        DrawLine(grip, bladeTip, new Color(0.80f, 0.84f, 0.90f), 3.6f, antialiased: true);
+        DrawLine(grip + bladeDir * 3f, bladeTip - bladeDir * 3f, new Color(0.35f, 0.38f, 0.44f), 1.4f, antialiased: true);
+        DrawCircle(bladeTip, 2.0f, Colors.White);
+    }
+
+    private void DrawTwoHandedAxe(Vector2 pos, Vector2 facingDir, Vector2 normalDir, float swingAngle)
+    {
+        Vector2 grip = pos + normalDir * 3.5f + facingDir * 4f;
+        Vector2 bladeDir = facingDir.Rotated(swingAngle * 1.2f);
+        Vector2 bladeNormal = new(-bladeDir.Y, bladeDir.X);
+
+        Vector2 haftTip = grip + bladeDir * 21f;
+        DrawLine(grip - bladeDir * 5f, haftTip, new Color(0.42f, 0.30f, 0.18f), 2.8f, antialiased: true);
+
+        Vector2 headCenter = grip + bladeDir * 17f;
+        Vector2[] rightBlade =
+        [
+            headCenter - bladeDir * 3.5f,
+            headCenter + bladeNormal * 8f - bladeDir * 5f,
+            headCenter + bladeNormal * 9f + bladeDir * 2f,
+            headCenter + bladeDir * 3.5f
+        ];
+        Vector2[] leftBlade =
+        [
+            headCenter - bladeDir * 3.5f,
+            headCenter - bladeNormal * 8f - bladeDir * 5f,
+            headCenter - bladeNormal * 9f + bladeDir * 2f,
+            headCenter + bladeDir * 3.5f
+        ];
+
+        DrawColoredPolygon(rightBlade, new Color(0.70f, 0.74f, 0.80f));
+        DrawColoredPolygon(leftBlade, new Color(0.70f, 0.74f, 0.80f));
+        DrawLine(rightBlade[1], rightBlade[2], Colors.White, 1.5f, antialiased: true);
+        DrawLine(leftBlade[1], leftBlade[2], Colors.White, 1.5f, antialiased: true);
+    }
+
+    private void DrawTwoHandedMace(Vector2 pos, Vector2 facingDir, Vector2 normalDir, float swingAngle)
+    {
+        Vector2 grip = pos + normalDir * 3.5f + facingDir * 4f;
+        Vector2 bladeDir = facingDir.Rotated(swingAngle * 1.2f);
+        Vector2 hammerTip = grip + bladeDir * 19f;
+
+        DrawLine(grip - bladeDir * 4f, hammerTip, new Color(0.35f, 0.36f, 0.40f), 3.0f, antialiased: true);
+
+        Vector2 hNormal = new(-bladeDir.Y, bladeDir.X);
+        DrawLine(hammerTip - hNormal * 5.5f, hammerTip + hNormal * 5.5f, new Color(0.70f, 0.72f, 0.78f), 5.5f, antialiased: true);
+        DrawCircle(hammerTip, 2.2f, Colors.White);
+    }
+
+    private void DrawStaff(Vector2 handPos, Vector2 facingDir, Vector2 normalDir, float swingPhase)
+    {
+        Vector2 staffTip = handPos + facingDir * 18f;
+        Vector2 staffTail = handPos - facingDir * 9f;
+
+        DrawLine(staffTail, staffTip, new Color(0.48f, 0.35f, 0.20f), 2.4f, antialiased: true);
+        DrawCircle(staffTail, 2.0f, new Color(0.78f, 0.65f, 0.30f));
+
+        float orbRadius = 3.8f + swingPhase * 1.5f;
+        DrawCircle(staffTip, orbRadius, new Color(0.20f, 0.85f, 1.0f, 0.90f));
+        DrawArc(staffTip, orbRadius + 1.5f, 0, Mathf.Tau, 16, new Color(0.4f, 0.9f, 1.0f, 0.6f), 1.2f);
+        DrawCircle(staffTip, 1.8f, Colors.White);
+    }
+
+    private void DrawMainHandWeapon(Vector2 handPos, Vector2 facingDir, Vector2 normalDir, WeaponClass? weaponClass, float swingAngle, float swingPhase)
+    {
+        Vector2 bladeDir = facingDir.Rotated(swingAngle);
+        Vector2 bladeNormal = new(-bladeDir.Y, bladeDir.X);
+
+        switch (weaponClass)
+        {
+            case WeaponClass.OneHandedAxe:
+                Vector2 axeHaftTip = handPos + bladeDir * 14f;
+                DrawLine(handPos - bladeDir * 3f, axeHaftTip, new Color(0.48f, 0.35f, 0.22f), 2.2f, antialiased: true);
+                Vector2[] axeHead =
+                [
+                    axeHaftTip - bladeDir * 3f,
+                    axeHaftTip + bladeNormal * 6f - bladeDir * 4f,
+                    axeHaftTip + bladeNormal * 7.5f + bladeDir * 1.5f,
+                    axeHaftTip + bladeDir * 1.5f
+                ];
+                DrawColoredPolygon(axeHead, new Color(0.72f, 0.75f, 0.80f));
+                DrawLine(axeHead[1], axeHead[2], Colors.White, 1.4f, antialiased: true);
+                break;
+
+            case WeaponClass.OneHandedMace:
+                Vector2 maceTip = handPos + bladeDir * 13f;
+                DrawLine(handPos - bladeDir * 2f, maceTip, new Color(0.35f, 0.36f, 0.40f), 2.4f, antialiased: true);
+                DrawCircle(maceTip, 3.6f, new Color(0.68f, 0.70f, 0.75f));
+                DrawCircle(maceTip, 1.8f, Colors.White);
+                break;
+
+            case WeaponClass.Wand:
+            case WeaponClass.Sceptre:
+                Vector2 wandTip = handPos + facingDir * 13f;
+                DrawLine(handPos - facingDir * 2f, wandTip, new Color(0.60f, 0.48f, 0.35f), 1.8f, antialiased: true);
+                Color wandGemColor = (weaponClass == WeaponClass.Sceptre || MainHandWeapon?.Id.Contains("fire") == true)
+                    ? new Color(1.0f, 0.45f, 0.20f, 0.95f)
+                    : new Color(0.25f, 0.75f, 1.0f, 0.95f);
+                float wandPulse = 3.2f + swingPhase * 2.0f;
+                DrawCircle(wandTip, wandPulse, wandGemColor);
+                DrawArc(wandTip, wandPulse + 1.5f, 0, Mathf.Tau, 16, new Color(wandGemColor.R, wandGemColor.G, wandGemColor.B, 0.5f), 1.2f);
+                DrawCircle(wandTip, 1.5f, Colors.White);
+                break;
+
+            case WeaponClass.Dagger:
+                Vector2 dagTip = handPos + bladeDir * 11f;
+                DrawLine(handPos, dagTip, new Color(0.78f, 0.82f, 0.88f), 2.2f, antialiased: true);
+                DrawCircle(dagTip, 1.3f, Colors.White);
+                break;
+
+            case WeaponClass.Claw:
+                Vector2 clawBase = handPos + bladeDir * 2f;
+                for (int t = -1; t <= 1; t++)
+                {
+                    Vector2 cDir = bladeDir.Rotated(t * 0.28f);
+                    DrawLine(clawBase, clawBase + cDir * 9f, new Color(0.85f, 0.88f, 0.92f), 1.5f, antialiased: true);
+                }
+                break;
+
+            case WeaponClass.OneHandedSword:
+            default:
+                // Standard Sword / Foil
+                float bladeLen = (MainHandWeapon?.Id.Contains("foil") == true) ? 19f : 15f;
+                DrawLine(handPos - bladeNormal * 3f, handPos + bladeNormal * 3f, new Color(0.78f, 0.65f, 0.32f), 2.0f, antialiased: true);
+                DrawCircle(handPos - bladeDir * 3f, 1.8f, new Color(0.78f, 0.65f, 0.32f));
+                Vector2 tip = handPos + bladeDir * bladeLen;
+                DrawLine(handPos, tip, new Color(0.78f, 0.82f, 0.88f), 2.4f, antialiased: true);
+                DrawLine(handPos + bladeDir * 2f, tip - bladeDir * 2f, Colors.White, 1.0f, antialiased: true);
+                DrawCircle(tip, 1.4f, Colors.White);
+                break;
+        }
+    }
+
+    private void DrawOffHandItem(Vector2 handPos, Vector2 facingDir, Vector2 normalDir, float swingAngle, float swingPhase)
+    {
+        if (OffHandItem is ArmourItemInstance shield && shield.BaseDefinition.ArmourSlot == ArmourSlot.Shield)
+        {
+            // Shield on left forearm
+            Vector2 shieldCenter = handPos - normalDir * 2f;
+            DrawArc(shieldCenter, 6.5f, 0, Mathf.Tau, 20, new Color(0.72f, 0.74f, 0.80f), 2.2f, antialiased: true);
+            DrawCircle(shieldCenter, 5.5f, new Color(0.18f, 0.20f, 0.28f));
+            DrawCircle(shieldCenter, 2.2f, new Color(0.85f, 0.70f, 0.25f));
+            return;
+        }
+
+        if (OffHandItem is WeaponItemInstance offWeapon)
+        {
+            if (offWeapon.BaseDefinition.WeaponClass == WeaponClass.Shield)
+            {
+                Vector2 shieldCenter = handPos - normalDir * 2f;
+                DrawArc(shieldCenter, 6.5f, 0, Mathf.Tau, 20, new Color(0.72f, 0.74f, 0.80f), 2.2f, antialiased: true);
+                DrawCircle(shieldCenter, 5.5f, new Color(0.18f, 0.20f, 0.28f));
+                DrawCircle(shieldCenter, 2.2f, new Color(0.85f, 0.70f, 0.25f));
+                return;
+            }
+
+            // Dual Wielding (e.g. 2nd Sword / Axe / Wand)
+            float offSwing = Mathf.Sin(_exileAttackRecoil * Mathf.Pi) * 0.45f;
+            Vector2 offBladeDir = facingDir.Rotated(-0.25f - offSwing);
+            Vector2 offBladeNormal = new(-offBladeDir.Y, offBladeDir.X);
+            float offLen = 14f;
+
+            DrawLine(handPos - offBladeNormal * 2.5f, handPos + offBladeNormal * 2.5f, new Color(0.78f, 0.65f, 0.32f), 1.8f, antialiased: true);
+            DrawCircle(handPos - offBladeDir * 2.5f, 1.5f, new Color(0.78f, 0.65f, 0.32f));
+            Vector2 offTip = handPos + offBladeDir * offLen;
+            DrawLine(handPos, offTip, new Color(0.78f, 0.82f, 0.88f), 2.2f, antialiased: true);
+            DrawLine(handPos + offBladeDir * 2f, offTip - offBladeDir * 2f, Colors.White, 0.9f, antialiased: true);
+            DrawCircle(offTip, 1.2f, Colors.White);
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    //  Rendering: Monsters & Overhead Bars
+    // ─────────────────────────────────────────────
+    private void DrawMonsters()
+    {
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            var m = _monsters[i];
+            if (!m.IsAlive && m.DeathFadeTimer <= 0f) continue;
+
+            float alpha = m.IsAlive ? 1.0f : Mathf.Clamp(m.DeathFadeTimer / 0.4f, 0f, 1f);
+            float bob = Mathf.Sin(m.BobbingPhase) * 1.2f;
+            Vector2 pos = new(m.Position.X, m.Position.Y + bob);
+
+            // Ground shadow
+            float shadowRadius = 9f * m.Scale;
+            DrawCircle(pos + new Vector2(0, 3 * m.Scale), shadowRadius, new Color(0, 0, 0, 0.42f * alpha));
+
+            // Rare Monster Aura Ring
+            if (m.Rarity == MonsterRarity.Rare)
+            {
+                float auraPulse = 0.35f + Mathf.Sin(m.BobbingPhase * 1.5f) * 0.15f;
+                DrawArc(pos, 18f * m.Scale, 0, Mathf.Tau, 24,
+                    new Color(ColorRareAura.R, ColorRareAura.G, ColorRareAura.B, auraPulse * alpha), 2.0f);
+            }
+            // Magic Monster Outline Aura
+            else if (m.Rarity == MonsterRarity.Magic)
+            {
+                DrawArc(pos, 14f * m.Scale, 0, Mathf.Tau, 16,
+                    new Color(ColorMagicAura.R, ColorMagicAura.G, ColorMagicAura.B, 0.35f * alpha), 1.5f);
+            }
+            // Boss Imposing Dark Red Ring
+            else if (m.Rarity == MonsterRarity.Boss)
+            {
+                float bossPulse = 0.45f + Mathf.Sin(m.BobbingPhase * 2.0f) * 0.2f;
+                DrawArc(pos, 28f * m.Scale, 0, Mathf.Tau, 32,
+                    new Color(ColorBossAura.R, ColorBossAura.G, ColorBossAura.B, bossPulse * alpha), 2.5f);
+            }
+
+            // Monster Body Silhouette (Top-down token)
+            Color bodyColor = m.HitFlashTimer > 0f ? Colors.White : m.CustomColor;
+            bodyColor.A = alpha;
+
+            float r = 8.5f * m.Scale;
+            DrawCircle(pos, r, bodyColor);
+
+            // Monster Eyes facing towards Exile
+            Vector2 toExile = (ExilePosition - pos).Normalized();
+            Vector2 eyeOffset = toExile * (3.5f * m.Scale);
+            Vector2 eyeNormal = new(-toExile.Y, toExile.X);
+
+            Color eyeColor = m.Rarity switch
+            {
+                MonsterRarity.Boss => new Color(1.0f, 0.2f, 0.2f, alpha),
+                MonsterRarity.Rare => new Color(1.0f, 0.85f, 0.1f, alpha),
+                MonsterRarity.Magic => new Color(0.2f, 0.8f, 1.0f, alpha),
+                _ => new Color(0.85f, 0.3f, 0.3f, alpha)
+            };
+
+            DrawCircle(pos + eyeOffset + eyeNormal * (2.5f * m.Scale), 1.4f * m.Scale, eyeColor);
+            DrawCircle(pos + eyeOffset - eyeNormal * (2.5f * m.Scale), 1.4f * m.Scale, eyeColor);
+
+            // Overhead Health Bar
+            if (m.Rarity == MonsterRarity.Boss)
+            {
+                DrawBossOverheadBar(pos, m, alpha);
+            }
+            else if (m.CurrentLife < m.MaxLife && m.IsAlive)
+            {
+                DrawRegularOverheadBar(pos, m, alpha);
+            }
+        }
+    }
+
+    private void DrawRegularOverheadBar(Vector2 pos, MonsterVisualToken m, float alpha)
+    {
+        float barW = 24f * m.Scale;
+        float barH = 3f;
+        float barX = pos.X - barW / 2;
+        float barY = pos.Y - 18f * m.Scale;
+
+        // Background
+        DrawRect(new Rect2(barX, barY, barW, barH), new Color(0.1f, 0.1f, 0.1f, 0.8f * alpha));
+
+        // Fill
+        float fillW = barW * Mathf.Clamp(m.CurrentLife / m.MaxLife, 0f, 1f);
+        DrawRect(new Rect2(barX, barY, fillW, barH), new Color(0.85f, 0.2f, 0.2f, 0.9f * alpha));
+    }
+
+    private void DrawBossOverheadBar(Vector2 pos, MonsterVisualToken m, float alpha)
+    {
+        float barW = 68f;
+        float barH = 5f;
+        float barX = pos.X - barW / 2;
+        float barY = pos.Y - 32f;
+
+        // Gold border & Dark background
+        DrawRect(new Rect2(barX - 1, barY - 1, barW + 2, barH + 2), new Color(0.68f, 0.54f, 0.30f, alpha));
+        DrawRect(new Rect2(barX, barY, barW, barH), new Color(0.08f, 0.08f, 0.1f, 0.9f * alpha));
+
+        // Health fill
+        float fillW = barW * Mathf.Clamp(m.CurrentLife / m.MaxLife, 0f, 1f);
+        DrawRect(new Rect2(barX, barY, fillW, barH), new Color(0.85f, 0.15f, 0.15f, alpha));
+
+        // Boss skull / label indicator dot
+        DrawCircle(new Vector2(barX - 6, barY + 2.5f), 2.5f, new Color(1.0f, 0.3f, 0.3f, alpha));
+    }
+
+    // ─────────────────────────────────────────────
+    //  Rendering: Projectiles (PoE 5 Elements)
+    // ─────────────────────────────────────────────
+    private void DrawProjectiles()
+    {
+        for (int i = 0; i < MaxProjectiles; i++)
+        {
+            if (!_projectiles[i].IsActive) continue;
+
+            var p = _projectiles[i];
+            Vector2 dir = (p.TargetPosition - p.StartPosition).Normalized();
+            Vector2 tailPos = p.CurrentPosition - dir * p.StreakLength;
+
+            // Outer glow line
+            DrawLine(tailPos, p.CurrentPosition, p.GlowColor, 4.0f, antialiased: true);
+            // Inner core bright streak
+            DrawLine(tailPos + dir * 2f, p.CurrentPosition, p.BaseColor, 2.0f, antialiased: true);
+            // Projectile head tip
+            DrawCircle(p.CurrentPosition, 2.2f, Colors.White);
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    //  Rendering: Boss Slam Telegraph Indicator (2D Circular AoE)
+    // ─────────────────────────────────────────────
+    private void DrawBossSlamTelegraph()
+    {
+        Vector2 pos = _telegraph.Position;
+        float baseRadius = _telegraph.Radius;
+        float progress = _telegraph.Progress;
+
+        // 1. Static outer lethal danger zone (Alpha = 0.22)
+        Color zoneFill = new(0.95f, 0.15f, 0.15f, 0.22f);
+        Color zoneBorder = new(1.0f, 0.15f, 0.15f, 0.65f);
+        DrawCircle(pos, baseRadius, zoneFill);
+        DrawArc(pos, baseRadius, 0, Mathf.Tau, 36, zoneBorder, 1.5f);
+
+        // 2. Shrinking Ring indicator (from 1.6x down to 0.05x)
+        float currentShrinkRadius = Mathf.Lerp(baseRadius * 1.6f, baseRadius * 0.05f, progress);
+        Color shrinkRingColor = new(1.0f, 0.85f, 0.2f, 0.85f);
+        DrawArc(pos, currentShrinkRadius, 0, Mathf.Tau, 32, shrinkRingColor, 2.0f);
+
+        // 3. Danger warning crosshair in center
+        Color crosshairColor = new(1.0f, 0.2f, 0.2f, 0.75f);
+        DrawLine(pos + new Vector2(-6, 0), pos + new Vector2(6, 0), crosshairColor, 1.5f);
+        DrawLine(pos + new Vector2(0, -6), pos + new Vector2(0, 6), crosshairColor, 1.5f);
+    }
+
+    // ─────────────────────────────────────────────
+    //  Rendering: Melee Strike AoE Indicators
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Renders all active melee strike indicators as expanding directional arcs.
+    /// Each indicator is a semi-transparent arc that expands from 0 to full range
+    /// while fading out, creating a fast "slash sweep" visual.
+    /// </summary>
+    private void DrawMeleeStrikeIndicators()
+    {
+        for (int i = 0; i < MaxMeleeIndicators; i++)
+        {
+            if (!_meleeIndicators[i].IsActive) continue;
+            ref var ind = ref _meleeIndicators[i];
+
+            float progress = ind.Progress;
+
+            // Expand radius from 30% to 100% of range
+            float currentRadius = Mathf.Lerp(ind.Range * 0.3f, ind.Range, progress);
+
+            // Fade alpha: peak at 0.15 progress, then fade out
+            float alpha;
+            if (progress < 0.15f)
+            {
+                alpha = Mathf.Lerp(0f, ind.IsCrit ? 0.55f : 0.38f, progress / 0.15f);
+            }
+            else
+            {
+                alpha = Mathf.Lerp(ind.IsCrit ? 0.55f : 0.38f, 0f, (progress - 0.15f) / 0.85f);
+            }
+
+            if (alpha < 0.01f) continue;
+
+            // Arc sweep: centered on direction angle, spanning ArcAngle
+            float halfArc = ind.ArcAngle * 0.5f;
+            float startAngle = ind.DirectionAngle - halfArc;
+            float endAngle = ind.DirectionAngle + halfArc;
+
+            // 1. Filled arc (semi-transparent fan)
+            Color fillColor = new(ind.ArcColor.R, ind.ArcColor.G, ind.ArcColor.B, alpha * 0.5f);
+            int segments = 16;
+            var points = new Vector2[segments + 2];
+            points[0] = ind.Origin;
+            for (int s = 0; s <= segments; s++)
+            {
+                float angle = Mathf.Lerp(startAngle, endAngle, (float)s / segments);
+                points[s + 1] = ind.Origin + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * currentRadius;
+            }
+
+            // Draw filled polygon (the fan)
+            var fillPoints = new Vector2[segments + 2];
+            var fillColors = new Color[segments + 2];
+            for (int s = 0; s < points.Length; s++)
+            {
+                fillPoints[s] = points[s];
+                fillColors[s] = fillColor;
+            }
+            DrawPolygon(fillPoints, fillColors);
+
+            // 2. Arc border (brighter edge)
+            Color edgeColor = new(ind.ArcColor.R, ind.ArcColor.G, ind.ArcColor.B, alpha * 0.9f);
+            float lineWidth = ind.IsCrit ? 2.5f : 1.5f;
+            DrawArc(ind.Origin, currentRadius, startAngle, endAngle, segments, edgeColor, lineWidth);
+
+            // 3. Crit indicator: radial slash lines from origin
+            if (ind.IsCrit)
+            {
+                Color slashColor = new(1.0f, 1.0f, 1.0f, alpha * 0.7f);
+                for (int s = 0; s < 3; s++)
+                {
+                    float slashAngle = Mathf.Lerp(startAngle + halfArc * 0.3f, endAngle - halfArc * 0.3f, (float)s / 2f);
+                    Vector2 slashEnd = ind.Origin + new Vector2(Mathf.Cos(slashAngle), Mathf.Sin(slashAngle)) * (currentRadius * 1.15f);
+                    DrawLine(ind.Origin, slashEnd, slashColor, 1.0f);
+                }
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    //  Public Control API: Projectiles & Attacks
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Spawns an in-flight projectile from start to target in 2D space.
+    /// Clamps visual rendering to MaxProjectiles to protect frame rate and avoid visual clutter.
+    /// </summary>
+    public bool SpawnProjectile(Vector2 start, Vector2 target, DamageType type, float speed = 520f)
+    {
+        // Find available slot in object pool
+        int freeIndex = -1;
+        for (int i = 0; i < MaxProjectiles; i++)
+        {
+            if (!_projectiles[i].IsActive)
+            {
+                freeIndex = i;
+                break;
+            }
+        }
+
+        if (freeIndex == -1)
+        {
+            // Visual clamping limit reached; drop rendering gracefully while core handles damage
+            return false;
+        }
+
+        (Color baseColor, Color glowColor) = GetDamageTypeColors(type);
+
+        _projectiles[freeIndex] = new ProjectileData
+        {
+            IsActive = true,
+            StartPosition = start,
+            TargetPosition = target,
+            CurrentPosition = start,
+            Progress = 0f,
+            Speed = speed,
+            DamageType = type,
+            StreakLength = 16f,
+            BaseColor = baseColor,
+            GlowColor = glowColor
+        };
+
+        return true;
+    }
+
+    /// <summary>
+    /// Sets the target monster or position for auto-facing.
+    /// </summary>
+    public void SetTarget(long? instanceId, Vector2? targetPos = null)
+    {
+        TargetMonsterInstanceId = instanceId;
+        TargetPosition = targetPos;
+    }
+
+    /// <summary>
+    /// Instantly turns the Exile to face toward the specified target position.
+    /// </summary>
+    public void FaceTarget(Vector2 targetPos)
+    {
+        TargetPosition = targetPos;
+        Vector2 toTarget = targetPos - ExilePosition;
+        if (toTarget.LengthSquared() > 0.001f)
+        {
+            _exileFacingAngle = Mathf.Wrap(toTarget.Angle(), -Mathf.Pi, Mathf.Pi);
+        }
+    }
+
+    /// <summary>
+    /// Directly sets the Exile's facing angle in radians.
+    /// </summary>
+    public void SetFacingAngle(float angle)
+    {
+        _exileFacingAngle = Mathf.Wrap(angle, -Mathf.Pi, Mathf.Pi);
+    }
+
+    /// <summary>
+    /// Triggers the Exile's attack recoil and weapon animation phase.
+    /// </summary>
+    public void TriggerExileAttackRecoil(float recoil = 1.0f)
+    {
+        _exileAttackRecoil = recoil;
+    }
+
+    /// <summary>
+    /// Calculates the 2D world position of the weapon / wand tip based on the Exile's current facing angle.
+    /// </summary>
+    public Vector2 GetWeaponTipPosition()
+    {
+        Vector2 facingDir = new(Mathf.Cos(_exileFacingAngle), Mathf.Sin(_exileFacingAngle));
+        Vector2 normalDir = new(-facingDir.Y, facingDir.X);
+        return ExilePosition + normalDir * 8.5f + facingDir * 18f;
+    }
+
+    /// <summary>
+    /// Resolves the current target position for auto-facing:
+    /// 1. If TargetMonsterInstanceId corresponds to an alive monster, returns its token position.
+    /// 2. Else if TargetPosition is set, returns TargetPosition.
+    /// 3. Otherwise, falls back to the closest alive monster in the arena.
+    /// </summary>
+    public Vector2? GetCurrentTargetPosition()
+    {
+        if (TargetMonsterInstanceId.HasValue)
+        {
+            for (int i = 0; i < _activeMonsterCount; i++)
+            {
+                if (_monsters[i].InstanceId == TargetMonsterInstanceId.Value && _monsters[i].IsAlive)
+                {
+                    return _monsters[i].Position;
+                }
+            }
+        }
+
+        if (TargetPosition.HasValue)
+        {
+            return TargetPosition.Value;
+        }
+
+        return GetClosestAliveMonsterPosition();
+    }
+
+    /// <summary>
+    /// Triggers Exile attack animation: visual recoil, turns to face target, and launches projectile towards target.
+    /// </summary>
+    public void FireExileAttack(DamageType type = DamageType.Physical, Vector2? targetPosition = null)
+    {
+        _exileAttackRecoil = 1.0f;
+
+        Vector2 target = targetPosition ?? GetCurrentTargetPosition() ?? new Vector2(ExilePosition.X + 90f, ExilePosition.Y);
+        Vector2 toTarget = target - ExilePosition;
+        if (toTarget.LengthSquared() > 0.001f)
+        {
+            _exileFacingAngle = Mathf.Wrap(toTarget.Angle(), -Mathf.Pi, Mathf.Pi);
+        }
+
+        Vector2 wandTip = GetWeaponTipPosition();
+        SpawnProjectile(wandTip, target, type);
+    }
+
+    private Vector2? GetClosestAliveMonsterPosition()
+    {
+        Vector2? closest = null;
+        float minDistSq = float.MaxValue;
+
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            if (_monsters[i].IsAlive)
+            {
+                float dSq = ExilePosition.DistanceSquaredTo(_monsters[i].Position);
+                if (dSq < minDistSq)
+                {
+                    minDistSq = dSq;
+                    closest = _monsters[i].Position;
+                }
+            }
+        }
+        return closest;
+    }
+
+    private void TriggerProjectileImpact(Vector2 targetPos, DamageType type)
+    {
+        // Trigger hit flash on monsters near the target in 2D Euclidean distance
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            if (_monsters[i].IsAlive && _monsters[i].Position.DistanceTo(targetPos) < 28f)
+            {
+                _monsters[i].HitFlashTimer = 0.12f;
+            }
+        }
+
+        OnProjectileImpact?.Invoke(targetPos, type);
+    }
+
+    // ─────────────────────────────────────────────
+    //  Public Control API: Boss Slam Telegraph
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Triggers a Boss Slam telegraph warning indicator anywhere in the 2D arena.
+    /// Only used for lethal attacks (>70% player EHP) to give a window for Emergency Portal (Space).
+    /// </summary>
+    public void TriggerBossSlam(Vector2 targetPosition, float duration = 1.35f, float radius = 50f, float threatEhpPercent = 85f)
+    {
+        _telegraph = new BossSlamTelegraph
+        {
+            IsActive = true,
+            Position = targetPosition,
+            Radius = radius,
+            TotalDuration = Mathf.Max(0.5f, duration),
+            ElapsedDuration = 0f,
+            ThreatEhpPercent = threatEhpPercent,
+            ScreenShakeIntensity = 3.5f
+        };
+    }
+
+    /// <summary>
+    /// Cancels or clears the current telegraph indicator.
+    /// </summary>
+    public void CancelBossSlam()
+    {
+        _telegraph.IsActive = false;
+    }
+
+    private void DetonateBossSlam()
+    {
+        Vector2 pos = _telegraph.Position;
+        float threat = _telegraph.ThreatEhpPercent;
+        float intensity = _telegraph.ScreenShakeIntensity;
+
+        _telegraph.IsActive = false;
+
+        // Apply screen shake
+        ScreenShake(intensity, 0.15f);
+
+        // Flash recoil on exile if caught in the 2D blast radius
+        if (pos.DistanceTo(ExilePosition) <= _telegraph.Radius)
+        {
+            _exileAttackRecoil = 0.8f;
+        }
+
+        OnBossSlamDetonated?.Invoke(pos, threat);
+    }
+
+    // ─────────────────────────────────────────────
+    //  Public Control API: Melee Strike AoE Indicators
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Triggers a melee attack AoE indicator arc at the given position.
+    /// The arc expands from the monster's origin toward the Exile, colored by damage type.
+    /// Crit strikes produce a wider, brighter indicator with radial slash lines.
+    /// </summary>
+    public void TriggerMeleeStrikeIndicator(
+        Vector2 origin,
+        float directionAngle,
+        float range,
+        DamageType damageType,
+        bool isCrit = false,
+        float? arcAngle = null)
+    {
+        // Find available slot in pool (oldest-overwrite if full)
+        int slot = -1;
+        for (int i = 0; i < MaxMeleeIndicators; i++)
+        {
+            if (!_meleeIndicators[i].IsActive)
+            {
+                slot = i;
+                break;
+            }
+        }
+
+        // Overwrite the oldest (highest elapsed) if all slots full
+        if (slot == -1)
+        {
+            float maxElapsed = -1f;
+            slot = 0;
+            for (int i = 0; i < MaxMeleeIndicators; i++)
+            {
+                if (_meleeIndicators[i].Elapsed > maxElapsed)
+                {
+                    maxElapsed = _meleeIndicators[i].Elapsed;
+                    slot = i;
+                }
+            }
+        }
+
+        (Color baseColor, _) = GetDamageTypeColors(damageType);
+
+        _meleeIndicators[slot] = new MeleeStrikeIndicator
+        {
+            IsActive = true,
+            Origin = origin,
+            DirectionAngle = directionAngle,
+            Range = Mathf.Max(15f, range),
+            TotalDuration = isCrit ? 0.38f : 0.28f,
+            Elapsed = 0f,
+            ArcColor = baseColor,
+            ArcAngle = arcAngle ?? (isCrit ? 2.6f : 2.1f),   // Default: Crit: ~150°, Normal: ~120°
+            IsCrit = isCrit
+        };
+    }
+
+    /// <summary>
+    /// Triggers Exile melee attack animation: visual recoil, turns to face target, and directional slash arc sweep towards target.
+    /// </summary>
+    public void FireExileMeleeAttack(Vector2? targetPosition, float range, DamageType type, float? arcAngle = null, bool isCrit = false)
+    {
+        _exileAttackRecoil = 0.8f;
+        float dirAngle;
+        if (targetPosition.HasValue)
+        {
+            Vector2 toTarget = targetPosition.Value - ExilePosition;
+            dirAngle = toTarget.LengthSquared() > 0.001f ? Mathf.Atan2(toTarget.Y, toTarget.X) : _exileFacingAngle;
+            TargetPosition = targetPosition.Value;
+        }
+        else
+        {
+            dirAngle = _exileFacingAngle;
+        }
+
+        _exileFacingAngle = Mathf.Wrap(dirAngle, -Mathf.Pi, Mathf.Pi);
+
+        TriggerMeleeStrikeIndicator(ExilePosition, dirAngle, range, type, isCrit, arcAngle);
+    }
+
+    /// <summary>
+    /// Triggers a subtle screen shake for lethal impacts and critical slams.
+    /// </summary>
+    public void ScreenShake(float magnitude = 3.0f, float duration = 0.15f)
+    {
+        _screenShakeMagnitude = magnitude;
+        _screenShakeTimer = duration;
+    }
+
+    /// <summary>
+    /// Spawns a floating combat text number in the arena.
+    /// </summary>
+    public void SpawnFloatingDamage(float damage, Vector2 position, DamageType type, bool isCrit = false) =>
+        FloatingText?.SpawnDamageText(damage, position, type, isCrit);
+
+    /// <summary>
+    /// Spawns floating combat text from a calculated HitResult.
+    /// </summary>
+    public void SpawnFloatingHit(HitResult hit, Vector2 position) =>
+        FloatingText?.SpawnHitResult(hit, position);
+
+    // ─────────────────────────────────────────────
+    //  Public Control API: Monsters Management (2D Formations)
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Populates the visual arena with monsters from the simulation WaveSpawner.
+    /// Uses 2D radial / surrounding distribution around the central Exile.
+    /// Reuses internal tokens to achieve zero GC pressure.
+    /// </summary>
+    public void SetMonsters(IReadOnlyList<MonsterInstance> monsterInstances)
+    {
+        _activeMonsterCount = Mathf.Min(monsterInstances.Count, MaxMonsters);
+
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            var inst = monsterInstances[i];
+            var token = _monsters[i];
+
+            token.InstanceId = inst.InstanceId;
+            token.Name = inst.Name;
+            token.Rarity = inst.Rarity;
+            token.MaxLife = inst.MaxLife;
+            token.CurrentLife = inst.CurrentLife;
+            token.IsAlive = inst.IsAlive;
+            token.HitFlashTimer = 0f;
+            token.DeathFadeTimer = inst.IsAlive ? 1.0f : 0f;
+            token.BobbingPhase = i * 0.75f;
+
+            // 2D Positioning around Exile
+            Vector2 spawnPos;
+            if (inst.Position != Vector2D.Zero)
+            {
+                spawnPos = new Vector2(inst.Position.X, inst.Position.Y);
+            }
+            else if (inst.Rarity == MonsterRarity.Boss)
+            {
+                // Boss stands in commanding North-East or East position
+                spawnPos = new Vector2(320f, 95f);
+            }
+            else
+            {
+                // Radial surrounding distribution around Exile
+                float angle = (i * Mathf.Tau / _activeMonsterCount) + 0.35f;
+                float radiusX = 110f + (i % 3) * 22f;
+                float radiusY = 55f + (i % 2) * 18f;
+
+                float x = Mathf.Clamp(CenterPosition.X + Mathf.Cos(angle) * radiusX, 40f, ArenaWidth - 40f);
+                float y = Mathf.Clamp(CenterPosition.Y + Mathf.Sin(angle) * radiusY, 28f, ArenaHeight - 28f);
+                spawnPos = new Vector2(x, y);
+            }
+
+            token.BasePosition = spawnPos;
+            token.Position = spawnPos;
+
+            // Rarity scaling & color configuration
+            token.Scale = inst.Rarity switch
+            {
+                MonsterRarity.Boss => 1.8f,
+                MonsterRarity.Rare => 1.3f,
+                MonsterRarity.Magic => 1.1f,
+                _ => 0.95f
+            };
+
+            token.CustomColor = inst.Rarity switch
+            {
+                MonsterRarity.Boss => new Color(0.24f, 0.08f, 0.12f),
+                MonsterRarity.Rare => new Color(0.28f, 0.24f, 0.10f),
+                MonsterRarity.Magic => new Color(0.12f, 0.20f, 0.32f),
+                _ => new Color(0.18f, 0.19f, 0.22f)
+            };
+        }
+    }
+
+    /// <summary>
+    /// Updates an active monster's remaining health and triggers death fade-out if killed.
+    /// </summary>
+    public void UpdateMonsterLife(long instanceId, float currentLife)
+    {
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            if (_monsters[i].InstanceId == instanceId)
+            {
+                _monsters[i].CurrentLife = Mathf.Max(0f, currentLife);
+                if (currentLife <= 0f && _monsters[i].IsAlive)
+                {
+                    _monsters[i].IsAlive = false;
+                    _monsters[i].DeathFadeTimer = 0.4f;
+                }
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Synchronizes visual token positions from core MonsterInstance positions.
+    /// Called each tick after CombatEngine Phase 4 moves monsters toward the Exile.
+    /// Smoothly interpolates visual position to prevent jitter at 30Hz tick rate.
+    /// </summary>
+    public void SyncMonsterPositions(IReadOnlyList<MonsterInstance> coreMonsters)
+    {
+        if (coreMonsters == null) return;
+
+        for (int i = 0; i < _activeMonsterCount && i < coreMonsters.Count; i++)
+        {
+            var core = coreMonsters[i];
+            var token = _monsters[i];
+
+            if (token.InstanceId == core.InstanceId)
+            {
+                if (token.IsAlive && !core.IsAlive)
+                {
+                    token.IsAlive = false;
+                    token.DeathFadeTimer = 0.4f;
+                }
+                else if (token.IsAlive)
+                {
+                    // Update base position from core simulation
+                    Vector2 targetPos = new(core.Position.X, core.Position.Y);
+                    token.BasePosition = targetPos;
+
+                    // Smooth lerp toward target position for visual fluidity
+                    token.Position = token.Position.Lerp(targetPos, 0.25f);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns the 2D arena position for the specified monster instance.
+    /// Falls back to default upper arena if not found.
+    /// </summary>
+    public Vector2 GetMonsterPosition(long instanceId)
+    {
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            if (_monsters[i].InstanceId == instanceId)
+            {
+                return _monsters[i].Position;
+            }
+        }
+        return new Vector2(220f, 60f);
+    }
+
+    private void SpawnDefaultPackPreview()
+    {
+        _activeMonsterCount = 4;
+
+        // 1. Rare Goliath (North-East quadrant)
+        _monsters[0].InstanceId = 101;
+        _monsters[0].Name = "Strand Goliath";
+        _monsters[0].Rarity = MonsterRarity.Rare;
+        _monsters[0].MaxLife = 450f;
+        _monsters[0].CurrentLife = 450f;
+        _monsters[0].IsAlive = true;
+        _monsters[0].Position = new Vector2(330f, 65f);
+        _monsters[0].Scale = 1.35f;
+        _monsters[0].CustomColor = new Color(0.28f, 0.24f, 0.10f);
+
+        // 2. Trash mob (North-West quadrant)
+        _monsters[1].InstanceId = 102;
+        _monsters[1].Name = "Drowned Peon";
+        _monsters[1].Rarity = MonsterRarity.Normal;
+        _monsters[1].MaxLife = 120f;
+        _monsters[1].CurrentLife = 120f;
+        _monsters[1].IsAlive = true;
+        _monsters[1].Position = new Vector2(110f, 65f);
+        _monsters[1].Scale = 0.95f;
+        _monsters[1].CustomColor = new Color(0.18f, 0.19f, 0.22f);
+
+        // 3. Trash mob (South-West quadrant)
+        _monsters[2].InstanceId = 103;
+        _monsters[2].Name = "Drowned Peon";
+        _monsters[2].Rarity = MonsterRarity.Normal;
+        _monsters[2].MaxLife = 120f;
+        _monsters[2].CurrentLife = 120f;
+        _monsters[2].IsAlive = true;
+        _monsters[2].Position = new Vector2(100f, 145f);
+        _monsters[2].Scale = 0.95f;
+        _monsters[2].CustomColor = new Color(0.18f, 0.19f, 0.22f);
+
+        // 4. Magic mob (South-East quadrant)
+        _monsters[3].InstanceId = 104;
+        _monsters[3].Name = "Shore Stalker";
+        _monsters[3].Rarity = MonsterRarity.Magic;
+        _monsters[3].MaxLife = 220f;
+        _monsters[3].CurrentLife = 220f;
+        _monsters[3].IsAlive = true;
+        _monsters[3].Position = new Vector2(335f, 145f);
+        _monsters[3].Scale = 1.1f;
+        _monsters[3].CustomColor = new Color(0.12f, 0.20f, 0.32f);
+    }
+
+    public static (Color baseColor, Color glowColor) GetDamageTypeColors(DamageType type) => type switch
+    {
+        DamageType.Physical => (ColorPhysical, new Color(1.0f, 1.0f, 1.0f, 0.35f)),
+        DamageType.Fire => (ColorFire, new Color(1.0f, 0.5f, 0.2f, 0.45f)),
+        DamageType.Cold => (ColorCold, new Color(0.4f, 0.9f, 1.0f, 0.45f)),
+        DamageType.Lightning => (ColorLightning, new Color(1.0f, 1.0f, 0.4f, 0.5f)),
+        DamageType.Chaos => (ColorChaos, new Color(0.9f, 0.3f, 1.0f, 0.5f)),
+        _ => (Colors.White, Colors.Transparent)
+    };
+}

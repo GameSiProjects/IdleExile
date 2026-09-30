@@ -1,0 +1,22 @@
+# Godot 4 engine cache
+.godot/
+
+# C# / .NET build outputs
+bin/
+obj/
+*.csproj.user
+
+# IDE and Editor files
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.sln.docstates
+
+# Mono / C# legacy Godot folders
+.mono/
+
+# Export outputs
+exports/
+builds/

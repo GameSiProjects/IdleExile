@@ -1,0 +1,80 @@
+{
+  "maps": [
+    {
+      "id": "endless_hollow",
+      "name": "The Endless Hollow",
+      "tier": 0,
+      "monsterLevel": 1,
+      "isFailSafe": true,
+      "baseQuantity": 0,
+      "basePackSize": 100,
+      "description": "A stable pocket dimension within the Crucible. Monsters scale to your level. Guarantees Tier 1 map drops."
+    },
+    {
+      "id": "overgrown_beach",
+      "name": "Overgrown Beach",
+      "tier": 1,
+      "monsterLevel": 1,
+      "baseQuantity": 10,
+      "basePackSize": 100,
+      "bossName": "Tidal Behemoth",
+      "description": "A serene shoreline infested with mutated crustaceans and stranded spirits."
+    },
+    {
+      "id": "strand",
+      "name": "Strand Map",
+      "tier": 1,
+      "monsterLevel": 1,
+      "baseQuantity": 10,
+      "basePackSize": 100,
+      "bossName": "Tidal Behemoth",
+      "description": "A windswept coastline teeming with stranded sea horrors."
+    },
+    {
+      "id": "arid_lake",
+      "name": "Arid Lake",
+      "tier": 2,
+      "monsterLevel": 12,
+      "baseQuantity": 15,
+      "basePackSize": 105,
+      "bossName": "Drought Broodmother",
+      "description": "A cracked salt basin where burrowing chitterers nest."
+    },
+    {
+      "id": "ruined_courtyard",
+      "name": "Ruined Courtyard",
+      "tier": 5,
+      "monsterLevel": 45,
+      "baseQuantity": 25,
+      "basePackSize": 115,
+      "bossName": "Statue Sentinel",
+      "description": "Crumbled imperial pillars where ancient animated armors patrol."
+    }
+  ],
+  "mapModifiers": [
+    {
+      "id": "extra_damage_cold",
+      "nameTemplate": "Monsters deal {0}% extra damage as Cold",
+      "bonusQuantity": 15,
+      "bonusPackSize": 10,
+      "min": 30,
+      "max": 50
+    },
+    {
+      "id": "player_reduced_max_res",
+      "nameTemplate": "Players have -{0}% to Maximum Elemental Resistances",
+      "bonusQuantity": 35,
+      "bonusPackSize": 20,
+      "min": 10,
+      "max": 15
+    },
+    {
+      "id": "monster_reflect_elemental",
+      "nameTemplate": "Monsters reflect {0}% of Elemental Damage",
+      "bonusQuantity": 40,
+      "bonusPackSize": 15,
+      "min": 15,
+      "max": 20
+    }
+  ]
+}

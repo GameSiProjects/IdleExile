@@ -1,0 +1,462 @@
+using System.Collections.Generic;
+using System.Linq;
+using Godot;
+using IdleExile.Core.Models;
+using IdleExile.Core.Services;
+using IdleExile.Core.Simulation;
+using IdleExile.Core.State;
+using IdleExile.UI.Components;
+
+namespace IdleExile.UI;
+
+public partial class Main : Control
+{
+    private Label? _statusLabel;
+    private Label? _statsLabel;
+    private CheckBox? _alwaysOnTopCheckBox;
+    private BattleViewport? _battleViewport;
+    private MapDeviceBar? _mapDeviceBar;
+    private EquipmentView? _equipmentView;
+    private Button? _gearNavButton;
+
+    public DatabaseLoader Db { get; } = new();
+    public PlayerState Player { get; } = new();
+    public SkillLoadout Loadout { get; } = new();
+    public FtueManager Ftue { get; } = new();
+    public SeededDropCoordinator DropCoordinator { get; private set; } = null!;
+    public CombatEngine? Engine { get; private set; }
+
+    public override void _Ready()
+    {
+        // 1. Set window title
+        DisplayServer.WindowSetTitle("Idle Exile - Actless ARPG");
+
+        // 2. Mini-window configuration: default Always On Top
+        bool defaultAlwaysOnTop = true;
+        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, defaultAlwaysOnTop);
+
+        // 3. UI Node binding
+        _statusLabel = GetNodeOrNull<Label>("%StatusLabel");
+        _statsLabel = GetNodeOrNull<Label>("%StatsLabel");
+        _alwaysOnTopCheckBox = GetNodeOrNull<CheckBox>("%AlwaysOnTopCheck");
+        _battleViewport = GetNodeOrNull<BattleViewport>("%BattleViewport");
+        _mapDeviceBar = GetNodeOrNull<MapDeviceBar>("%MapDeviceBar");
+        _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
+        _gearNavButton = GetNodeOrNull<Button>("%GearNavButton");
+
+        if (_alwaysOnTopCheckBox != null)
+        {
+            _alwaysOnTopCheckBox.ButtonPressed = defaultAlwaysOnTop;
+            _alwaysOnTopCheckBox.Toggled += OnAlwaysOnTopToggled;
+        }
+
+        if (_gearNavButton != null)
+        {
+            _gearNavButton.Pressed += OnGearNavPressed;
+        }
+
+        if (_equipmentView != null)
+        {
+            _equipmentView.OnCloseRequested += OnEquipmentClosed;
+            _equipmentView.SetPlayer(Player);
+        }
+
+        Player.Gear.OnEquipmentChanged += () =>
+        {
+            _battleViewport?.UpdateEquippedWeapons(Player.MainHand?.BaseDefinition, Player.Gear.OffHand);
+        };
+
+        if (_mapDeviceBar != null)
+        {
+            _mapDeviceBar.OnMapActivated += OnMapActivated;
+            _mapDeviceBar.OnEmergencyPortalTriggered += OnEmergencyPortalTriggered;
+        }
+
+        // 4. Load JSON Database
+        Db.LoadAll();
+
+        // 5. Initialize FTUE Seeded Drop Coordinator
+        DropCoordinator = new SeededDropCoordinator(Ftue);
+
+        // 6. Run Unit Tests (Core & UI)
+        IdleExile.Core.Tests.DamageCalculatorTests.RunAll();
+        IdleExile.Core.Tests.CombatInfrastructureTests.RunAll();
+        IdleExile.Core.Tests.CombatEngineTests.RunAll();
+        IdleExile.Core.Tests.UnifiedCombatSystemTests.RunAll();
+        IdleExile.Core.Tests.StarterArchetypeTests.RunAll();
+        IdleExile.Core.Tests.FtueManagerTests.RunAll();
+        IdleExile.Core.Tests.SeededDropTests.RunAll();
+        IdleExile.Core.Tests.SpatialGeometryTests.RunAll();
+        IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
+        BattleViewportTests.RunAll();
+        MapHeaderBarTests.RunAll();
+        Arena2DTests.RunAll();
+        VitometerViewTests.RunAll();
+        FloatingTextManagerTests.RunAll();
+        StarterSelectionModalTests.RunAll();
+        MapDeviceBarTests.RunAll();
+        EquipmentViewTests.RunAll();
+
+        if (_statusLabel != null)
+        {
+            _statusLabel.Text = "Crucible Online • Ready to Map";
+        }
+
+        if (_statsLabel != null)
+        {
+            _statsLabel.Text = $"Database: {Db.Affixes.Count} Affixes | {Db.WeaponBases.Count} Weapons | {Db.ArmourBases.Count} Armours | {Db.Gems.Count} Gems | {Db.Maps.Count} Maps";
+        }
+
+        // 7. Check FTUE: If awaiting archetype selection, spawn the 1-click modal overlay
+        if (Ftue.CurrentStep == FtueStep.AwaitingArchetypeSelect)
+        {
+            var modalScene = GD.Load<PackedScene>("res://scenes/StarterSelectionModal.tscn");
+            if (modalScene != null)
+            {
+                var modal = modalScene.Instantiate<StarterSelectionModal>();
+                modal.OnArchetypeSelected += OnStarterArchetypeChosen;
+                AddChild(modal);
+            }
+        }
+        else
+        {
+            // Default demo telemetry if already bootstrapped
+            InitializeDemoViewport();
+        }
+    }
+
+    private void OnStarterArchetypeChosen(StarterArchetypeDefinition archetype)
+    {
+        // 1. Advance FTUE Step 0 -> Step 1 (AwaitingFirstMapActivate)
+        Ftue.SelectArchetype(archetype);
+
+        // 2. Initialize PlayerState with chosen archetype vitals, weapons, and inventory
+        Player.BootstrapFromArchetype(archetype, Db.WeaponBases);
+        if (Db.Gems.TryGetValue(archetype.ActiveGemId, out var starterGem))
+        {
+            Loadout.PrimarySkill.SetActiveGem(starterGem);
+        }
+
+        // 3. Update Status and Telemetry
+        if (_statusLabel != null)
+        {
+            _statusLabel.Text = $"Exile Awakened: {archetype.DisplayName} • Step 1: Click [ACTIVATE MAP]";
+        }
+
+        // 4. Setup Strand Map (Tier 1) as the active starter map
+        Db.Maps.TryGetValue("strand", out var mapDef);
+        mapDef ??= Db.Maps.GetValueOrDefault("overgrown_beach") ?? new MapDefinition(
+            Id: "strand",
+            Name: "Strand Map",
+            Tier: 1,
+            MonsterLevel: 1,
+            IsFailSafe: false,
+            BaseQuantity: 10,
+            BasePackSize: 100,
+            BossName: "Tidal Behemoth",
+            Description: "A windswept coastline."
+        );
+
+        // 5. Update Vitometer with actual PlayerState numbers
+        if (_battleViewport != null)
+        {
+            _battleViewport.BindPlayer(Player, Loadout);
+
+            float maxEhp = Player.MaxLife + Player.MaxEnergyShield;
+            string defenseSummary = archetype.PrimaryAttribute switch
+            {
+                "Strength" => $"EHP: {maxEhp:F0} | Armour: {archetype.BaseDefenses.Armour:F0}",
+                "Intelligence" => $"EHP: {maxEhp:F0} | Fire Res: {archetype.BaseDefenses.FireResistance:F0}%",
+                "Dexterity" => $"EHP: {maxEhp:F0} | Evasion: {archetype.BaseDefenses.EvasionChance:F0}%",
+                _ => $"EHP: {maxEhp:F0}"
+            };
+
+            _battleViewport.UpdateVitals(
+                Player.CurrentLife, Player.MaxLife,
+                Player.CurrentEnergyShield, Player.MaxEnergyShield,
+                Player.CurrentMana, Player.MaxMana,
+                0.0,
+                defenseSummary
+            );
+
+            var config = new MapRunConfig(mapDef, System.Array.Empty<RolledMapModifier>());
+            _battleViewport.SetMap(config, progressPercent: 0f, rarity: "Normal");
+        }
+
+        // 6. Equip starter armour & jewellery conforming to archetype
+        string helmId = archetype.PrimaryAttribute switch { "Intelligence" => "mind_cage", "Dexterity" => "leather_cap", _ => "iron_helmet" };
+        string bodyId = archetype.PrimaryAttribute switch { "Intelligence" => "simple_robe", "Dexterity" => "leather_tunic", _ => "plate_vest" };
+        string gloveId = archetype.PrimaryAttribute switch { "Intelligence" => "silk_gloves", "Dexterity" => "rawhide_gloves", _ => "iron_gauntlets" };
+        string bootId = archetype.PrimaryAttribute switch { "Intelligence" => "scholar_boots", "Dexterity" => "rawhide_boots", _ => "iron_greaves" };
+        string amuId = archetype.PrimaryAttribute switch { "Intelligence" => "lapis_amulet", "Dexterity" => "jade_amulet", _ => "amber_amulet" };
+
+        if (Db.ArmourBases.TryGetValue(helmId, out var helmDef)) Player.Gear.Equip(GearSlot.Helmet, new ArmourItemInstance(helmDef));
+        if (Db.ArmourBases.TryGetValue(bodyId, out var bodyDef)) Player.Gear.Equip(GearSlot.BodyArmour, new ArmourItemInstance(bodyDef));
+        if (Db.ArmourBases.TryGetValue(gloveId, out var gloveDef)) Player.Gear.Equip(GearSlot.Gloves, new ArmourItemInstance(gloveDef));
+        if (Db.ArmourBases.TryGetValue(bootId, out var bootDef)) Player.Gear.Equip(GearSlot.Boots, new ArmourItemInstance(bootDef));
+        if (Db.AccessoryBases.TryGetValue(amuId, out var amuDef)) Player.Gear.Equip(GearSlot.Amulet, new AccessoryItemInstance(amuDef));
+        if (Db.AccessoryBases.TryGetValue("leather_belt", out var beltDef)) Player.Gear.Equip(GearSlot.Belt, new AccessoryItemInstance(beltDef));
+        if (Db.AccessoryBases.TryGetValue("iron_ring", out var ring1Def)) Player.Gear.Equip(GearSlot.Ring1, new AccessoryItemInstance(ring1Def));
+        if (Db.AccessoryBases.TryGetValue("two_stone_ring", out var ring2Def)) Player.Gear.Equip(GearSlot.Ring2, new AccessoryItemInstance(ring2Def));
+
+        _equipmentView?.SetPlayer(Player);
+        _battleViewport?.UpdateEquippedWeapons(Player.MainHand?.BaseDefinition, Player.Gear.OffHand);
+
+        // 7. Task 2.3: Auto-load Tier 1 Strand Map into Map Device tray & Golden Pulse
+        _mapDeviceBar?.SlotMap(mapDef, "Normal");
+        _mapDeviceBar?.SetGoldenPulse(true);
+
+        GD.Print($"[Main] Character bootstrapped: {archetype.DisplayName}, Life: {Player.MaxLife}, ES: {Player.MaxEnergyShield}, Mana: {Player.MaxMana}");
+        GD.Print($"[Main] Equipped Weapon: MainHand={Player.MainHand?.BaseDefinition.Name ?? "None"} ({Player.MainHand?.ComputedMinDamage}-{Player.MainHand?.ComputedMaxDamage} Phys, APS: {Player.MainHand?.ComputedAps}), OffHand={Player.OffHand?.BaseDefinition.Name ?? "None"}, DualWield={Player.IsDualWielding}");
+        GD.Print($"[Main] FTUE Step: {Ftue.CurrentStep} ({Ftue.GetCurrentInstruction()})");
+        GD.Print($"[Main] Inventory: {Player.Inventory.Count} items, {Player.MapInventory.Count} maps");
+    }
+
+    private void OnMapActivated(MapDefinition map)
+    {
+        // 1. Advance FTUE Step 1 -> Step 2 (FirstCombatWave)
+        if (Ftue.CurrentStep == FtueStep.AwaitingFirstMapActivate)
+        {
+            Ftue.ActivateFirstMap();
+        }
+
+        // 2. Turn off Golden Pulse & set portal active
+        _mapDeviceBar?.SetGoldenPulse(false);
+        _mapDeviceBar?.SetPortalActive(true);
+
+        // 3. Configure BattleViewport with the active map & start CombatEngine
+        var config = new MapRunConfig(map, System.Array.Empty<RolledMapModifier>());
+        _battleViewport?.SetMap(config, progressPercent: 0f, rarity: "Normal");
+        _battleViewport?.BindPlayer(Player, Loadout);
+
+        Engine = new CombatEngine(Player, Loadout, dropCoordinator: DropCoordinator);
+
+        Engine.OnWaveSpawned += wave =>
+        {
+            _battleViewport?.SetArenaMonsters(wave.Monsters);
+        };
+
+        Engine.OnDamageDealt += args =>
+        {
+            if (_battleViewport?.Arena != null)
+            {
+                _battleViewport.UpdateArenaMonsterLife(args.Target.InstanceId, args.Target.CurrentLife);
+                var pos = _battleViewport.Arena.GetMonsterPosition(args.Target.InstanceId);
+                _battleViewport.SpawnFloatingDamage(args.TotalDamageDealt, pos, args.Target.PrimaryDamageType, args.IsCrit);
+            }
+        };
+
+        Engine.OnPlayerDamaged += args =>
+        {
+            if (_battleViewport != null)
+            {
+                float reservedPct = Player.MaxMana > 0f ? (Player.ReservedMana / Player.MaxMana) * 100f : 0f;
+                _battleViewport.UpdateVitals(
+                    Player.CurrentLife, Player.MaxLife,
+                    Player.CurrentEnergyShield, Player.MaxEnergyShield,
+                    Player.CurrentMana, Player.MaxMana,
+                    reservedPct
+                );
+            }
+        };
+
+        Engine.OnTickProcessed += args =>
+        {
+            _battleViewport?.SetMapProgress(args.ClearProgress * 100f);
+
+            // Sync monster positions from core simulation (monsters advance toward Exile each tick)
+            if (_battleViewport?.Arena != null && Engine.CurrentWave != null)
+            {
+                _battleViewport.Arena.SyncMonsterPositions(Engine.CurrentWave.Monsters);
+
+                // Track CombatEngine current target for continuous Auto-Facing
+                if (Engine.CurrentTarget != null && Engine.CurrentTarget.IsAlive)
+                {
+                    _battleViewport.SetTarget(
+                        Engine.CurrentTarget.InstanceId,
+                        new Vector2(Engine.CurrentTarget.Position.X, Engine.CurrentTarget.Position.Y));
+                }
+                else
+                {
+                    _battleViewport.SetTarget(null, null);
+                }
+            }
+        };
+
+        Engine.OnLootDropped += drop =>
+        {
+            _battleViewport?.ShowLootToast($"Dropped: {drop.DisplayName}", new Color(drop.ColorHex));
+
+            if (drop.Type == LootDropType.Equipment)
+            {
+                // Route equipment drop into candidate drawer for instant comparison
+                if (Db.ArmourBases.TryGetValue("astral_plate", out var sampleArmourDef))
+                {
+                    var sampleArmour = new ArmourItemInstance(sampleArmourDef, drop.Rarity.ToString(), quality: 20, itemLevel: 84)
+                    {
+                        CustomName = drop.DisplayName
+                    };
+                    sampleArmour.Affixes.Add(new AffixDefinition("flat_maximum_life_t2", "+{0} to Maximum Life", AffixType.Prefix, 2, 74, 115, 115, new[] { "life", "defenses" }));
+                    sampleArmour.Affixes.Add(new AffixDefinition("fire_resistance_t1", "+{0}% to Fire Resistance", AffixType.Suffix, 1, 84, 45, 45, new[] { "fire", "resistance" }));
+                    sampleArmour.RecalculateStats();
+                    _equipmentView?.AddCandidateItem(sampleArmour);
+                }
+            }
+        };
+
+        Engine.OnBossSlamTelegraphed += args =>
+        {
+            if (_battleViewport?.Arena != null)
+            {
+                var bossPos = _battleViewport.Arena.GetMonsterPosition(args.Boss.InstanceId);
+                _battleViewport.TriggerBossSlam(bossPos, args.WindUpDuration, 50f, args.ThreatEhpPercent);
+            }
+        };
+
+        Engine.OnPlayerSkillFired += args =>
+        {
+            if (_battleViewport?.Arena != null)
+            {
+                Vector2? targetPos = args.PrimaryTarget != null
+                    ? new Vector2(args.PrimaryTarget.Position.X, args.PrimaryTarget.Position.Y)
+                    : null;
+
+                if (targetPos.HasValue)
+                {
+                    _battleViewport.FaceTarget(targetPos.Value);
+                    _battleViewport.SetTarget(args.PrimaryTarget?.InstanceId, targetPos.Value);
+                }
+
+                _battleViewport.TriggerExileAttackRecoil(1.0f);
+                Vector2 wandTip = _battleViewport.GetWeaponTipPosition();
+
+                if (args.Projectiles != null && args.Projectiles.Count > 0)
+                {
+                    if (!targetPos.HasValue && args.Projectiles.Count > 0)
+                    {
+                        var p0 = args.Projectiles[0];
+                        _battleViewport.SetFacingAngle(Mathf.Atan2(p0.Direction.Y, p0.Direction.X));
+                        wandTip = _battleViewport.GetWeaponTipPosition();
+                    }
+
+                    foreach (var p in args.Projectiles)
+                    {
+                        Vector2 target = wandTip + new Vector2(p.Direction.X, p.Direction.Y) * 220f;
+                        _battleViewport.SpawnProjectile(wandTip, target, args.PrimaryDamageType);
+                    }
+                }
+                else if (args.IsMelee || args.GeometryType == SkillGeometryType.Cone)
+                {
+                    float range = args.RadiusOrRange > 0f ? args.RadiusOrRange : 45f;
+                    float? arcAngle = args.ConeAngleDegrees > 0f ? Mathf.DegToRad(args.ConeAngleDegrees) : null;
+                    _battleViewport.FireExileMeleeAttack(targetPos, range, args.PrimaryDamageType, arcAngle);
+                }
+                else if (targetPos.HasValue)
+                {
+                    _battleViewport.SpawnProjectile(wandTip, targetPos.Value, args.PrimaryDamageType);
+                }
+            }
+        };
+
+        Engine.OnMonsterAttacked += args =>
+        {
+            if (_battleViewport?.Arena != null)
+            {
+                Vector2 origin = new(args.AttackOrigin.X, args.AttackOrigin.Y);
+                float dirAngle = Mathf.Atan2(args.AttackDirection.Y, args.AttackDirection.X);
+                _battleViewport.Arena.TriggerMeleeStrikeIndicator(
+                    origin, dirAngle, args.EffectiveRange, args.DamageType, args.IsCrit);
+            }
+        };
+
+        Engine.StartMap(config);
+
+        // 4. Update status display
+        if (_statusLabel != null)
+        {
+            _statusLabel.Text = $"Portal Active • Mapping: {map.Name} (T{map.Tier}) • 30Hz Combat Engine Active";
+        }
+
+        GD.Print($"[Main] Map activated: {map.Name} (T{map.Tier}). CombatEngine 30Hz running.");
+    }
+
+    private void OnEmergencyPortalTriggered()
+    {
+        Engine?.TriggerEmergencyPortal();
+        _mapDeviceBar?.SetPortalActive(false);
+
+        if (_statusLabel != null)
+        {
+            _statusLabel.Text = "Crucible Online • Safely retreated to Hideout";
+        }
+
+        GD.Print("[Main] Returned to Crucible via Emergency Portal.");
+    }
+
+    public override void _Process(double delta)
+    {
+        Engine?.Update((float)delta);
+    }
+
+    private void InitializeDemoViewport()
+    {
+        if (_battleViewport == null) return;
+
+        _battleViewport.UpdateEquippedWeapons(Player.MainHand?.BaseDefinition, Player.Gear.OffHand);
+
+        Db.Maps.TryGetValue("ruined_courtyard", out var mapDef);
+        mapDef ??= new MapDefinition(
+            Id: "strand",
+            Name: "Strand Map",
+            Tier: 14,
+            MonsterLevel: 81,
+            IsFailSafe: false,
+            BaseQuantity: 20,
+            BasePackSize: 100,
+            BossName: "Tidal Behemoth",
+            Description: "A windswept coastline."
+        );
+
+        var rolledMods = new List<RolledMapModifier>();
+        foreach (var modDef in Db.MapModifiers)
+        {
+            rolledMods.Add(new RolledMapModifier(modDef, (modDef.Min + modDef.Max) / 2f));
+        }
+
+        var config = new MapRunConfig(mapDef, rolledMods);
+        _battleViewport.SetMap(config, progressPercent: 68.0f, rarity: "Rare", leagueEncounter: "Breach");
+        _battleViewport.UpdateVitals(3450, 3450, 1200, 1200, 82, 820, 90.0, "EHP: 14.2k | Armour: 8.5k | Block: 75%");
+        _battleViewport.SetGuardSkill(true, 480f, 500f, "Steelskin");
+        _battleViewport.SpawnFloatingDamage(8420f, new Vector2(165, 120), DamageType.Cold, isCrit: true);
+
+        _mapDeviceBar?.SlotMap(mapDef, "Rare");
+        _mapDeviceBar?.SetPortalActive(true);
+    }
+
+    private void OnGearNavPressed()
+    {
+        if (_equipmentView == null || _battleViewport == null) return;
+
+        bool willShow = !_equipmentView.Visible;
+        _equipmentView.Visible = willShow;
+        _battleViewport.Visible = !willShow;
+
+        if (willShow)
+        {
+            _equipmentView.SetPlayer(Player);
+            _equipmentView.RefreshView();
+        }
+    }
+
+    private void OnEquipmentClosed()
+    {
+        if (_equipmentView != null) _equipmentView.Visible = false;
+        if (_battleViewport != null) _battleViewport.Visible = true;
+    }
+
+    private void OnAlwaysOnTopToggled(bool isToggled)
+    {
+        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, isToggled);
+        GD.Print($"[Main] AlwaysOnTop: {isToggled}");
+    }
+}

@@ -1,0 +1,110 @@
+[
+  {
+    "id": "two_stone_ring",
+    "name": "Two-Stone Ring",
+    "accessorySlot": "Ring",
+    "implicitDescription": "+16% to Fire and Cold Resistances",
+    "implicitValue": 16,
+    "reqLevel": 1,
+    "description": "Twin faceted gemstones that harmonize against opposing elements."
+  },
+  {
+    "id": "diamond_ring",
+    "name": "Diamond Ring",
+    "accessorySlot": "Ring",
+    "implicitDescription": "+25% Increased Global Critical Strike Chance",
+    "implicitValue": 25,
+    "reqLevel": 20,
+    "description": "Flawless cut diamond reflecting light into lethal focus."
+  },
+  {
+    "id": "iron_ring",
+    "name": "Iron Ring",
+    "accessorySlot": "Ring",
+    "implicitDescription": "Adds 1 to 4 Physical Damage to Attacks",
+    "implicitValue": 2,
+    "reqLevel": 1,
+    "description": "A heavy band of iron providing crushing weight to punches and swings."
+  },
+  {
+    "id": "cerulean_ring",
+    "name": "Cerulean Ring",
+    "accessorySlot": "Ring",
+    "implicitDescription": "+10% Increased Maximum Mana",
+    "implicitValue": 10,
+    "reqLevel": 45,
+    "description": "Deep azure jewel radiating tranquil arcane reserves."
+  },
+  {
+    "id": "onyx_amulet",
+    "name": "Onyx Amulet",
+    "accessorySlot": "Amulet",
+    "implicitDescription": "+16 to all Attributes",
+    "implicitValue": 16,
+    "reqLevel": 20,
+    "description": "Jet-black stone balancing mind, spirit, and flesh."
+  },
+  {
+    "id": "amber_amulet",
+    "name": "Amber Amulet",
+    "accessorySlot": "Amulet",
+    "implicitDescription": "+30 to Strength",
+    "implicitValue": 30,
+    "reqLevel": 1,
+    "description": "Fossilized resin humming with primeval physical might."
+  },
+  {
+    "id": "jade_amulet",
+    "name": "Jade Amulet",
+    "accessorySlot": "Amulet",
+    "implicitDescription": "+30 to Dexterity",
+    "implicitValue": 30,
+    "reqLevel": 1,
+    "description": "Carved green serpentine granting finesse and swift reflexes."
+  },
+  {
+    "id": "lapis_amulet",
+    "name": "Lapis Amulet",
+    "accessorySlot": "Amulet",
+    "implicitDescription": "+30 to Intelligence",
+    "implicitValue": 30,
+    "reqLevel": 1,
+    "description": "Starry lapis lazuli expanding cognition and mystic foresight."
+  },
+  {
+    "id": "leather_belt",
+    "name": "Leather Belt",
+    "accessorySlot": "Belt",
+    "implicitDescription": "+40 to Maximum Life",
+    "implicitValue": 40,
+    "reqLevel": 8,
+    "description": "Tough hide girdle anchoring core endurance."
+  },
+  {
+    "id": "heavy_belt",
+    "name": "Heavy Belt",
+    "accessorySlot": "Belt",
+    "implicitDescription": "+35 to Strength",
+    "implicitValue": 35,
+    "reqLevel": 8,
+    "description": "Weighted steel-studded cinch boosting brute force."
+  },
+  {
+    "id": "crystal_belt",
+    "name": "Crystal Belt",
+    "accessorySlot": "Belt",
+    "implicitDescription": "+80 to Maximum Energy Shield",
+    "implicitValue": 80,
+    "reqLevel": 65,
+    "description": "Glistening crystal matrix storing protective arcane current."
+  },
+  {
+    "id": "rustic_sash",
+    "name": "Rustic Sash",
+    "accessorySlot": "Belt",
+    "implicitDescription": "15% Increased Physical Damage",
+    "implicitValue": 15,
+    "reqLevel": 1,
+    "description": "Simple woven fiber sash bolstering martial attacks."
+  }
+]

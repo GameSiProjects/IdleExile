@@ -1,0 +1,417 @@
+using System;
+using System.Collections.Generic;
+using Godot;
+using IdleExile.Core.Models;
+using IdleExile.Core.Simulation;
+using IdleExile.Core.State;
+using IdleExile.UI.Components;
+
+namespace IdleExile.UI;
+
+/// <summary>
+/// Controller for the Battle Viewport (440 x 300 px), displaying map telemetry,
+/// 2D arena combat presentation, player vitometer (Life/ES/Mana/Flasks), and loot toast notifications.
+/// Designed according to docs/07_combat_ui_and_viewport.md.
+/// </summary>
+public partial class BattleViewport : Control
+{
+    // --- Container References (Task 2.1) ---
+    public PanelContainer? MapHeaderContainer { get; private set; }
+    public SubViewportContainer? ArenaViewportContainer { get; private set; }
+    public PanelContainer? VitometerPanel { get; private set; }
+    public VitometerView? Vitometer { get; private set; }
+    public PanelContainer? LootToastOverlay { get; private set; }
+
+    // --- Map Header Component (Task 2.2) ---
+    public MapHeaderBar? HeaderBar { get; private set; }
+
+    // --- Map Header Direct Control References (Task 2.1 & 2.2) ---
+    private Label? _tierBadgeLabel;
+    private Label? _mapNameLabel;
+    private HBoxContainer? _threatBadgesHBox;
+    private Label? _quantityBonusLabel;
+    private ProgressBar? _mapProgressBar;
+
+    // --- Arena 2D Component (Task 2.3) ---
+    public Arena2D? Arena { get; private set; }
+
+    // --- Floating Combat Text Manager (Task 2.5) ---
+    public FloatingTextManager? FloatingText { get; private set; }
+
+    // --- Arena Viewport Controls (Task 2.3) ---
+    private SubViewport? _arenaSubViewport;
+    private Node2D? _arena2D;
+    private Node2D? _parallaxBackground;
+    private Node2D? _monsterPool;
+    private Node2D? _exileNode;
+    private Node2D? _projectilePool;
+    private Control? _floatingCombatTextLayer;
+    private Node2D? _dropBeamLayer;
+
+    // --- Vitometer Controls (Task 2.4 Prerequisite) ---
+    private ProgressBar? _lifeEsBar;
+    private Label? _defensesSummaryLabel;
+    private HBoxContainer? _flasksContainer;
+    private ProgressBar? _manaBar;
+    private Label? _unreservedManaLabel;
+
+    // --- Loot Toast Controls (Task 2.6 Prerequisite) ---
+    private Label? _lootToastLabel;
+    private double _toastRemainingDuration;
+
+    public override void _Ready()
+    {
+        BindNodes();
+        ApplyInitialState();
+    }
+
+    private void BindNodes()
+    {
+        // 1. Primary Containers & Components
+        MapHeaderContainer = GetNodeOrNull<PanelContainer>("%MapHeaderContainer");
+        HeaderBar = MapHeaderContainer as MapHeaderBar ?? GetNodeOrNull<MapHeaderBar>("%MapHeaderContainer");
+        ArenaViewportContainer = GetNodeOrNull<SubViewportContainer>("%ArenaViewportContainer");
+        VitometerPanel = GetNodeOrNull<PanelContainer>("%VitometerPanel");
+        Vitometer = VitometerPanel as VitometerView ?? GetNodeOrNull<VitometerView>("%VitometerPanel");
+        if (Vitometer != null && !Vitometer.IsNodeReady())
+        {
+            Vitometer._Ready();
+        }
+        LootToastOverlay = GetNodeOrNull<PanelContainer>("%LootToastOverlay");
+
+        // 2. Map Header Elements
+        _tierBadgeLabel = GetNodeOrNull<Label>("%TierBadgeLabel");
+        _mapNameLabel = GetNodeOrNull<Label>("%MapNameLabel");
+        _threatBadgesHBox = GetNodeOrNull<HBoxContainer>("%ThreatBadgesHBox");
+        _quantityBonusLabel = GetNodeOrNull<Label>("%QuantityBonusLabel");
+        _mapProgressBar = GetNodeOrNull<ProgressBar>("%MapProgressBar");
+
+        // 3. Arena Viewport Elements
+        _arenaSubViewport = GetNodeOrNull<SubViewport>("%ArenaSubViewport");
+        Arena = GetNodeOrNull<Arena2D>("%Arena2D");
+        _arena2D = Arena;
+        _parallaxBackground = GetNodeOrNull<Node2D>("%ParallaxBackground");
+        _monsterPool = GetNodeOrNull<Node2D>("%MonsterPool");
+        _exileNode = GetNodeOrNull<Node2D>("%ExileNode");
+        _projectilePool = GetNodeOrNull<Node2D>("%ProjectilePool");
+        FloatingText = GetNodeOrNull<FloatingTextManager>("%FloatingCombatTextLayer");
+        if (FloatingText != null && !FloatingText.IsNodeReady())
+        {
+            FloatingText._Ready();
+        }
+        if (Arena != null)
+        {
+            if (!Arena.IsNodeReady())
+            {
+                Arena._Ready();
+            }
+            Arena.FloatingText ??= FloatingText;
+        }
+        _floatingCombatTextLayer = FloatingText ?? GetNodeOrNull<Control>("%FloatingCombatTextLayer");
+        _dropBeamLayer = GetNodeOrNull<Node2D>("%DropBeamLayer");
+
+        // 4. Vitometer Elements
+        _lifeEsBar = GetNodeOrNull<ProgressBar>("%LifeESBar");
+        _defensesSummaryLabel = GetNodeOrNull<Label>("%DefensesSummaryLabel");
+        _flasksContainer = GetNodeOrNull<HBoxContainer>("%FlasksContainer");
+        _manaBar = GetNodeOrNull<ProgressBar>("%ManaBar");
+        _unreservedManaLabel = GetNodeOrNull<Label>("%UnreservedManaLabel");
+
+        // 5. Loot Toast Elements
+        _lootToastLabel = GetNodeOrNull<Label>("%LootToastLabel");
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_toastRemainingDuration > 0)
+        {
+            _toastRemainingDuration -= delta;
+            if (_toastRemainingDuration <= 0)
+            {
+                HideLootToast();
+            }
+        }
+    }
+
+    private void ApplyInitialState()
+    {
+        if (LootToastOverlay != null)
+        {
+            LootToastOverlay.Visible = false;
+        }
+
+        // Default initial display for UI preview
+        UpdateMapInfo("Twilight Strand", 1, "Normal", 0, 0, 0, 0f);
+        UpdateVitals(100, 100, 0, 0, 50, 50, 0.0, "Life: 100 / 100 | EHP: 100");
+    }
+
+    /// <summary>
+    /// Updates the Map Header telemetry bar with current map metadata.
+    /// </summary>
+    public void UpdateMapInfo(string mapName, int tier, string rarity = "Normal", int iiq = 0, int iir = 0, int packSize = 0, float progressPercent = 0f)
+    {
+        if (HeaderBar != null)
+        {
+            HeaderBar.UpdateTelemetry(mapName, tier, rarity, iiq, iir, packSize, progressPercent);
+        }
+        else
+        {
+            if (_tierBadgeLabel != null)
+            {
+                _tierBadgeLabel.Text = $"T{tier}";
+                _tierBadgeLabel.Modulate = MapHeaderBar.GetTierColor(tier);
+            }
+
+            if (_mapNameLabel != null)
+            {
+                _mapNameLabel.Text = string.Equals(rarity, "Normal", StringComparison.OrdinalIgnoreCase) ? mapName : $"{mapName} • {rarity}";
+                _mapNameLabel.Modulate = MapHeaderBar.GetRarityColor(rarity);
+            }
+
+            if (_quantityBonusLabel != null)
+            {
+                _quantityBonusLabel.Text = $"IIQ: +{iiq}%";
+            }
+
+            if (_mapProgressBar != null)
+            {
+                _mapProgressBar.Value = Mathf.Clamp(progressPercent, 0f, 100f);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Configures the Map Header using a complete MapRunConfig (Task 2.2).
+    /// </summary>
+    public void SetMap(MapRunConfig config, float progressPercent = 0f, string rarity = "Normal", string? leagueEncounter = null)
+    {
+        HeaderBar?.SetMap(config, progressPercent, rarity, leagueEncounter);
+    }
+
+    /// <summary>
+    /// Updates the Monster Pack Clear Progress Bar (0% to 100%).
+    /// </summary>
+    public void SetMapProgress(float progressPercent)
+    {
+        if (HeaderBar != null)
+        {
+            HeaderBar.SetProgress(progressPercent);
+        }
+        else if (_mapProgressBar != null)
+        {
+            _mapProgressBar.Value = Mathf.Clamp(progressPercent, 0f, 100f);
+        }
+    }
+
+    /// <summary>
+    /// Updates the Vitometer health, energy shield, mana, and defense telemetry.
+    /// </summary>
+    public void UpdateVitals(double currentLife, double maxLife, double currentEs, double maxEs, double currentMana, double maxMana, double reservedPercent, string defensesSummary = "")
+    {
+        if (_lifeEsBar != null && maxLife > 0)
+        {
+            _lifeEsBar.MaxValue = maxLife;
+            _lifeEsBar.Value = Mathf.Clamp(currentLife, 0, maxLife);
+        }
+
+        if (_defensesSummaryLabel != null)
+        {
+            if (string.IsNullOrWhiteSpace(defensesSummary))
+            {
+                string esText = maxEs > 0 ? $" | ES: {Mathf.RoundToInt((float)currentEs)}/{Mathf.RoundToInt((float)maxEs)}" : "";
+                _defensesSummaryLabel.Text = $"Life: {Mathf.RoundToInt((float)currentLife)}/{Mathf.RoundToInt((float)maxLife)}{esText}";
+            }
+            else
+            {
+                _defensesSummaryLabel.Text = defensesSummary;
+            }
+        }
+
+        if (_manaBar != null && maxMana > 0)
+        {
+            _manaBar.MaxValue = maxMana;
+            _manaBar.Value = Mathf.Clamp(currentMana, 0, maxMana);
+        }
+
+        if (_unreservedManaLabel != null)
+        {
+            string reservedText = reservedPercent > 0 ? $" ({Mathf.RoundToInt((float)reservedPercent)}% R)" : "";
+            _unreservedManaLabel.Text = $"Mana: {Mathf.RoundToInt((float)currentMana)}/{Mathf.RoundToInt((float)maxMana)}{reservedText}";
+        }
+
+        // Delegate to VitometerView component (Task 2.4)
+        if (Vitometer != null)
+        {
+            float reservedMana = (float)(reservedPercent > 0 ? (maxMana * (reservedPercent / 100.0)) : 0.0);
+            Vitometer.UpdateVitals(
+                (float)currentLife,
+                (float)maxLife,
+                (float)currentEs,
+                (float)maxEs,
+                (float)currentMana,
+                (float)maxMana,
+                reservedMana
+            );
+
+            if (!string.IsNullOrWhiteSpace(defensesSummary))
+            {
+                Vitometer.SetDefensesSummary(defensesSummary);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Binds player state and skill loadout directly to the Vitometer for reactive combat telemetry.
+    /// </summary>
+    public void BindPlayer(PlayerState player, SkillLoadout loadout) => Vitometer?.Bind(player, loadout);
+
+    /// <summary>
+    /// Configures the status of the Guard Skill golden layer.
+    /// </summary>
+    public void SetGuardSkill(bool isActive, float currentAbsorb = 0f, float maxAbsorb = 0f, string name = "Steelskin") =>
+        Vitometer?.SetGuardSkill(isActive, currentAbsorb, maxAbsorb, name);
+
+    /// <summary>
+    /// Updates all 5 flask slots from a collection.
+    /// </summary>
+    public void UpdateFlasks(IReadOnlyList<FlaskSlot> flasks) => Vitometer?.UpdateAllFlasks(flasks);
+
+    /// <summary>
+    /// Attempts to drink the flask in the given slot index (0 to 4).
+    /// </summary>
+    public bool TryDrinkFlask(int slotIndex) => Vitometer?.TryDrinkFlask(slotIndex) ?? false;
+
+    /// <summary>
+    /// Displays a high-priority loot announcement banner over the arena.
+    /// </summary>
+    public void ShowLootToast(string message, Color? accentColor = null, double durationSeconds = 3.0)
+    {
+        if (LootToastOverlay == null || _lootToastLabel == null) return;
+
+        _lootToastLabel.Text = message;
+        _lootToastLabel.Modulate = accentColor ?? new Color(1.0f, 0.85f, 0.3f);
+        LootToastOverlay.Visible = true;
+        _toastRemainingDuration = durationSeconds;
+    }
+
+    /// <summary>
+    /// Dismisses the loot announcement banner immediately.
+    /// </summary>
+    public void HideLootToast()
+    {
+        if (LootToastOverlay != null)
+        {
+            LootToastOverlay.Visible = false;
+        }
+        _toastRemainingDuration = 0;
+    }
+
+    // ─────────────────────────────────────────────
+    //  Arena 2D Helpers (Task 2.3)
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Updates the Exile's equipped weapon visual configuration in the 2D arena (Task 2.3).
+    /// </summary>
+    public void UpdateEquippedWeapons(WeaponBaseDefinition? mainHand, IGearItem? offHand) =>
+        Arena?.SetEquippedWeapons(mainHand, offHand);
+
+    /// <summary>
+    /// Launches an attack from Exile towards active monsters with the specified damage type projectile.
+    /// </summary>
+    public void FireExileAttack(DamageType type = DamageType.Physical, Vector2? targetPosition = null) =>
+        Arena?.FireExileAttack(type, targetPosition);
+
+    /// <summary>
+    /// Triggers Exile melee attack visual arc in the 2D arena.
+    /// </summary>
+    public void FireExileMeleeAttack(Vector2? targetPosition, float range, DamageType type, float? arcAngle = null, bool isCrit = false) =>
+        Arena?.FireExileMeleeAttack(targetPosition, range, type, arcAngle, isCrit);
+
+    /// <summary>
+    /// Spawns a custom projectile streak in the arena.
+    /// </summary>
+    public bool SpawnProjectile(Vector2 start, Vector2 target, DamageType type, float speed = 520f) =>
+        Arena?.SpawnProjectile(start, target, type, speed) ?? false;
+
+    /// <summary>
+    /// Rotates the Exile to face directly toward the target position in the arena.
+    /// </summary>
+    public void FaceTarget(Vector2 targetPos) => Arena?.FaceTarget(targetPos);
+
+    /// <summary>
+    /// Sets the Exile's facing angle directly in radians.
+    /// </summary>
+    public void SetFacingAngle(float angle) => Arena?.SetFacingAngle(angle);
+
+    /// <summary>
+    /// Triggers Exile attack animation recoil.
+    /// </summary>
+    public void TriggerExileAttackRecoil(float recoil = 1.0f) => Arena?.TriggerExileAttackRecoil(recoil);
+
+    /// <summary>
+    /// Sets the target monster or position for continuous auto-facing.
+    /// </summary>
+    public void SetTarget(long? instanceId, Vector2? targetPos = null) => Arena?.SetTarget(instanceId, targetPos);
+
+    /// <summary>
+    /// Returns the weapon/wand tip position in 2D arena coordinates.
+    /// </summary>
+    public Vector2 GetWeaponTipPosition() => Arena?.GetWeaponTipPosition() ?? Arena2D.CenterPosition;
+
+    /// <summary>
+    /// Triggers a melee strike AoE indicator arc in the 2D arena.
+    /// </summary>
+    public void TriggerMeleeStrikeIndicator(
+        Vector2 origin,
+        float directionAngle,
+        float range,
+        DamageType damageType,
+        bool isCrit = false,
+        float? arcAngle = null) =>
+        Arena?.TriggerMeleeStrikeIndicator(origin, directionAngle, range, damageType, isCrit, arcAngle);
+
+    /// <summary>
+    /// Triggers a Boss Slam telegraph warning indicator for lethal attacks (>70% player EHP).
+    /// </summary>
+    public void TriggerBossSlam(Vector2 targetPosition, float duration = 1.35f, float radius = 50f, float threatEhpPercent = 85f) =>
+        Arena?.TriggerBossSlam(targetPosition, duration, radius, threatEhpPercent);
+
+    /// <summary>
+    /// Updates monsters displayed in the 2D arena from the simulation wave spawner.
+    /// </summary>
+    public void SetArenaMonsters(IReadOnlyList<MonsterInstance> monsters) => Arena?.SetMonsters(monsters);
+
+    /// <summary>
+    /// Updates monster remaining life in the 2D arena.
+    /// </summary>
+    public void UpdateArenaMonsterLife(long instanceId, float currentLife) => Arena?.UpdateMonsterLife(instanceId, currentLife);
+
+    // ─────────────────────────────────────────────
+    //  Floating Combat Text API (Task 2.5)
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Spawns a floating combat text damage number in the arena.
+    /// </summary>
+    public void SpawnFloatingDamage(float damage, Vector2 position, DamageType type, bool isCrit = false) =>
+        FloatingText?.SpawnDamageText(damage, position, type, isCrit);
+
+    /// <summary>
+    /// Spawns floating combat text from a calculated HitResult.
+    /// </summary>
+    public void SpawnFloatingHit(HitResult hit, Vector2 position) =>
+        FloatingText?.SpawnHitResult(hit, position);
+
+    /// <summary>
+    /// Spawns custom floating text (e.g. "DODGED", "BLOCKED", "IMMUNE").
+    /// </summary>
+    public void SpawnFloatingText(string text, Vector2 position, Color color, bool isCrit = false) =>
+        FloatingText?.SpawnCustomText(
+            text,
+            position,
+            color,
+            isCrit ? FloatingTextManager.ColorGoldOutline : FloatingTextManager.ColorBlackOutline,
+            isCrit ? FloatingTextManager.CritFontSize : FloatingTextManager.NormalFontSize,
+            isCrit ? FloatingTextManager.CritOutlineSize : FloatingTextManager.NormalOutlineSize,
+            isCrit
+        );
+}

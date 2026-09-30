@@ -1,0 +1,643 @@
+[
+  {
+    "id": "flat_maximum_life_t1",
+    "nameTemplate": "+{0} to Maximum Life",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 86,
+    "minValue": 120,
+    "maxValue": 129,
+    "tags": ["life", "resource", "defenses"]
+  },
+  {
+    "id": "flat_maximum_life_t2",
+    "nameTemplate": "+{0} to Maximum Life",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 74,
+    "minValue": 110,
+    "maxValue": 119,
+    "tags": ["life", "resource", "defenses"]
+  },
+  {
+    "id": "percent_increased_physical_damage_t1",
+    "nameTemplate": "{0}% Increased Physical Damage",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 83,
+    "minValue": 170,
+    "maxValue": 179,
+    "tags": ["damage", "physical", "attack"]
+  },
+  {
+    "id": "fire_resistance_t1",
+    "nameTemplate": "+{0}% to Fire Resistance",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 84,
+    "minValue": 46,
+    "maxValue": 48,
+    "tags": ["fire", "resistance", "elemental"]
+  },
+  {
+    "id": "cold_resistance_t1",
+    "nameTemplate": "+{0}% to Cold Resistance",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 84,
+    "minValue": 46,
+    "maxValue": 48,
+    "tags": ["cold", "resistance", "elemental"]
+  },
+  {
+    "id": "attack_speed_t1",
+    "nameTemplate": "{0}% Increased Attack Speed",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 76,
+    "minValue": 26,
+    "maxValue": 27,
+    "tags": ["speed", "attack"]
+  },
+
+  {
+    "id": "weapon_percent_phys_t1",
+    "nameTemplate": "{0}% Increased Physical Damage",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 83,
+    "minValue": 170,
+    "maxValue": 179,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_percent_phys_t2",
+    "nameTemplate": "{0}% Increased Physical Damage",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 73,
+    "minValue": 150,
+    "maxValue": 169,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_percent_phys_t3",
+    "nameTemplate": "{0}% Increased Physical Damage",
+    "type": "Prefix",
+    "tier": 3,
+    "minIlvl": 55,
+    "minValue": 130,
+    "maxValue": 149,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_percent_phys_t4",
+    "nameTemplate": "{0}% Increased Physical Damage",
+    "type": "Prefix",
+    "tier": 4,
+    "minIlvl": 35,
+    "minValue": 100,
+    "maxValue": 129,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_percent_phys_t5",
+    "nameTemplate": "{0}% Increased Physical Damage",
+    "type": "Prefix",
+    "tier": 5,
+    "minIlvl": 1,
+    "minValue": 40,
+    "maxValue": 69,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+
+  {
+    "id": "weapon_flat_phys_t1",
+    "nameTemplate": "Adds {0} to {1} Physical Damage",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 77,
+    "minValue": 30,
+    "maxValue": 60,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_phys_t2",
+    "nameTemplate": "Adds {0} to {1} Physical Damage",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 65,
+    "minValue": 22,
+    "maxValue": 45,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_phys_t3",
+    "nameTemplate": "Adds {0} to {1} Physical Damage",
+    "type": "Prefix",
+    "tier": 3,
+    "minIlvl": 46,
+    "minValue": 16,
+    "maxValue": 32,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_phys_t4",
+    "nameTemplate": "Adds {0} to {1} Physical Damage",
+    "type": "Prefix",
+    "tier": 4,
+    "minIlvl": 28,
+    "minValue": 10,
+    "maxValue": 20,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_phys_t5",
+    "nameTemplate": "Adds {0} to {1} Physical Damage",
+    "type": "Prefix",
+    "tier": 5,
+    "minIlvl": 1,
+    "minValue": 3,
+    "maxValue": 7,
+    "tags": ["damage", "physical", "attack", "weapon", "local"]
+  },
+
+  {
+    "id": "weapon_hybrid_phys_acc_t1",
+    "nameTemplate": "{0}% Increased Physical Damage / +135 to Accuracy Rating",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 83,
+    "minValue": 75,
+    "maxValue": 79,
+    "tags": ["damage", "physical", "attack", "weapon", "local", "accuracy"]
+  },
+  {
+    "id": "weapon_hybrid_phys_acc_t2",
+    "nameTemplate": "{0}% Increased Physical Damage / +90 to Accuracy Rating",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 60,
+    "minValue": 55,
+    "maxValue": 64,
+    "tags": ["damage", "physical", "attack", "weapon", "local", "accuracy"]
+  },
+  {
+    "id": "weapon_hybrid_phys_acc_t3",
+    "nameTemplate": "{0}% Increased Physical Damage / +50 to Accuracy Rating",
+    "type": "Prefix",
+    "tier": 3,
+    "minIlvl": 30,
+    "minValue": 35,
+    "maxValue": 44,
+    "tags": ["damage", "physical", "attack", "weapon", "local", "accuracy"]
+  },
+
+  {
+    "id": "weapon_flat_fire_t1",
+    "nameTemplate": "Adds {0} to {1} Fire Damage",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 82,
+    "minValue": 90,
+    "maxValue": 190,
+    "tags": ["damage", "fire", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_fire_t2",
+    "nameTemplate": "Adds {0} to {1} Fire Damage",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 62,
+    "minValue": 55,
+    "maxValue": 115,
+    "tags": ["damage", "fire", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_fire_t3",
+    "nameTemplate": "Adds {0} to {1} Fire Damage",
+    "type": "Prefix",
+    "tier": 3,
+    "minIlvl": 32,
+    "minValue": 25,
+    "maxValue": 55,
+    "tags": ["damage", "fire", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_cold_t1",
+    "nameTemplate": "Adds {0} to {1} Cold Damage",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 82,
+    "minValue": 80,
+    "maxValue": 160,
+    "tags": ["damage", "cold", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_cold_t2",
+    "nameTemplate": "Adds {0} to {1} Cold Damage",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 62,
+    "minValue": 50,
+    "maxValue": 100,
+    "tags": ["damage", "cold", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_cold_t3",
+    "nameTemplate": "Adds {0} to {1} Cold Damage",
+    "type": "Prefix",
+    "tier": 3,
+    "minIlvl": 32,
+    "minValue": 20,
+    "maxValue": 45,
+    "tags": ["damage", "cold", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_lightning_t1",
+    "nameTemplate": "Adds {0} to {1} Lightning Damage",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 82,
+    "minValue": 20,
+    "maxValue": 310,
+    "tags": ["damage", "lightning", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_lightning_t2",
+    "nameTemplate": "Adds {0} to {1} Lightning Damage",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 62,
+    "minValue": 12,
+    "maxValue": 200,
+    "tags": ["damage", "lightning", "elemental", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_flat_lightning_t3",
+    "nameTemplate": "Adds {0} to {1} Lightning Damage",
+    "type": "Prefix",
+    "tier": 3,
+    "minIlvl": 32,
+    "minValue": 5,
+    "maxValue": 90,
+    "tags": ["damage", "lightning", "elemental", "attack", "weapon", "local"]
+  },
+
+  {
+    "id": "weapon_all_spell_gems_t1",
+    "nameTemplate": "+{0} to Level of all Spell Skill Gems",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 85,
+    "minValue": 1,
+    "maxValue": 1,
+    "tags": ["gem_level", "spell", "caster", "global"]
+  },
+  {
+    "id": "weapon_percent_spell_dmg_t1",
+    "nameTemplate": "{0}% Increased Spell Damage",
+    "type": "Prefix",
+    "tier": 1,
+    "minIlvl": 84,
+    "minValue": 100,
+    "maxValue": 109,
+    "tags": ["damage", "spell", "caster", "global"]
+  },
+  {
+    "id": "weapon_percent_spell_dmg_t2",
+    "nameTemplate": "{0}% Increased Spell Damage",
+    "type": "Prefix",
+    "tier": 2,
+    "minIlvl": 64,
+    "minValue": 75,
+    "maxValue": 89,
+    "tags": ["damage", "spell", "caster", "global"]
+  },
+  {
+    "id": "weapon_percent_spell_dmg_t3",
+    "nameTemplate": "{0}% Increased Spell Damage",
+    "type": "Prefix",
+    "tier": 3,
+    "minIlvl": 34,
+    "minValue": 45,
+    "maxValue": 59,
+    "tags": ["damage", "spell", "caster", "global"]
+  },
+
+  {
+    "id": "weapon_attack_speed_t1",
+    "nameTemplate": "{0}% Increased Attack Speed",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 76,
+    "minValue": 26,
+    "maxValue": 27,
+    "tags": ["speed", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_attack_speed_t2",
+    "nameTemplate": "{0}% Increased Attack Speed",
+    "type": "Suffix",
+    "tier": 2,
+    "minIlvl": 60,
+    "minValue": 20,
+    "maxValue": 25,
+    "tags": ["speed", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_attack_speed_t3",
+    "nameTemplate": "{0}% Increased Attack Speed",
+    "type": "Suffix",
+    "tier": 3,
+    "minIlvl": 45,
+    "minValue": 15,
+    "maxValue": 19,
+    "tags": ["speed", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_attack_speed_t4",
+    "nameTemplate": "{0}% Increased Attack Speed",
+    "type": "Suffix",
+    "tier": 4,
+    "minIlvl": 30,
+    "minValue": 11,
+    "maxValue": 14,
+    "tags": ["speed", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_attack_speed_t5",
+    "nameTemplate": "{0}% Increased Attack Speed",
+    "type": "Suffix",
+    "tier": 5,
+    "minIlvl": 1,
+    "minValue": 6,
+    "maxValue": 10,
+    "tags": ["speed", "attack", "weapon", "local"]
+  },
+
+  {
+    "id": "weapon_local_crit_chance_t1",
+    "nameTemplate": "{0}% Increased Critical Strike Chance",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 73,
+    "minValue": 35,
+    "maxValue": 38,
+    "tags": ["critical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_local_crit_chance_t2",
+    "nameTemplate": "{0}% Increased Critical Strike Chance",
+    "type": "Suffix",
+    "tier": 2,
+    "minIlvl": 50,
+    "minValue": 25,
+    "maxValue": 30,
+    "tags": ["critical", "attack", "weapon", "local"]
+  },
+  {
+    "id": "weapon_local_crit_chance_t3",
+    "nameTemplate": "{0}% Increased Critical Strike Chance",
+    "type": "Suffix",
+    "tier": 3,
+    "minIlvl": 25,
+    "minValue": 15,
+    "maxValue": 20,
+    "tags": ["critical", "attack", "weapon", "local"]
+  },
+
+  {
+    "id": "weapon_global_crit_multi_t1",
+    "nameTemplate": "+{0}% to Global Critical Strike Multiplier",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 73,
+    "minValue": 35,
+    "maxValue": 38,
+    "tags": ["critical", "global"]
+  },
+  {
+    "id": "weapon_global_crit_multi_t2",
+    "nameTemplate": "+{0}% to Global Critical Strike Multiplier",
+    "type": "Suffix",
+    "tier": 2,
+    "minIlvl": 50,
+    "minValue": 25,
+    "maxValue": 30,
+    "tags": ["critical", "global"]
+  },
+  {
+    "id": "weapon_global_crit_multi_t3",
+    "nameTemplate": "+{0}% to Global Critical Strike Multiplier",
+    "type": "Suffix",
+    "tier": 3,
+    "minIlvl": 25,
+    "minValue": 15,
+    "maxValue": 20,
+    "tags": ["critical", "global"]
+  },
+
+  {
+    "id": "weapon_cast_speed_t1",
+    "nameTemplate": "{0}% Increased Cast Speed",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 76,
+    "minValue": 23,
+    "maxValue": 25,
+    "tags": ["speed", "spell", "caster", "global"]
+  },
+  {
+    "id": "weapon_cast_speed_t2",
+    "nameTemplate": "{0}% Increased Cast Speed",
+    "type": "Suffix",
+    "tier": 2,
+    "minIlvl": 55,
+    "minValue": 16,
+    "maxValue": 20,
+    "tags": ["speed", "spell", "caster", "global"]
+  },
+  {
+    "id": "weapon_cast_speed_t3",
+    "nameTemplate": "{0}% Increased Cast Speed",
+    "type": "Suffix",
+    "tier": 3,
+    "minIlvl": 30,
+    "minValue": 10,
+    "maxValue": 13,
+    "tags": ["speed", "spell", "caster", "global"]
+  },
+
+  {
+    "id": "weapon_dot_multiplier_t1",
+    "nameTemplate": "+{0}% to Damage over Time Multiplier",
+    "type": "Suffix",
+    "tier": 1,
+    "minIlvl": 78,
+    "minValue": 26,
+    "maxValue": 30,
+    "tags": ["dot", "damage", "global"]
+  },
+  {
+    "id": "weapon_dot_multiplier_t2",
+    "nameTemplate": "+{0}% to Damage over Time Multiplier",
+    "type": "Suffix",
+    "tier": 2,
+    "minIlvl": 55,
+    "minValue": 18,
+    "maxValue": 22,
+    "tags": ["dot", "damage", "global"]
+  },
+  {
+    "id": "weapon_dot_multiplier_t3",
+    "nameTemplate": "+{0}% to Damage over Time Multiplier",
+    "type": "Suffix",
+    "tier": 3,
+    "minIlvl": 30,
+    "minValue": 10,
+    "maxValue": 14,
+    "tags": ["dot", "damage", "global"]
+  },
+
+  {
+    "id": "sword_implicit_accuracy",
+    "nameTemplate": "+{0} to Accuracy Rating",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 18,
+    "maxValue": 30,
+    "tags": ["implicit", "accuracy"]
+  },
+  {
+    "id": "foil_implicit_crit_multi",
+    "nameTemplate": "+{0}% to Global Critical Strike Multiplier",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 25,
+    "maxValue": 25,
+    "tags": ["implicit", "critical"]
+  },
+  {
+    "id": "mace_implicit_stun_threshold",
+    "nameTemplate": "{0}% Reduced Enemy Stun Threshold",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 10,
+    "maxValue": 15,
+    "tags": ["implicit", "stun"]
+  },
+  {
+    "id": "mace_implicit_stun_duration",
+    "nameTemplate": "{0}% Increased Stun Duration on Enemies",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 30,
+    "maxValue": 30,
+    "tags": ["implicit", "stun"]
+  },
+  {
+    "id": "claw_implicit_life_on_hit",
+    "nameTemplate": "+{0} Life gained for each Enemy hit by Attacks",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 7,
+    "maxValue": 46,
+    "tags": ["implicit", "life"]
+  },
+  {
+    "id": "dagger_implicit_global_crit",
+    "nameTemplate": "+{0}% to Global Critical Strike Chance",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 30,
+    "maxValue": 50,
+    "tags": ["implicit", "critical"]
+  },
+  {
+    "id": "wand_implicit_spell_damage",
+    "nameTemplate": "{0}% Increased Spell Damage",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 10,
+    "maxValue": 35,
+    "tags": ["implicit", "spell"]
+  },
+  {
+    "id": "sceptre_implicit_elemental_damage",
+    "nameTemplate": "{0}% Increased Elemental Damage",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 40,
+    "maxValue": 40,
+    "tags": ["implicit", "elemental"]
+  },
+  {
+    "id": "staff_implicit_block",
+    "nameTemplate": "+{0}% Chance to Block Attack Damage",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 20,
+    "maxValue": 20,
+    "tags": ["implicit", "block"]
+  },
+  {
+    "id": "quiver_implicit_flat_phys",
+    "nameTemplate": "Adds {0} to {1} Physical Damage to Bow Attacks",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 6,
+    "maxValue": 10,
+    "tags": ["implicit", "damage", "physical", "bow"]
+  },
+  {
+    "id": "quiver_implicit_crit_multi",
+    "nameTemplate": "+{0}% to Global Critical Strike Multiplier",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 25,
+    "maxValue": 25,
+    "tags": ["implicit", "critical"]
+  },
+  {
+    "id": "shield_implicit_flat_life",
+    "nameTemplate": "+{0} to Maximum Life",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 50,
+    "maxValue": 50,
+    "tags": ["implicit", "life"]
+  },
+  {
+    "id": "shield_implicit_spell_suppress",
+    "nameTemplate": "+{0}% Chance to Suppress Spell Damage",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 8,
+    "maxValue": 8,
+    "tags": ["implicit", "suppression"]
+  },
+  {
+    "id": "shield_implicit_spell_damage",
+    "nameTemplate": "{0}% Increased Spell Damage",
+    "type": "Implicit",
+    "tier": 1,
+    "minIlvl": 1,
+    "minValue": 15,
+    "maxValue": 15,
+    "tags": ["implicit", "spell"]
+  }
+]

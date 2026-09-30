@@ -1,0 +1,357 @@
+[gd_scene format=3 uid="uid://b1m8x7y4q2w3k"]
+
+[ext_resource type="Script" path="res://src/UI/StarterSelectionModal.cs" id="1_modal"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jugg_card"]
+bg_color = Color(0.0862745, 0.0509804, 0.0509804, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.25, 0.2, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jugg_btn"]
+bg_color = Color(0.2, 0.06, 0.06, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.25, 0.2, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ele_card"]
+bg_color = Color(0.0470588, 0.0588235, 0.0901961, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.55, 0.85, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ele_btn"]
+bg_color = Color(0.05, 0.1, 0.18, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.55, 0.85, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dead_card"]
+bg_color = Color(0.0470588, 0.0784314, 0.0588235, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.75, 0.4, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dead_btn"]
+bg_color = Color(0.05, 0.15, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.75, 0.4, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tag_red"]
+bg_color = Color(0.35, 0.1, 0.1, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tag_blue"]
+bg_color = Color(0.1, 0.2, 0.35, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="StarterSelectionModal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_modal")
+
+[node name="DimmerBackground" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0352941, 0.0352941, 0.0509804, 0.96)
+
+[node name="MainMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="ContentVBox" type="VBoxContainer" parent="MainMargin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="HeaderVBox" type="VBoxContainer" parent="MainMargin/ContentVBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="PreTitleLabel" type="Label" parent="MainMargin/ContentVBox/HeaderVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.545098, 0.305882, 1)
+theme_override_font_sizes/font_size = 10
+text = "THE CRUCIBLE • THỨC TỈNH"
+horizontal_alignment = 1
+
+[node name="TitleLabel" type="Label" parent="MainMargin/ContentVBox/HeaderVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.72, 0.28, 1)
+theme_override_font_sizes/font_size = 17
+text = "CHỌN BẢN THỂ KHỞI NGUYÊN"
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="MainMargin/ContentVBox/HeaderVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
+theme_override_font_sizes/font_size = 11
+text = "Mở cổng Map Tier 1 ngay lập tức • 100% Zero APM"
+horizontal_alignment = 1
+
+[node name="CardsVBox" type="VBoxContainer" parent="MainMargin/ContentVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="JuggernautCard" type="PanelContainer" parent="MainMargin/ContentVBox/CardsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+pivot_offset = Vector2(204, 85)
+theme_override_styles/panel = SubResource("StyleBoxFlat_jugg_card")
+
+[node name="Margin" type="MarginContainer" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeaderHBox" type="HBoxContainer" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
+layout_mode = 2
+
+[node name="TagLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox/HeaderHBox"]
+custom_minimum_size = Vector2(36, 18)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tag_red")
+text = "STR"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.92, 0.35, 0.3, 1)
+theme_override_font_sizes/font_size = 14
+text = "JUGGERNAUT"
+
+[node name="Subtitle" type="Label" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "The Unyielding Colossus • Cận Chiến & Giáp"
+
+[node name="DescLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
+theme_override_font_sizes/font_size = 11
+text = "Máu: 120 | Giáp: 25 | Chém lan Cleave diện rộng"
+
+[node name="PerkLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.6, 0.4, 1)
+theme_override_font_sizes/font_size = 10
+text = "Đảm bảo rơi: Added Fire Damage Support"
+
+[node name="JuggernautBtn" type="Button" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_colors/font_color = Color(1, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_jugg_btn")
+text = "CHỌN JUGGERNAUT (SỨC MẠNH)"
+
+[node name="ElementalistCard" type="PanelContainer" parent="MainMargin/ContentVBox/CardsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+pivot_offset = Vector2(204, 85)
+theme_override_styles/panel = SubResource("StyleBoxFlat_ele_card")
+
+[node name="Margin" type="MarginContainer" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeaderHBox" type="HBoxContainer" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
+layout_mode = 2
+
+[node name="TagLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox/HeaderHBox"]
+custom_minimum_size = Vector2(36, 18)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.9, 1, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tag_blue")
+text = "INT"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 0.65, 0.95, 1)
+theme_override_font_sizes/font_size = 14
+text = "ELEMENTALIST"
+
+[node name="Subtitle" type="Label" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "The Primordial Evoker • Phép Thuật & Khiên"
+
+[node name="DescLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
+theme_override_font_sizes/font_size = 11
+text = "Máu: 90 | Khiên ES: 45 | Kháng Hỏa: 10% | Cầu lửa Fireball"
+
+[node name="PerkLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "Đảm bảo rơi: Ignite Proliferation Support"
+
+[node name="ElementalistBtn" type="Button" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_ele_btn")
+text = "CHỌN ELEMENTALIST (TRÍ TUỆ)"
+
+[node name="DeadeyeCard" type="PanelContainer" parent="MainMargin/ContentVBox/CardsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+pivot_offset = Vector2(204, 85)
+theme_override_styles/panel = SubResource("StyleBoxFlat_dead_card")
+
+[node name="Margin" type="MarginContainer" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeaderHBox" type="HBoxContainer" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
+layout_mode = 2
+
+[node name="TagLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox/HeaderHBox"]
+custom_minimum_size = Vector2(36, 18)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 1, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "DEX"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NameLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.3, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+text = "DEADEYE"
+
+[node name="Subtitle" type="Label" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "The Windrunning Marksman • Cung Tên & Né Tránh"
+
+[node name="DescLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
+theme_override_font_sizes/font_size = 11
+text = "Máu: 105 | Né Tránh: 25% | Mưa tên Split Arrow 3 tia"
+
+[node name="PerkLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.95, 0.65, 1)
+theme_override_font_sizes/font_size = 10
+text = "Đảm bảo rơi: Lesser Multiple Projectiles Support"
+
+[node name="DeadeyeBtn" type="Button" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_colors/font_color = Color(0.9, 1, 0.9, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_dead_btn")
+text = "CHỌN DEADEYE (NHANH NHẸN)"
+
+[node name="FooterLabel" type="Label" parent="MainMargin/ContentVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.47, 0.52, 1)
+theme_override_font_sizes/font_size = 10
+text = "Click 1 lần để chọn và kích hoạt ngay lập tức"
+horizontal_alignment = 1

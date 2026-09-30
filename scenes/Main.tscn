@@ -1,0 +1,147 @@
+[gd_scene load_steps=4 format=3 uid="uid://c1x8v6p1y2m3k"]
+
+[ext_resource type="Script" path="res://src/UI/Main.cs" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/BattleViewport.tscn" id="2_battle_viewport"]
+[ext_resource type="PackedScene" path="res://scenes/MapDeviceBar.tscn" id="3_map_device_bar"]
+[ext_resource type="PackedScene" path="res://scenes/EquipmentView.tscn" id="4_equipment_view"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0509804, 0.054902, 0.0705882, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="HeaderPanel" type="PanelContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+
+[node name="HeaderMargin" type="MarginContainer" parent="MainLayout/HeaderPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="HeaderHBox" type="HBoxContainer" parent="MainLayout/HeaderPanel/HeaderMargin"]
+layout_mode = 2
+
+[node name="TitleVBox" type="VBoxContainer" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="TitleLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/TitleVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.878431, 0.639216, 0.247059, 1)
+theme_override_font_sizes/font_size = 16
+text = "IDLE EXILE"
+
+[node name="SubtitleLabel" type="Label" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox/TitleVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
+theme_override_font_sizes/font_size = 11
+text = "Actless Mapping Engine"
+
+[node name="GearNavButton" type="Button" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Mở Bảng Trang Bị & Chỉ Số 10 Ô (PoE 2 Decoupled)"
+text = "🛡 Gear (10)"
+
+[node name="AlwaysOnTopCheck" type="CheckBox" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Keep window on top of other applications"
+text = "Pin"
+
+[node name="ContentMargin" type="MarginContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 0
+theme_override_constants/margin_right = 0
+
+[node name="ContentVBox" type="VBoxContainer" parent="MainLayout/ContentMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StatusCardMargin" type="MarginContainer" parent="MainLayout/ContentMargin/ContentVBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 12
+
+[node name="StatusCard" type="PanelContainer" parent="MainLayout/ContentMargin/ContentVBox/StatusCardMargin"]
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="MainLayout/ContentMargin/ContentVBox/StatusCardMargin/StatusCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="MainLayout/ContentMargin/ContentVBox/StatusCardMargin/StatusCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StatusLabel" type="Label" parent="MainLayout/ContentMargin/ContentVBox/StatusCardMargin/StatusCard/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.298039, 0.686275, 0.313726, 1)
+theme_override_font_sizes/font_size = 13
+text = "System Initializing..."
+
+[node name="StatsLabel" type="Label" parent="MainLayout/ContentMargin/ContentVBox/StatusCardMargin/StatusCard/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
+theme_override_font_sizes/font_size = 11
+text = "Loading Database..."
+
+[node name="BattleViewport" parent="MainLayout/ContentMargin/ContentVBox" instance=ExtResource("2_battle_viewport")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EquipmentView" parent="MainLayout/ContentMargin/ContentVBox" instance=ExtResource("4_equipment_view")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="MapDeviceMargin" type="MarginContainer" parent="MainLayout/ContentMargin/ContentVBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 12
+
+[node name="MapDeviceBar" parent="MainLayout/ContentMargin/ContentVBox/MapDeviceMargin" instance=ExtResource("3_map_device_bar")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FooterBar" type="HBoxContainer" parent="MainLayout"]
+layout_mode = 2
+alignment = 1
+
+[node name="VersionLabel" type="Label" parent="MainLayout/FooterBar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.4, 0.45, 1)
+theme_override_font_sizes/font_size = 10
+text = "Godot 4.7 Mono | .NET 8 | v0.1.0"

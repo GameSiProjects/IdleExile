@@ -1,0 +1,452 @@
+[gd_scene load_steps=17 format=3]
+
+[ext_resource type="Script" path="res://src/UI/BattleViewport.cs" id="1_viewport"]
+[ext_resource type="Script" path="res://src/UI/Components/MapHeaderBar.cs" id="2_header"]
+[ext_resource type="Script" path="res://src/UI/Components/Arena2D.cs" id="3_arena"]
+[ext_resource type="Script" path="res://src/UI/Components/VitometerView.cs" id="4_vitometer"]
+[ext_resource type="Script" path="res://src/UI/Components/FloatingTextManager.cs" id="5_floating_text"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
+bg_color = Color(0.0705882, 0.0745098, 0.0980392, 1)
+border_width_bottom = 1
+border_color = Color(0.180392, 0.192157, 0.239216, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tier_badge"]
+bg_color = Color(0.141176, 0.121569, 0.0823529, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.686275, 0.545098, 0.305882, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+expand_margin_left = 2.0
+expand_margin_top = 1.0
+expand_margin_right = 2.0
+expand_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_boss_badge"]
+bg_color = Color(0.08, 0.08, 0.1, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.24, 0.3, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 4.0
+content_margin_top = 1.0
+content_margin_right = 4.0
+content_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_map_bar_bg"]
+bg_color = Color(0.105882, 0.113725, 0.141176, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_map_bar_fill"]
+bg_color = Color(0.85098, 0.65098, 0.25098, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vitometer"]
+bg_color = Color(0.0705882, 0.0745098, 0.0980392, 1)
+border_width_top = 1
+border_color = Color(0.180392, 0.192157, 0.239216, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_life_bg"]
+bg_color = Color(0.160784, 0.0588235, 0.0588235, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_life_fill"]
+bg_color = Color(0.721569, 0.180392, 0.180392, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_flask"]
+bg_color = Color(0.0980392, 0.105882, 0.141176, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.247059, 0.266667, 0.337255, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mana_bg"]
+bg_color = Color(0.0509804, 0.0980392, 0.180392, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mana_fill"]
+bg_color = Color(0.117647, 0.533333, 0.898039, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_loot_toast"]
+bg_color = Color(0.117647, 0.0980392, 0.0588235, 0.941176)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.756863, 0.027451, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 4
+
+[node name="BattleViewport" type="Control"]
+custom_minimum_size = Vector2(440, 300)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 440.0
+offset_bottom = 300.0
+script = ExtResource("1_viewport")
+
+[node name="BackgroundRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0509804, 0.054902, 0.0705882, 1)
+
+[node name="ViewportVBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="MapHeaderContainer" type="PanelContainer" parent="ViewportVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_header")
+script = ExtResource("2_header")
+
+[node name="HeaderMargin" type="MarginContainer" parent="ViewportVBox/MapHeaderContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
+
+[node name="HeaderVBox" type="VBoxContainer" parent="ViewportVBox/MapHeaderContainer/HeaderMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MapInfoHBox" type="HBoxContainer" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TierBadge" type="PanelContainer" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/MapInfoHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_tier_badge")
+
+[node name="TierBadgeLabel" type="Label" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/MapInfoHBox/TierBadge"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.686275, 0.545098, 0.305882, 1)
+theme_override_font_sizes/font_size = 10
+text = "T1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MapNameLabel" type="Label" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/MapInfoHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 11
+text = "Twilight Strand • Normal"
+text_overrun_behavior = 3
+
+[node name="ThreatBadgesHBox" type="HBoxContainer" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/MapInfoHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="QuantityBonusLabel" type="Label" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/MapInfoHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.462745, 1, 0.0117647, 1)
+theme_override_font_sizes/font_size = 10
+text = "IIQ: +0%"
+
+[node name="ProgressHBox" type="HBoxContainer" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MapProgressBar" type="ProgressBar" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/ProgressHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 5)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_map_bar_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_map_bar_fill")
+show_percentage = false
+
+[node name="ProgressPercentLabel" type="Label" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/ProgressHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.75, 0.8, 1)
+theme_override_font_sizes/font_size = 9
+text = "0%"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="BossIndicator" type="PanelContainer" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/ProgressHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_boss_badge")
+
+[node name="BossIndicatorLabel" type="Label" parent="ViewportVBox/MapHeaderContainer/HeaderMargin/HeaderVBox/ProgressHBox/BossIndicator"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.52, 0.58, 1)
+theme_override_font_sizes/font_size = 9
+text = "☠ BOSS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ArenaViewportContainer" type="SubViewportContainer" parent="ViewportVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 208)
+layout_mode = 2
+size_flags_vertical = 3
+stretch = true
+
+[node name="ArenaSubViewport" type="SubViewport" parent="ViewportVBox/ArenaViewportContainer"]
+unique_name_in_owner = true
+handle_input_locally = false
+size = Vector2i(440, 208)
+render_target_update_mode = 3
+
+[node name="ArenaBackground" type="ColorRect" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0431373, 0.0470588, 0.0627451, 1)
+
+[node name="Arena2D" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport"]
+unique_name_in_owner = true
+script = ExtResource("3_arena")
+
+[node name="ParallaxBackground" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
+unique_name_in_owner = true
+
+[node name="MonsterPool" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
+unique_name_in_owner = true
+
+[node name="ExileNode" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
+unique_name_in_owner = true
+position = Vector2(220, 104)
+
+[node name="ProjectilePool" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
+unique_name_in_owner = true
+
+[node name="DropBeamLayer" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
+unique_name_in_owner = true
+
+[node name="FloatingCombatTextLayer" type="Control" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(440, 208)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 440.0
+offset_bottom = 208.0
+mouse_filter = 2
+script = ExtResource("5_floating_text")
+
+[node name="VitometerPanel" type="PanelContainer" parent="ViewportVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_vitometer")
+script = ExtResource("4_vitometer")
+
+[node name="VitometerMargin" type="MarginContainer" parent="ViewportVBox/VitometerPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="VitometerHBox" type="HBoxContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HealthVBox" type="VBoxContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="LifeESBar" type="ProgressBar" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/HealthVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_life_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_life_fill")
+value = 100.0
+show_percentage = false
+
+[node name="DefensesSummaryLabel" type="Label" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/HealthVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 9
+text = "Life: 100 / 100 | EHP: 100"
+
+[node name="FlasksContainer" type="HBoxContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 3
+
+[node name="FlaskSlot1" type="PanelContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer"]
+custom_minimum_size = Vector2(20, 32)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_flask")
+
+[node name="KeyLabel" type="Label" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer/FlaskSlot1"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FlaskSlot2" type="PanelContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer"]
+custom_minimum_size = Vector2(20, 32)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_flask")
+
+[node name="KeyLabel" type="Label" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer/FlaskSlot2"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FlaskSlot3" type="PanelContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer"]
+custom_minimum_size = Vector2(20, 32)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_flask")
+
+[node name="KeyLabel" type="Label" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer/FlaskSlot3"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FlaskSlot4" type="PanelContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer"]
+custom_minimum_size = Vector2(20, 32)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_flask")
+
+[node name="KeyLabel" type="Label" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer/FlaskSlot4"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "4"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="FlaskSlot5" type="PanelContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer"]
+custom_minimum_size = Vector2(20, 32)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_flask")
+
+[node name="KeyLabel" type="Label" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/FlasksContainer/FlaskSlot5"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "5"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ManaVBox" type="VBoxContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="ManaBar" type="ProgressBar" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/ManaVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_mana_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_mana_fill")
+value = 100.0
+show_percentage = false
+
+[node name="UnreservedManaLabel" type="Label" parent="ViewportVBox/VitometerPanel/VitometerMargin/VitometerHBox/ManaVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 9
+text = "Mana: 50 / 50"
+horizontal_alignment = 2
+
+[node name="LootToastOverlay" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(280, 32)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -140.0
+offset_top = 48.0
+offset_right = 140.0
+offset_bottom = 80.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_loot_toast")
+
+[node name="Margin" type="MarginContainer" parent="LootToastOverlay"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="LootToastLabel" type="Label" parent="LootToastOverlay/Margin"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85098, 0.301961, 1)
+theme_override_font_sizes/font_size = 11
+text = "★ Exalted Orb dropped! ★"
+horizontal_alignment = 1
+vertical_alignment = 1
