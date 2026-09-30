@@ -79,15 +79,49 @@ Mỗi dòng thuộc tính bất lợi (Affix) đập vào Map sẽ tăng tương
   * **Bộ lọc an toàn (Map Safety Filter):** Tự động phát hiện và bỏ qua các bản đồ có mod phản đòn (Reflect) hoặc không thể hồi phục (No Regen) nếu build của người chơi không tương thích.
   * Khi hết sạch map hợp lệ, cỗ máy tự động kích hoạt **The Endless Hollow (Tier 0)** để duy trì farm ngọc và tìm thêm map mới.
 
-### 4.3. Tiến Trình Một Lượt Chạy (Run Simulation)
-Mỗi bản đồ diễn ra trong khoảng 30 – 75 giây:
-1. **Khởi đầu (Incursion):** Nhận hiệu ứng từ Map Affixes.
-2. **Dọn quái (Trash Clearing - 70% thời lượng):** Quái ra theo từng đợt (waves), nhân vật tự xả kỹ năng AOE và kích hoạt buff phòng ngự.
-3. **Sự kiện đặc biệt (Random League Encounters - 15% cơ hội):**
-   * **Breach:** Quái vật dồn dập trong 15s với lượng drop gấp 3 lần.
-   * **Harbinger:** Thả mảnh vỡ Currency đặc biệt khi chết.
-   * **Voltaxic Sulphite Geyser:** Phun trào tài nguyên Sulphite để nạp năng lượng cho *The Endless Abyss*.
-4. **Map Boss:** Đụng độ Boss bản đồ với lượng máu lớn. Hạ gục Boss để kích hoạt Loot Explosion, nhận điểm **Atlas Passive** và rớt Map cấp cao hơn.
+### 4.3. Tiến Trình Một Lượt Chạy Bản Đồ Tuyến Tính (Linear Map Progression)
+
+Khác với mô hình đấu trường đóng cố định (Enclosed Arena), mỗi bản đồ trong **Idle Exile** được thiết kế dưới dạng **Hành lang kéo dài đơn hướng (Directional Linear Corridor)** — tái hiện trọn vẹn cảm giác dọn dẹp các bản đồ nổi tiếng như *Strand, Canyon, Promenade* trong *Path of Exile*:
+
+```
+[KHỞI ĐẦU] (World Pos: Y = 0)
+    │
+    ▼  ◄── (Nhân vật thực sự di chuyển tiến bước; Camera2D bám theo)
+[PACK 1: Bầy quái thường (Swarm)] ──► Dọn dẹp trong 3-5s
+    │
+    ▼  ◄── (Travel Phase: Tự động chạy tới bầy tiếp theo)
+[PACK 2: Quái Tinh Anh (Rare + Aura)] ──► Thử thách khả năng chịu đòn
+    │
+    ▼
+[LEAGUE ENCOUNTER (15% Tỉ Lệ)]: Breach / Essence / Sulphite Geyser
+    │
+    ▼
+[PACK 3, 4: Tiền đồn hộ vệ (Phalanx & Ranged)] ──► Quét sạch
+    │
+    ▼
+═══════════════════════════════════════════════════════════
+[CỔNG VÀO PHÒNG BOSS (FOG GATE / SEALED THRESHOLD)] (85% Map)
+═══════════════════════════════════════════════════════════
+    │  ◄── (Bước qua cổng: Camera khóa vào phòng, rào chắn sập xuống)
+    ▼
+[PHÒNG BOSS (END-OF-MAP BOSS ROOM)]
+    • Map Boss thức tỉnh ở trung tâm phòng kèm thanh máu lớn
+    • Đấu trường khép kín, kiểm tra Single Target DPS & tránh đòn Slam
+    • Hạ Boss: Bùng nổ phần thưởng (Loot Explosion), mở cổng Portal hoàn thành
+```
+
+#### Quy Tắc Vận Hành Cốt Lõi:
+1. **Di chuyển thế giới thực (Real World Movement - Không Cuộn Sàn Giả):**
+   * **Tuyệt đối không áp dụng kỹ thuật cuộn sàn (No fake parallax/floor scrolling):** Nhân vật có tọa độ thế giới ($X_{\text{world}}, Y_{\text{world}}$) thực tế và di chuyển tịnh tiến dọc theo chiều dài hành lang của bản đồ ($L_{\text{map}}$).
+   * **Camera2D Tracking:** Camera bám sát theo vị trí thực tế của nhân vật trong không gian 2D, giữ nhân vật ở vùng quan sát trung tâm/có độ nhìn trước (Look-ahead) về hướng di chuyển.
+   * **Tốc độ di chuyển thực tế (% Movement Speed):** Tác động trực tiếp lên tốc độ lướt qua các khoảng cách trống giữa các pack quái, giúp chỉ số Movement Speed có giá trị chiến lược rõ rệt.
+2. **Tuần tự gặp các Cụm Quái (Sequential Monster Packs):**
+   * Quái vật không spawn từ khoảng không rớt xuống đầu nhân vật, mà được định vị sẵn tại các tọa độ thế giới dọc theo hành lang.
+   * Khi nhân vật tiến tới khoảng cách kích hoạt (Aggro Range / Effective Skill Range), nhân vật tự động dừng lại hoặc giữ khoảng cách tối ưu để xả skill tiêu diệt. Khi toàn bộ quái trong cụm bị tiêu diệt, nhân vật tiếp tục hành quân về phía trước.
+3. **Phòng Boss Cuối Đường (End-of-Map Boss Room):**
+   * Cuối hành lang luôn bố trí một **Phòng Boss (Boss Chamber)** ngăn cách bởi Cổng sương mù/Cửa đá phong ấn.
+   * Khi nhân vật vượt qua ngưỡng cổng, camera chuyển sang chế độ khóa cố định (Arena Lock), rào chắn sập lại và Map Boss xuất hiện.
+   * Đây là chốt chặn cuối cùng kiểm tra toàn diện Single Target DPS và các lớp phòng thủ EHP trước khi hoàn tất bản đồ.
 
 ---
 

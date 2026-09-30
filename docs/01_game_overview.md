@@ -48,9 +48,9 @@ Idle Exile vận hành dựa trên kiến trúc 2 trục tương hỗ: **Trục 
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ 2. VƯỢT MAP TỰ ĐỘNG (Auto-Run Simulation - 80% Time)        │
-│    • Dọn wave quái & League Encounters (Breach, Harbingers) │
+│    • Hành quân dọc hành lang, dọn cụm quái & Encounters     │
 │    • Thu hoạch Voltaxic Sulphite từ các mỏ địa chấn         │
-│    • Đánh bại Map Boss & Kích hoạt Loot Explosion           │
+│    • Đột nhập Boss Room, diệt Map Boss & Loot Explosion     │
 └───────────────┬──────────────────────────────┬──────────────┘
                 │                              │
                 ▼ (Thu nạp Sulphite)           ▼ (Base Items, Maps, Currency)

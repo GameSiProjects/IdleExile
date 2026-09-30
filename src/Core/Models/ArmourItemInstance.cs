@@ -67,6 +67,7 @@ public sealed class ArmourItemInstance : IGearItem
     public float LocalDps => 0f;
     public float GlobalIncreasedDamagePercent { get; private set; }
     public float GlobalAttackSpeedPercent { get; private set; }
+    public float MovementSpeedBonus { get; private set; }
 
     public ArmourItemInstance(ArmourBaseDefinition baseDefinition, string rarity = "Normal", int quality = 0, int itemLevel = 1)
     {
@@ -109,6 +110,7 @@ public sealed class ArmourItemInstance : IGearItem
         int intel = 0;
         float incDmg = 0f;
         float incSpeed = 0f;
+        float moveSpeed = 0f;
 
         // Handle implicit modifiers from base definition
         if (!string.IsNullOrEmpty(BaseDefinition.ImplicitDescription))
@@ -171,6 +173,10 @@ public sealed class ArmourItemInstance : IGearItem
                 {
                     chaosRes += avgVal;
                 }
+                else if (Array.Exists(affix.Tags, t => string.Equals(t, "movement_speed", StringComparison.OrdinalIgnoreCase)))
+                {
+                    moveSpeed += avgVal;
+                }
                 else if (Array.Exists(affix.Tags, t => string.Equals(t, "speed", StringComparison.OrdinalIgnoreCase)))
                 {
                     incSpeed += avgVal;
@@ -180,6 +186,12 @@ public sealed class ArmourItemInstance : IGearItem
                     incDmg += avgVal;
                 }
             }
+        }
+
+        // Implicit movement speed (e.g. boots +3% Movement Speed)
+        if (string.Equals(BaseDefinition.ImplicitAffixId, "movement_speed", StringComparison.OrdinalIgnoreCase))
+        {
+            moveSpeed += 3f;
         }
 
         LocalArmour = MathF.Round((baseArmour + localFlatArmour) * (1f + localIncArmour / 100f), 0);
@@ -200,5 +212,6 @@ public sealed class ArmourItemInstance : IGearItem
         IntelligenceBonus = intel;
         GlobalIncreasedDamagePercent = incDmg;
         GlobalAttackSpeedPercent = incSpeed;
+        MovementSpeedBonus = moveSpeed;
     }
 }

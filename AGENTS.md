@@ -124,7 +124,7 @@ dotnet build
 
 | Feature / Subsystem | Status | Location |
 | :--- | :--- | :--- |
-| **GDD Documentation** | Complete | `docs/01_*.md` to `docs/07_*.md` |
+| **GDD Documentation** | Complete | `docs/01_*.md` to `docs/12_*.md` |
 | **Execution Task List** | Tracking | `TASKS.md` |
 | **Project & Engine Setup** | Complete | `project.godot`, `IdleExile.csproj`, `nuget.config` |
 | **JSON Data Pipeline** | Complete | `data/`, `src/Core/Models/`, `DatabaseLoader.cs` |
@@ -136,6 +136,7 @@ dotnet build
 | **Combat & Tick Engine (30Hz Simulation)** | Complete | `src/Core/Simulation/CombatEngine.cs`, `TickManager.cs` |
 | **Unified Combat & Attack System** | Complete | `src/Core/Models/ICombatEntity.cs`, `AttackPayload.cs`, `CombatAttackService.cs` |
 | **Spatial Geometry & 2D Math (Section 4)** | Complete | `src/Core/Services/SpatialCombatService.cs`, `Vector2D.cs` |
+| **Real-World Movement Controller (Task 2.5)** | Complete | `src/Core/Simulation/ExileMovementController.cs` |
 | **10-Slot Equipment & Soft Attributes (Task 3.1)** | Complete | `src/Core/Models/`, `src/Core/State/EquippedGearState.cs` |
 | **Smart Tooltip Comparison Engine (Task 3.4)** | Complete | `src/Core/Services/EquipmentComparisonService.cs` |
 | **Mini-Window Equipment View (Task 3.4)** | Complete | `scenes/EquipmentView.tscn`, `src/UI/Components/EquipmentView.cs` |

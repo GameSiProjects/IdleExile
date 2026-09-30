@@ -87,6 +87,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.FtueManagerTests.RunAll();
         IdleExile.Core.Tests.SeededDropTests.RunAll();
         IdleExile.Core.Tests.SpatialGeometryTests.RunAll();
+        IdleExile.Core.Tests.ExileMovementControllerTests.RunAll();
         IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
         BattleViewportTests.RunAll();
         MapHeaderBarTests.RunAll();
@@ -281,6 +282,26 @@ public partial class Main : Control
                     _battleViewport.SetTarget(null, null);
                 }
             }
+
+            if (_statusLabel != null && Engine != null)
+            {
+                _statusLabel.Text = $"Portal Active • Mapping: {map.Name} (T{map.Tier}) • State: {Engine.Movement.CurrentState} • Dist: {Engine.Movement.DistanceTraveled:F0}px ({Engine.Movement.MapProgressPercent:F1}%)";
+            }
+        };
+
+        Engine.OnMovementStateChanged += (oldState, newState) =>
+        {
+            GD.Print($"[Movement] State transition: {oldState} -> {newState} (Position: {Engine?.Movement.Position})");
+        };
+
+        Engine.OnFogGateCrossed += () =>
+        {
+            GD.Print("[Movement] Fog Gate crossed at 85% map progress! Approaching Boss Arena.");
+        };
+
+        Engine.OnBossArenaEntered += () =>
+        {
+            GD.Print("[Movement] Entered Boss Arena Chamber! Final Map Boss encounter ready.");
         };
 
         Engine.OnLootDropped += drop =>

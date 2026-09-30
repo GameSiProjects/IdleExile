@@ -108,20 +108,36 @@ Vì là game treo máy 2D tối giản, toàn bộ combat được tính toán t
 
 ---
 
-## 4. Hình Học Không Gian & Tính Toán Combat Top-Down (Spatial Geometry & 2D Math)
+## 4. Hình Học Không Gian & Tính Toán Combat Top-Down Tuyến Tính (Spatial Geometry & 2D Math)
 
-Khác với mô hình chạy cuộn ngang 1D giới hạn, kiến trúc Top-Down đưa toàn bộ tương tác chiến đấu vào không gian tọa độ 2D phẳng ($X, Y$):
+Khác với mô hình đấu trường đóng cố định hay cuộn sàn giả lập, kiến trúc chiến đấu của **Idle Exile** đưa toàn bộ tương tác vào **Hành lang bản đồ 2D kéo dài đơn hướng (World-Space Linear Corridor)** trong không gian tọa độ thế giới thực ($X_{\text{world}}, Y_{\text{world}}$):
 
-### 4.1. Khoảng Cách Euclid & Vùng Tầm Đánh (Euclidean Distance & Range)
-Khoảng cách giữa Kẻ Lưu Đày (Exile) tại $P_E(x_E, y_E)$ và Quái vật tại $P_M(x_M, y_M)$ được tính bằng chuẩn Euclidean:
+### 4.1. Hệ Tọa Độ Thế Giới & Cơ Chế Di Chuyển Thực Tế (World Coordinates & True Movement)
+* **Không gian Hành lang Thế giới:** Bản đồ mở rộng theo chiều dài $L_{\text{map}}$ (ví dụ: $Y_{\text{world}} \in [0, L_{\text{map}}]$) với độ rộng hành lang $W_{\text{corridor}} \approx 280 - 440\text{px}$.
+* **Di chuyển thực sự của Nhân vật (True World Movement - Không Cuộn Sàn):**
+  * Nhân vật (Exile) sở hữu vị trí thế giới thực $P_E(t) = (x_E(t), y_E(t))$ biến thiên liên tục theo thời gian khi hành quân, **tuyệt đối không dùng kỹ thuật cuộn sàn giả lập (No fake floor scrolling)**.
+  * Vận tốc di chuyển thực tế:
+    $$v_{\text{move}} = v_{\text{base}} \times \left(1 + \sum \frac{\% \text{Increased Movement Speed}}{100}\right) \times \prod \left(1 + \frac{\% \text{More Movement Speed}}{100}\right)$$
+  * **Máy Trạng Thái Di Chuyển (Movement State Machine):**
+    1. **Hành quân (Marching / Advancing):** Khi không có mục tiêu trong tầm đánh, Exile di chuyển tịnh tiến dọc theo hướng bản đồ với vận tốc $v_{\text{move}}$.
+    2. **Giao chiến (Engaging / Staging):** Khi cụm quái tiếp theo lọt vào tầm nhận thức/tầm đánh hiệu dụng ($d(P_E, P_M) \le R_{\text{skill}}$), Exile dừng lại hoặc giữ khoảng cách tối ưu để xả skill.
+    3. **Tiếp tục tiến bước:** Sau khi dọn sạch cụm quái, Exile tự động tiếp tục hành quân tới cụm kế tiếp.
+    4. **Vào phòng Boss (Boss Room Entry):** Khi chạm mốc cổng phong ấn ở cuối hành lang, Exile bước vào trung tâm phòng Boss, camera khóa vị trí vào đấu trường và trận chiến Boss bắt đầu.
+* **Camera2D Bám Theo Nhân Vật (Camera Tracking):**
+  * `Camera2D` trong Viewport bám theo vị trí thực $P_E(t)$ của Exile với thuật toán làm mượt (Smooth Interpolation / Lerp) và khoảng nhìn trước (Look-ahead Offset) hướng về phía trước hành lang:
+    $$P_{\text{camera}}(t) = \text{Lerp}\left(P_{\text{camera}}(t - \Delta t),\ P_E(t) + \vec{O}_{\text{lookahead}},\ \lambda \times \Delta t\right)$$
+  * Người chơi nhìn thấy Exile thực sự dấn bước qua từng phiến đá, từng chướng ngại vật và từng bầy quái rải rác trên bản đồ.
+
+### 4.2. Khoảng Cách Euclid & Vùng Tầm Đánh (Euclidean Distance & Range)
+Khoảng cách giữa Kẻ Lưu Đày (Exile) tại $P_E(x_E, y_E)$ và Quái vật tại $P_M(x_M, y_M)$ được tính toán trong không gian tọa độ thế giới:
 
 $$d(P_E, P_M) = \sqrt{(x_M - x_E)^2 + (y_M - y_E)^2}$$
 
 * **Melee Range:** $d \le 35\text{px}$ (Đòn đánh cận chiến, áp sát).
 * **Medium AoE / Aura Radius:** $d \le 70\text{px}$ (Righteous Fire, Warcries, Blasphemy Curses).
-* **Ranged / Screen Projectile Range:** $d \le 220\text{px}$ (Tầm bắn cung tên, tia phép thuật vươn khắp sàn đấu $440 \times 208\text{px}$).
+* **Ranged / Screen Projectile Range:** $d \le 220\text{px}$ (Tầm bắn cung tên, tia phép thuật quét dọc tầm nhìn Viewport).
 
-### 4.2. Hình Thái Kỹ Năng & Công Thức Va Chạm (Skill Geometries & Hit Testing)
+### 4.3. Hình Thái Kỹ Năng & Công Thức Va Chạm (Skill Geometries & Hit Testing)
 1. **Radial AoE (Hình Tròn Tỏa Đều 360° - Nova / Aura / Slams):**
    * Quái vật nhận sát thương khi: $d(P_{\text{origin}}, P_M) \le R_{\text{AoE}}$.
    * Hỗ trợ chỉ số `Increased Area of Effect` gia tăng bán kính hiệu dụng:
@@ -134,7 +150,7 @@ $$d(P_E, P_M) = \sqrt{(x_M - x_E)^2 + (y_M - y_E)^2}$$
      $$\theta_k = \theta_{\text{aim}} + \left(k - \frac{N - 1}{2}\right) \times \Delta \phi \quad (k = 0, \dots, N-1)$$
    * Mỗi viên đạn di chuyển độc lập theo vector vận tốc $\vec{v}_k = (S \cos\theta_k, S \sin\theta_k)$ và xử lý xuyên táo (*Pierce*) hoặc nảy xích (*Chain*) sang mục tiêu gần nhất trong bán kính tìm kiếm $R_{\text{chain}} \le 60\text{px}$.
 
-### 4.3. Ưu Tiên Mục Tiêu Tự Động (Autonomous AI Target Selection)
+### 4.4. Ưu Tiên Mục Tiêu Tự Động (Autonomous AI Target Selection)
 Hệ thống Zero APM tự động chọn mục tiêu theo thuật toán chấm điểm trọng số (Threat Scoring):
 
 $$\text{Threat Score}(M) = W_{\text{Rarity}} \times 1000 + W_{\text{Boss}} \times 5000 + \frac{500}{d(P_E, P_M) + 1} + \text{ClusterBonus}(M)$$

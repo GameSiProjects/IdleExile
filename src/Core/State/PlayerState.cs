@@ -215,6 +215,9 @@ public sealed class PlayerState : ICombatEntity
     /// <summary>Total Intelligence (Base + Gear bonuses).</summary>
     public int TotalIntelligence => BaseIntelligence + Gear.GetTotalIntelligenceBonus();
 
+    /// <summary>Total increased movement speed percentage from equipped gear.</summary>
+    public float TotalMovementSpeedBonus => Gear.GetTotalMovementSpeedPercent();
+
     /// <summary>Chosen Starter Archetype, if any.</summary>
     public StarterArchetypeDefinition? Archetype { get; private set; }
 
@@ -251,6 +254,8 @@ public sealed class PlayerState : ICombatEntity
     public PlayerState()
     {
         Gear.OnEquipmentChanged += RecalculateStatsFromGear;
+        RecalculateStatsFromGear();
+        RestoreAllPools();
     }
 
     private static readonly Dictionary<string, WeaponBaseDefinition> FallbackStarterBases = new()

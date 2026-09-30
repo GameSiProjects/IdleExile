@@ -61,6 +61,9 @@ public sealed class CombatEngine
     /// <summary>30Hz discrete simulation tick manager.</summary>
     public TickManager TickManager { get; }
 
+    /// <summary>Autonomous Zero-APM real-world corridor movement controller (Task 2.5).</summary>
+    public ExileMovementController Movement { get; }
+
     /// <summary>Passive skill tree modifier bucket.</summary>
     public StatModifierBucket? PassiveStats { get; set; }
 
@@ -158,11 +161,30 @@ public sealed class CombatEngine
     /// <summary>Fired when a monster executes a melee attack, providing 2D spatial data for the AoE strike indicator.</summary>
     public event Action<MonsterAttackEventArgs>? OnMonsterAttacked;
 
-    /// <summary>2D spatial position of the Exile within the 440 x 208 arena.</summary>
+    /// <summary>Fired when the Exile's autonomous movement state changes.</summary>
+    public event Action<ExileMovementState, ExileMovementState>? OnMovementStateChanged;
+
+    /// <summary>Fired when the Exile moves along the corridor.</summary>
+    public event Action<Vector2D>? OnExileMoved;
+
+    /// <summary>Fired when the Exile crosses the Fog Gate threshold at 85% of map length.</summary>
+    public event Action? OnFogGateCrossed;
+
+    /// <summary>Fired when the Exile arrives in the center of the Boss Arena.</summary>
+    public event Action? OnBossArenaEntered;
+
+    /// <summary>2D spatial position of the Exile within the world corridor.</summary>
     public Vector2D ExilePosition
     {
-        get => Player.Position;
-        set => Player.Position = value;
+        get => Movement?.Position ?? Player.Position;
+        set
+        {
+            Player.Position = value;
+            if (Movement != null)
+            {
+                Movement.Position = value;
+            }
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -188,9 +210,23 @@ public sealed class CombatEngine
         TickManager = tickManager ?? new TickManager();
         _random = random ?? Random.Shared;
 
+        Movement = new ExileMovementController(Player, Loadout);
+        Movement.OnStateChanged += (oldS, newS) => OnMovementStateChanged?.Invoke(oldS, newS);
+        Movement.OnPositionChanged += pos => OnExileMoved?.Invoke(pos);
+        Movement.OnFogGateCrossed += () => OnFogGateCrossed?.Invoke();
+        Movement.OnBossArenaEntered += () => OnBossArenaEntered?.Invoke();
+
         // Forward internal events
-        Death.OnPlayerDied += recap => OnPlayerDied?.Invoke(recap);
-        Death.OnPlayerRespawned += () => OnPlayerRespawned?.Invoke();
+        Death.OnPlayerDied += recap =>
+        {
+            Movement.SetDead();
+            OnPlayerDied?.Invoke(recap);
+        };
+        Death.OnPlayerRespawned += () =>
+        {
+            Movement.SetAlive();
+            OnPlayerRespawned?.Invoke();
+        };
     }
 
     // ─────────────────────────────────────────────
@@ -222,6 +258,8 @@ public sealed class CombatEngine
 
         OnMapStarted?.Invoke(config);
 
+        Movement.StartMap(2400f, ExilePosition);
+
         var firstWave = Spawner.SpawnNextWave();
         if (firstWave != null)
         {
@@ -235,6 +273,7 @@ public sealed class CombatEngine
     public void StopMap()
     {
         IsInCombat = false;
+        Movement.Stop();
     }
 
     /// <summary>
@@ -246,6 +285,7 @@ public sealed class CombatEngine
         if (!IsInCombat || !Player.IsAlive)
             return false;
 
+        Movement.Stop();
         bool escaped = Death.TryTriggerEmergencyPortal(Player);
         if (escaped)
         {
@@ -312,6 +352,11 @@ public sealed class CombatEngine
         //  Phase 2: Timers & Buffs Phase
         // ═════════════════════════════════════════════
         ExecutePhase2_TimersAndBuffs(deltaTime);
+
+        // ═════════════════════════════════════════════
+        //  Phase 2.5: Real-World Exile Movement (Task 2.5)
+        // ═════════════════════════════════════════════
+        ExecutePhase_ExileMovement(deltaTime);
 
         // ═════════════════════════════════════════════
         //  Phase 3: Player Action Phase
@@ -449,6 +494,23 @@ public sealed class CombatEngine
                 _playerActionAccumulator.Reset();
             }
         }
+    }
+
+    // ─────────────────────────────────────────────
+    //  Phase 2.5: Real-World Exile Movement (Task 2.5)
+    // ─────────────────────────────────────────────
+
+    private void ExecutePhase_ExileMovement(float deltaTime)
+    {
+        if (!Player.IsAlive || Death.IsAwaitingRespawn || !IsInCombat)
+        {
+            Movement.Stop();
+            return;
+        }
+
+        var aliveMonsters = CurrentWave?.Alive.ToList() ?? new List<MonsterInstance>();
+        Movement.Tick(deltaTime, aliveMonsters, Player, GearStats, PassiveStats);
+        Player.Position = Movement.Position;
     }
 
     // ─────────────────────────────────────────────
@@ -884,10 +946,13 @@ public sealed class CombatEngine
         // 2. Wave Progression & Map Completion
         if (CurrentWave != null && CurrentWave.IsCleared)
         {
+            Movement.NotifyPackCleared();
+
             if (CurrentWave.IsBossWave || Spawner.IsMapComplete)
             {
                 IsMapComplete = true;
                 IsInCombat = false;
+                Movement.SetCompleted();
 
                 OnMapCompleted?.Invoke(new MapCompletedEventArgs(
                     Config: CurrentConfig!,

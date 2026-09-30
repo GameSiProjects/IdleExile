@@ -118,4 +118,7 @@ public interface IGearItem
 
     /// <summary>Global increased attack speed bonus in percent.</summary>
     float GlobalAttackSpeedPercent { get; }
+
+    /// <summary>Increased Movement Speed bonus granted by this item in percent.</summary>
+    float MovementSpeedBonus => 0f;
 }

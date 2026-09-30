@@ -465,4 +465,17 @@ public sealed class EquippedGearState
 
         return new DamageRange(MainHand.ComputedMinDamage, MainHand.ComputedMaxDamage);
     }
+
+    /// <summary>
+    /// Computes the total increased movement speed percentage from all equipped items.
+    /// </summary>
+    public float GetTotalMovementSpeedPercent()
+    {
+        float total = 0f;
+        foreach (var item in GetAllEquippedItems())
+        {
+            total += item.MovementSpeedBonus;
+        }
+        return total;
+    }
 }

@@ -79,5 +79,10 @@ Tài liệu thiết kế tổng thể cho dự án **Idle Exile** — một tự
     - Triết lý đồ Độc Bản (Unique Items): Không chạy đua chỉ số thô, tập trung mở khóa cơ chế Build-Enabling.
     - Vòng đời trang bị (Early -> Mid -> Endgame) và tối ưu hóa trải nghiệm Mini-Window 440x780 (Smart Tooltip Delta, Auto-Affinity Stash).
 
-12. **[Lộ Trình Triển Khai Kỹ Thuật: Tiến Trình Kép & Hóa Thạch (`DUAL_PROGRESSION_AND_CRAFTING_PLAN.md`)](DUAL_PROGRESSION_AND_CRAFTING_PLAN.md)**
+12. **[12. Lộ Trình Triển Khai Toàn Diện (`12_master_implementation_roadmap.md`)](12_master_implementation_roadmap.md)**
+    - Bản đồ chiến lược 8 giai đoạn từ nền tảng đến bản hoàn thiện.
+    - 4 mốc phát hành lớn: M1 (Vertical Slice), M2 (Closed Alpha), M3 (Open Beta), M4 (Golden Master v1.0).
+    - Phân tích chi tiết tiến độ, phụ thuộc kỹ thuật (dependencies) và ma trận quản trị rủi ro.
+
+13. **[Kế Hoạch Triển Khai Kỹ Thuật: Tiến Trình Kép & Hóa Thạch (`DUAL_PROGRESSION_AND_CRAFTING_PLAN.md`)](DUAL_PROGRESSION_AND_CRAFTING_PLAN.md)**
     - Checklist chi tiết 6 giai đoạn phát triển: JSON Data Pipeline, Auto-Mapping Queue, The Endless Abyss Engine, Streamlined Fossil Crafting Anvil, Viewport UI và Unit Tests.
