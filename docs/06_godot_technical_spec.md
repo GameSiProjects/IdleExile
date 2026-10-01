@@ -242,3 +242,24 @@ Khi người chơi mở lại game sau nhiều giờ offline:
    * Chạy số lượng roll này qua hệ thống Drop Table kết hợp với **Loot Filter** để sinh trực tiếp danh sách Currency và trang bị giá trị vào Stash Tab mà không cần giả lập vị trí hay chuyển động.
 5. **Hiển thị Popup Tổng Kết (Offline Summary Dialog):**
    * Thông báo thời gian offline, số map đã chạy, lượng EXP nhận được, số lần chết và danh sách vật phẩm quý hiếm nhặt được. Toàn bộ thuật toán hoàn tất trong **< 1 mili-giây**.
+
+---
+
+## 7. Quy Tắc Debug Code & Cleanliness Trong Bản Release (Release Build Policy)
+
+Nhằm đảm bảo trải nghiệm người chơi luôn sạch sẽ, bảo mật và hiệu năng cực đại đúng triết lý companion app:
+1. **Tuyệt Đối Không Để Debug Code Tồn Tại Trong Bản Release:**
+   * Toàn bộ nhãn overlay toạ độ nhân vật (`[DEBUG] P_E: (X, Y) | State | Speed`), telemetry vị trí, phím tắt test hay mock preview không được phép hiển thị hay biên dịch vào bản Release.
+2. **Khai Báo Điều Kiện Tiền Xử Lý (`#if DEBUG`):**
+   * Mọi trường biến, hàm khởi tạo, hàm cập nhật debug HUD phải nằm trong `#if DEBUG ... #endif`.
+   * Trong Godot presentation C#, bổ sung kiểm tra runtime `if (!OS.IsDebugBuild()) return;` để phòng vệ kép:
+     ```csharp
+     #if DEBUG
+     if (OS.IsDebugBuild())
+     {
+         _battleViewport?.UpdateDebugCoordinates(...);
+     }
+     #endif
+     ```
+3. **Kiểm Tra Build:**
+   * Bản Release biên dịch qua `dotnet build -c Release` sẽ tự động loại bỏ 100% mã debug khỏi file binary, không tiêu tốn RAM hay chu kỳ CPU.

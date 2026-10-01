@@ -119,6 +119,22 @@ public sealed class MonsterInstance : ICombatEntity
     /// </summary>
     public float MovementSpeed { get; }
 
+    /// <summary>
+    /// Perception/awareness detection radius in pixels.
+    /// Monsters stay idle in their formation until the Exile enters this radius or until damaged.
+    /// Normal: 150px, Magic: 180px, Rare: 200px, Boss: 260px.
+    /// </summary>
+    public float AggroRange { get; set; }
+
+    /// <summary>
+    /// Whether this monster has aggroed onto the Exile.
+    /// Monsters only advance and attack when aggroed.
+    /// </summary>
+    public bool IsAggroed { get; set; } = false;
+
+    /// <summary>Original spawn position within the corridor or arena.</summary>
+    public Vector2D SpawnPosition { get; set; } = Vector2D.Zero;
+
     // ─────────────────────────────────────────────
     //  Health
     // ─────────────────────────────────────────────
@@ -301,9 +317,19 @@ public sealed class MonsterInstance : ICombatEntity
             MonsterRarity.Magic => 55f,  // Slightly faster than trash
             _ => 60f                     // Standard trash mob speed
         };
+
+        AggroRange = rarity switch
+        {
+            MonsterRarity.Boss => 100f,
+            MonsterRarity.Rare => 95f,
+            MonsterRarity.Magic => 85f,
+            _ => 75f
+        };
+
         if (initialPosition.HasValue)
         {
             Position = initialPosition.Value;
+            SpawnPosition = initialPosition.Value;
         }
 
         MaxLife = MathF.Max(1f, maxLife);
@@ -329,6 +355,14 @@ public sealed class MonsterInstance : ICombatEntity
     // ─────────────────────────────────────────────
 
     /// <summary>
+    /// Aggros this monster, enabling it to advance towards and attack the Exile.
+    /// </summary>
+    public void Aggro()
+    {
+        IsAggroed = true;
+    }
+
+    /// <summary>
     /// Applies damage to this monster, accounting for its resistances.
     /// Returns the actual damage dealt after resistance mitigation.
     /// </summary>
@@ -338,6 +372,8 @@ public sealed class MonsterInstance : ICombatEntity
     {
         if (amount <= 0f || !IsAlive)
             return 0f;
+
+        IsAggroed = true;
 
         // Apply monster resistance
         float resistance = GetResistance(damageType);
@@ -365,6 +401,8 @@ public sealed class MonsterInstance : ICombatEntity
     {
         if (amount <= 0f || !IsAlive)
             return 0f;
+
+        IsAggroed = true;
 
         CurrentLife -= amount;
         if (CurrentLife <= 0f)

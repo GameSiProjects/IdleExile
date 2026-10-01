@@ -62,6 +62,16 @@ public sealed record WeaponBaseDefinition(
     [property: JsonPropertyName("description")] string Description = ""
 )
 {
+    /// <summary>Whether this weapon base belongs to a melee weapon class.</summary>
+    public bool IsMelee => WeaponClass switch
+    {
+        WeaponClass.Bow or WeaponClass.Wand or WeaponClass.Quiver => false,
+        _ => true
+    };
+
+    /// <summary>Whether this weapon base is a ranged weapon (Bow or Wand).</summary>
+    public bool IsRanged => WeaponClass is WeaponClass.Bow or WeaponClass.Wand;
+
     /// <summary>
     /// Formats the weapon's implicit affix into standard Path of Exile modifier text.
     /// </summary>

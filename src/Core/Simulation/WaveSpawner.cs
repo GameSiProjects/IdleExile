@@ -77,6 +77,18 @@ public sealed class MonsterWave
     /// <summary>True if this is the final boss wave.</summary>
     public bool IsBossWave { get; init; }
 
+    /// <summary>Corridor pack metadata and spatial formation (Task 2.7).</summary>
+    public CorridorPack? Pack { get; init; }
+
+    /// <summary>Formation type of the pack in this wave.</summary>
+    public CorridorPackFormationType? Formation => Pack?.FormationType;
+
+    /// <summary>Associated roadside League Encounter, if this wave represents one.</summary>
+    public LeagueEncounterInstance? Encounter => Pack?.Encounter;
+
+    /// <summary>True if this wave belongs to a roadside League Encounter.</summary>
+    public bool IsEncounterWave => Pack?.IsEncounterPack == true;
+
     /// <summary>Returns all living monsters in this wave.</summary>
     public IEnumerable<MonsterInstance> Alive => Monsters.Where(m => m.IsAlive);
 
@@ -173,7 +185,7 @@ public sealed class WaveSpawner
 
     // ─── Rare Monster Aura Pool ───
 
-    private static readonly MonsterAuraModifier[] AuraPool =
+    public static readonly MonsterAuraModifier[] AuraPool =
     [
         new("haste", "Allies have +25% Action Speed", 0f, 25f, 0f),
         new("extra_fire", "Allies deal extra Fire damage", 15f, 0f, 0f),
@@ -195,6 +207,9 @@ public sealed class WaveSpawner
 
     /// <summary>Map run configuration for the current map.</summary>
     public MapRunConfig? CurrentConfig { get; private set; }
+
+    /// <summary>Structured sequential corridor layout for the active map run (Task 2.7).</summary>
+    public CorridorMonsterLayout? CurrentLayout { get; private set; }
 
     /// <summary>Total waves expected before boss (trash clearing phase).</summary>
     public int TotalTrashWaves { get; private set; }
@@ -234,18 +249,29 @@ public sealed class WaveSpawner
 
     /// <summary>
     /// Initializes the spawner for a new map run.
-    /// Resets wave counter, sets up pack composition based on map config.
+    /// Resets wave counter, generates sequential corridor layout based on map config.
     /// Must be called before <see cref="SpawnNextWave"/>.
     /// </summary>
-    public void BeginMap(MapRunConfig config)
+    public void BeginMap(
+        MapRunConfig config,
+        float mapLength = ExileMovementController.DefaultMapLength,
+        LeagueEncounterType? forceEncounter = null)
     {
         CurrentConfig = config;
         _currentWaveNumber = 0;
         IsMapComplete = false;
         BossSpawned = false;
 
-        // Pack Size modifies total wave count: 100% base = 8 waves, 150% = 12 waves
-        TotalTrashWaves = Math.Max(1, (int)MathF.Round(BaseTrashWaveCount * (config.TotalPackSize / 100f)));
+        // Task 2.7: Generate structured sequential corridor layout
+        CurrentLayout = CorridorMonsterLayout.Generate(
+            config,
+            (rarity, overrideName) => CreateMonster(rarity, config, overrideName),
+            mapLength,
+            _random,
+            forceEncounter
+        );
+
+        TotalTrashWaves = CurrentLayout.Packs.Count(p => p.FormationType != CorridorPackFormationType.BossChamber);
     }
 
     // ─────────────────────────────────────────────
@@ -257,9 +283,8 @@ public sealed class WaveSpawner
     /// Returns null if the map is already complete.
     ///
     /// Progression:
-    /// - Waves 1 to TotalTrashWaves: Trash packs with chance for Magic/Rare leaders.
-    /// - Wave TotalTrashWaves+1: Boss wave (if map has a boss).
-    /// - After boss: map is marked complete.
+    /// - Waves 1 to TotalTrashWaves: Sequential packs along corridor (Vanguard, Commander, Encounter, Flankers, Gate Phalanx).
+    /// - Final wave: Boss Chamber pack.
     /// </summary>
     public MonsterWave? SpawnNextWave()
     {
@@ -268,6 +293,41 @@ public sealed class WaveSpawner
 
         _currentWaveNumber++;
 
+        // 1. Task 2.7: Pull from structured CorridorMonsterLayout if available
+        if (CurrentLayout != null && _currentWaveNumber <= CurrentLayout.Packs.Count)
+        {
+            var pack = CurrentLayout.Packs[_currentWaveNumber - 1];
+            bool isBoss = pack.FormationType == CorridorPackFormationType.BossChamber;
+
+            if (isBoss)
+            {
+                BossSpawned = true;
+                IsMapComplete = true;
+            }
+
+            var wave = new MonsterWave
+            {
+                WaveNumber = _currentWaveNumber,
+                Monsters = pack.Monsters,
+                IsBossWave = isBoss,
+                Pack = pack
+            };
+
+            if (isBoss)
+            {
+                OnBossWaveSpawned?.Invoke(wave);
+                OnWaveSpawned?.Invoke(wave);
+                OnMapCompleted?.Invoke();
+            }
+            else
+            {
+                OnWaveSpawned?.Invoke(wave);
+            }
+
+            return wave;
+        }
+
+        // 2. Legacy fallback
         // Boss wave
         if (_currentWaveNumber > TotalTrashWaves && !BossSpawned)
         {
@@ -290,9 +350,9 @@ public sealed class WaveSpawner
         }
 
         // Normal trash wave (with possible Magic/Rare leader)
-        var wave = SpawnTrashWave();
-        OnWaveSpawned?.Invoke(wave);
-        return wave;
+        var legacyWave = SpawnTrashWave();
+        OnWaveSpawned?.Invoke(legacyWave);
+        return legacyWave;
     }
 
     /// <summary>

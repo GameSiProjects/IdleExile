@@ -317,7 +317,8 @@ public static class CombatEngineTests
             accuracy: 100f,
             baseExperience: 10f,
             itemQuantityMultiplier: 1f,
-            itemRarityMultiplier: 1f
+            itemRarityMultiplier: 1f,
+            initialPosition: new Vector2D(220f, 65f)
         );
 
         var wave = new MonsterWave
@@ -388,7 +389,7 @@ public static class CombatEngineTests
 
         engine.StartMap(new MapRunConfig(mapDef, rolledMods));
 
-        var monster = new MonsterInstance(102, "Target Mob", MonsterRarity.Normal, 1, 1000f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1);
+        var monster = new MonsterInstance(102, "Target Mob", MonsterRarity.Normal, 1, 1000f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(220f, 65f));
         engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = new[] { monster } });
 
         bool reflectDamaged = false;
@@ -637,7 +638,8 @@ public static class CombatEngineTests
                 accuracy: 100f,
                 baseExperience: 10f,
                 itemQuantityMultiplier: 1f,
-                itemRarityMultiplier: 1f
+                itemRarityMultiplier: 1f,
+                initialPosition: new Vector2D(220f, 65f + m * 5f)
             ));
         }
 

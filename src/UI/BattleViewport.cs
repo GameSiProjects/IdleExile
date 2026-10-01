@@ -63,6 +63,9 @@ public partial class BattleViewport : Control
     {
         BindNodes();
         ApplyInitialState();
+#if DEBUG
+        CreateDebugOverlay();
+#endif
     }
 
     private void BindNodes()
@@ -385,6 +388,79 @@ public partial class BattleViewport : Control
     /// Updates monster remaining life in the 2D arena.
     /// </summary>
     public void UpdateArenaMonsterLife(long instanceId, float currentLife) => Arena?.UpdateMonsterLife(instanceId, currentLife);
+
+    /// <summary>
+    /// Updates Exile world position and movement telemetry in the 2D arena for relative corridor rendering (Task 2.7).
+    /// </summary>
+    public void UpdateExileWorldPosition(Vector2 worldPos, ExileMovementState state = ExileMovementState.Idle, float speed = 0f, float mapLength = 2400f) =>
+        Arena?.UpdateExileWorldPosition(worldPos, state, speed, mapLength);
+
+    /// <summary>
+    /// Triggers visual shatter effect for awakened dormant monsters (e.g. Essence Monolith).
+    /// </summary>
+    public void WakeUpAllMonsters() => Arena?.WakeUpAllMonsters();
+
+#if DEBUG
+    // ─────────────────────────────────────────────
+    //  Developer Debug Telemetry Overlay (STRIPPED IN RELEASE BUILDS)
+    // ─────────────────────────────────────────────
+    private PanelContainer? _debugOverlayPanel;
+    private Label? _debugCoordLabel;
+
+    private void CreateDebugOverlay()
+    {
+        if (!OS.IsDebugBuild()) return;
+
+        var style = new StyleBoxFlat
+        {
+            BgColor = new Color(0.04f, 0.05f, 0.07f, 0.88f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            BorderColor = new Color(0.20f, 0.45f, 0.75f, 0.90f),
+            CornerRadiusTopLeft = 3,
+            CornerRadiusTopRight = 3,
+            CornerRadiusBottomRight = 3,
+            CornerRadiusBottomLeft = 3,
+            ContentMarginLeft = 6,
+            ContentMarginRight = 6,
+            ContentMarginTop = 2,
+            ContentMarginBottom = 2
+        };
+
+        _debugCoordLabel = new Label
+        {
+            Name = "DebugCoordLabel",
+            Text = "[DEBUG] P_E: (220.0, 40.0) | Idle | 0px/s | Dist: 0/2400px (0.0%)",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+        _debugCoordLabel.AddThemeFontSizeOverride("font_size", 10);
+        _debugCoordLabel.AddThemeColorOverride("font_color", new Color(0.40f, 0.85f, 1.0f, 0.95f));
+
+        _debugOverlayPanel = new PanelContainer
+        {
+            Name = "DebugCoordinateOverlay",
+            MouseFilter = MouseFilterEnum.Ignore,
+            Position = new Vector2(8, 44),
+            ZIndex = 50
+        };
+        _debugOverlayPanel.AddThemeStyleboxOverride("panel", style);
+        _debugOverlayPanel.AddChild(_debugCoordLabel);
+
+        AddChild(_debugOverlayPanel);
+    }
+
+    /// <summary>
+    /// Live telemetry update for developer debug label. Automatically compiled out in Release builds.
+    /// </summary>
+    public void UpdateDebugCoordinates(Vector2 worldPos, ExileMovementState state, float speed, float distanceTraveled, float mapLength, float progressPct)
+    {
+        if (!OS.IsDebugBuild() || _debugCoordLabel == null) return;
+        _debugCoordLabel.Text = $"[DEBUG] P_E: ({worldPos.X:F1}, {worldPos.Y:F1}) | {state} | {speed:F0}px/s | Dist: {distanceTraveled:F0}/{mapLength:F0}px ({progressPct:F1}%)";
+    }
+#endif
 
     // ─────────────────────────────────────────────
     //  Floating Combat Text API (Task 2.5)

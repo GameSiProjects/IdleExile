@@ -119,11 +119,14 @@ Tài liệu này là **Bản đồ chỉ dẫn thực thi chiến lược (Strat
 - [ ] **2.6: Hệ Thống Camera2D Smooth Follow (`ArenaCamera.cs`)**
   - [ ] Camera2D bám theo vị trí thực của Exile với thuật toán Lerp làm mượt.
   - [ ] Khoảng nhìn trước (`Look-ahead Offset`) về phía trước hướng hành quân.
-- [ ] **2.7: Bố Trí Cụm Quái Tuần Tự Dọc Hành Lang (`CorridorMonsterLayout`)**
-  - [ ] Pack 1: Bầy quái thường chắn đường (Vanguard Swarm).
-  - [ ] Pack 2: Quái Tinh Anh (Rare Commander có vòng hào quang hoàng kim).
-  - [ ] Encounter: Vết nứt Breach, mạch Sulphite hoặc Essence phong ấn bên rìa đường.
-  - [ ] Pack 3, 4: Đội hình hộ vệ hoặc bọc hậu (Phalanx / Flankers).
+- [x] **2.7: Bố Trí Cụm Quái Tuần Tự Dọc Hành Lang (`CorridorMonsterLayout`)**
+  - [x] Pack 1: Bầy quái thường chắn đường (Vanguard Swarm).
+  - [x] Pack 2: Quái Tinh Anh (Rare Commander có vòng hào quang hoàng kim).
+  - [x] Encounter: Vết nứt Breach, mạch Sulphite hoặc Essence phong ấn bên rìa đường.
+  - [x] Pack 3, 4: Đội hình hộ vệ hoặc bọc hậu (Phalanx / Flankers).
+  - [x] Gating phạm vi Aggro (75–95px): Quái vật chỉ kích hoạt khi nhân vật tiếp cận gần, cuộn mượt vào tầm mắt thay vì lao từ ngoài màn hình vào.
+  - [x] Sàn hành lang cuộn trực quan: Tịnh tiến texture đá lát nền, đuốc bập bùng hai bên tường và bệ xuất phát (Start Dais) cuộn xa dần.
+  - [x] Nhãn Debug Tọa Độ (`[DEBUG] P_E`): Hiển thị tọa độ thực, trạng thái và tốc độ; được bảo vệ bằng `#if DEBUG` (loại bỏ 100% trong bản Release).
 - [ ] **2.8: Cổng Sương Mù & Đấu Trường Boss Cuối Đường (Boss Room Chamber)**
   - [ ] Cổng sương mù (Fog Gate) phong tỏa tại mốc 85% chiều dài map.
   - [ ] Bước qua cổng: Camera2D khóa cố định vào tâm phòng Boss (Arena Lock).

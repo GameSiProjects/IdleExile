@@ -100,6 +100,22 @@ IdleExile/
 * Leverage **LINQ** for querying collections (e.g., Loot Filter evaluation, gem tag matching).
 * Maintain clean naming: PascalCase for public members/methods, `_camelCase` for private fields.
 
+### 4.4. Release Build Cleanliness & Debug Code Policy (CRITICAL & NON-NEGOTIABLE)
+* **Zero Debug Artifacts in Release Builds:** Debug telemetry labels, diagnostic coordinate overlays, developer cheats/shortcuts, and temporary testing hooks MUST NEVER exist or be accessible in Release builds.
+* **Strict Preprocessor Gating:**
+  * All debug UI elements, diagnostic fields, and telemetry methods MUST be encapsulated within `#if DEBUG` ... `#endif` directives.
+  * In Godot C# presentation scripts, additionally gate runtime execution with `if (!OS.IsDebugBuild()) return;` as a secondary safety barrier:
+    ```csharp
+    #if DEBUG
+    if (OS.IsDebugBuild())
+    {
+        // Debug telemetry HUD updates / overlay rendering
+    }
+    #endif
+    ```
+  * In Release configuration (`dotnet build -c Release`), all debug code, variables, and allocations are 100% stripped by the compiler, guaranteeing zero binary footprint and zero CPU/GPU overhead.
+* **No Temporary Debug Hacks in Production:** Never commit hardcoded mock coordinates, simulation bypasses, or testing overrides into production simulation loops.
+
 ---
 
 ## 5. Development & Build Commands
@@ -137,6 +153,7 @@ dotnet build
 | **Unified Combat & Attack System** | Complete | `src/Core/Models/ICombatEntity.cs`, `AttackPayload.cs`, `CombatAttackService.cs` |
 | **Spatial Geometry & 2D Math (Section 4)** | Complete | `src/Core/Services/SpatialCombatService.cs`, `Vector2D.cs` |
 | **Real-World Movement Controller (Task 2.5)** | Complete | `src/Core/Simulation/ExileMovementController.cs` |
+| **Sequential Corridor Monster Layout (Task 2.7)** | Complete | `src/Core/Simulation/CorridorMonsterLayout.cs` |
 | **10-Slot Equipment & Soft Attributes (Task 3.1)** | Complete | `src/Core/Models/`, `src/Core/State/EquippedGearState.cs` |
 | **Smart Tooltip Comparison Engine (Task 3.4)** | Complete | `src/Core/Services/EquipmentComparisonService.cs` |
 | **Mini-Window Equipment View (Task 3.4)** | Complete | `scenes/EquipmentView.tscn`, `src/UI/Components/EquipmentView.cs` |

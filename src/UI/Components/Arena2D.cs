@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using IdleExile.Core.Models;
+using IdleExile.Core.Simulation;
 
 namespace IdleExile.UI.Components;
 
@@ -42,6 +43,9 @@ public sealed class MonsterVisualToken
     public float DeathFadeTimer;
     public float BobbingPhase;
     public Color CustomColor;
+    public bool IsDormant;
+    public bool IsAggroed;
+    public LeagueEncounterType EncounterType;
 }
 
 /// <summary>
@@ -108,6 +112,10 @@ public partial class Arena2D : Node2D
     //  Exile Character State (Top-Down)
     // ─────────────────────────────────────────────
     public Vector2 ExilePosition { get; set; } = CenterPosition;
+    public Vector2 ExileWorldPosition { get; set; } = new(220f, 104f);
+    public ExileMovementState MovementState { get; set; } = ExileMovementState.Idle;
+    public float MovementSpeed { get; set; } = 0f;
+    public float MapLength { get; set; } = 2400f;
     private float _exileFacingAngle; // In radians
     public float ExileFacingAngle => _exileFacingAngle;
     private float _exileAttackRecoil;
@@ -358,6 +366,13 @@ public partial class Arena2D : Node2D
                 _exileFacingAngle = Mathf.Wrap(_exileFacingAngle, -Mathf.Pi, Mathf.Pi);
             }
         }
+        else
+        {
+            // Out of combat: smoothly face forward marching direction (+Y downward in corridor)
+            float desiredAngle = Mathf.Pi * 0.5f;
+            _exileFacingAngle = Mathf.LerpAngle(_exileFacingAngle, desiredAngle, dt * 6f);
+            _exileFacingAngle = Mathf.Wrap(_exileFacingAngle, -Mathf.Pi, Mathf.Pi);
+        }
     }
 
     public override void _Draw()
@@ -389,72 +404,151 @@ public partial class Arena2D : Node2D
     // ─────────────────────────────────────────────
     private void DrawTopDownFloor()
     {
-        // Base dark stone slab
+        // 1. Base dark stone foundation slab
         DrawRect(new Rect2(0, 0, ArenaWidth, ArenaHeight), new Color(0.043f, 0.047f, 0.063f, 1.0f));
 
-        // 2D Flagstone Tiles (10 columns x 6 rows)
-        int cols = 10;
-        int rows = 6;
-        float tileW = ArenaWidth / cols;   // 44px
-        float tileH = ArenaHeight / rows;  // ~34.6px
+        // 2. Playable Corridor Flagstone Tiles (between MinCorridorX=40 and MaxCorridorX=400)
+        float tileW = 36f;
+        float tileH = 28f;
+        int cols = Mathf.CeilToInt((ExileMovementController.MaxCorridorX - ExileMovementController.MinCorridorX) / tileW);
+        int rows = Mathf.CeilToInt(ArenaHeight / tileH) + 2;
+
+        float scrollY = -Mathf.PosMod(ExileWorldPosition.Y, tileH);
+        int tileWorldRowBase = Mathf.FloorToInt(ExileWorldPosition.Y / tileH);
 
         Color groutColor = new(0.025f, 0.028f, 0.038f, 0.95f);
         Color tileColorA = new(0.062f, 0.068f, 0.088f, 0.85f);
         Color tileColorB = new(0.052f, 0.058f, 0.076f, 0.85f);
 
-        for (int r = 0; r < rows; r++)
+        for (int r = -1; r <= rows; r++)
         {
-            float rowOffset = (r % 2 == 1) ? (tileW * 0.5f) : 0f;
-            for (int c = -1; c <= cols; c++)
-            {
-                float x = c * tileW + rowOffset;
-                float y = r * tileH;
-                Rect2 tileRect = new(x + 1f, y + 1f, tileW - 2f, tileH - 2f);
+            int worldR = tileWorldRowBase + r;
+            float rowOffset = ((worldR % 2 + 2) % 2 == 1) ? (tileW * 0.5f) : 0f;
+            float y = r * tileH + scrollY;
 
-                // Alternate subtle shading
-                Color col = ((c + r) % 2 == 0) ? tileColorA : tileColorB;
+            for (int c = -1; c <= cols + 1; c++)
+            {
+                float x = ExileMovementController.MinCorridorX + c * tileW + rowOffset;
+                if (x + tileW < ExileMovementController.MinCorridorX || x > ExileMovementController.MaxCorridorX)
+                    continue;
+
+                float drawX = Mathf.Max(x, ExileMovementController.MinCorridorX);
+                float drawW = Mathf.Min(x + tileW, ExileMovementController.MaxCorridorX) - drawX;
+                if (drawW <= 0.5f) continue;
+
+                Rect2 tileRect = new(drawX + 0.5f, y + 0.5f, drawW - 1f, tileH - 1f);
+
+                // Deterministic tile shading based on world coordinates (c, worldR)
+                int shadeIndex = ((c + worldR) % 2 + 2) % 2;
+                Color col = (shadeIndex == 0) ? tileColorA : tileColorB;
                 DrawRect(tileRect, col);
+            }
+
+            // Horizontal grout seams
+            DrawLine(new Vector2(ExileMovementController.MinCorridorX, y), new Vector2(ExileMovementController.MaxCorridorX, y), groutColor, 1.0f);
+        }
+
+        // 3. Side Walls (Dungeon corridors: Left 0..40, Right 400..440)
+        Color wallBase = new(0.022f, 0.024f, 0.032f, 1.0f);
+        Color curbBorder = new(0.18f, 0.20f, 0.26f, 0.95f);
+        Color curbHighlight = new(0.28f, 0.32f, 0.42f, 0.70f);
+
+        // Left wall slab & Right wall slab
+        DrawRect(new Rect2(0, 0, ExileMovementController.MinCorridorX, ArenaHeight), wallBase);
+        DrawRect(new Rect2(ExileMovementController.MaxCorridorX, 0, ArenaWidth - ExileMovementController.MaxCorridorX, ArenaHeight), wallBase);
+
+        // Wall stone seams scrolling with Y
+        for (int r = -1; r <= rows; r++)
+        {
+            float wy = r * tileH + scrollY;
+            DrawLine(new Vector2(0, wy), new Vector2(ExileMovementController.MinCorridorX, wy), groutColor, 1.2f);
+            DrawLine(new Vector2(ExileMovementController.MaxCorridorX, wy), new Vector2(ArenaWidth, wy), groutColor, 1.2f);
+        }
+
+        // Curb edges
+        DrawLine(new Vector2(ExileMovementController.MinCorridorX, 0), new Vector2(ExileMovementController.MinCorridorX, ArenaHeight), curbBorder, 2.0f);
+        DrawLine(new Vector2(ExileMovementController.MinCorridorX + 1f, 0), new Vector2(ExileMovementController.MinCorridorX + 1f, ArenaHeight), curbHighlight, 1.0f);
+
+        DrawLine(new Vector2(ExileMovementController.MaxCorridorX, 0), new Vector2(ExileMovementController.MaxCorridorX, ArenaHeight), curbBorder, 2.0f);
+        DrawLine(new Vector2(ExileMovementController.MaxCorridorX - 1f, 0), new Vector2(ExileMovementController.MaxCorridorX - 1f, ArenaHeight), curbHighlight, 1.0f);
+
+        // 4. Roadside Sconces / Torches (spaced every 140px along corridor)
+        float torchSpacing = 140f;
+        int torchBase = Mathf.FloorToInt((ExileWorldPosition.Y - 140f) / torchSpacing);
+        for (int t = torchBase; t <= torchBase + 4; t++)
+        {
+            float worldTorchY = t * torchSpacing;
+            float screenY = CenterPosition.Y + (worldTorchY - ExileWorldPosition.Y);
+            if (screenY >= -25f && screenY <= ArenaHeight + 25f)
+            {
+                DrawCorridorTorch(new Vector2(ExileMovementController.MinCorridorX - 3f, screenY), isLeft: true);
+                DrawCorridorTorch(new Vector2(ExileMovementController.MaxCorridorX + 3f, screenY), isLeft: false);
             }
         }
 
-        // Subtle horizontal & vertical grout grid seams
-        for (int r = 0; r <= rows; r++)
+        // 5. Start Portal Dais (Milestone Altar at World Y = 40f)
+        float startDaisScreenY = CenterPosition.Y + (40f - ExileWorldPosition.Y);
+        if (startDaisScreenY >= -60f && startDaisScreenY <= ArenaHeight + 60f)
         {
-            DrawLine(new Vector2(0, r * tileH), new Vector2(ArenaWidth, r * tileH), groutColor, 1.2f);
+            Vector2 daisCenter = new(CenterPosition.X, startDaisScreenY);
+            Color runicOuter = new(0.20f, 0.45f, 0.85f, 0.45f);
+            Color runicInner = new(0.12f, 0.25f, 0.45f, 0.25f);
+
+            DrawCircle(daisCenter, 44f, runicInner);
+            DrawArc(daisCenter, 44f, 0, Mathf.Tau, 36, runicOuter, 1.8f);
+            DrawArc(daisCenter, 28f, 0, Mathf.Tau, 24, runicOuter, 1.2f);
+
+            for (int i = 0; i < 8; i++)
+            {
+                float angle = i * (Mathf.Tau / 8f);
+                Vector2 dir = new(Mathf.Cos(angle), Mathf.Sin(angle));
+                DrawLine(daisCenter + dir * 28f, daisCenter + dir * 44f, runicOuter, 1.0f);
+            }
         }
 
-        // Central Altar / Runic Circle beneath Exile
-        Vector2 center = ExilePosition;
-        Color runicOuter = new(0.18f, 0.28f, 0.44f, 0.30f);
-        Color runicInner = new(0.18f, 0.28f, 0.44f, 0.18f);
-
-        DrawCircle(center, 44f, runicInner);
-        DrawArc(center, 44f, 0, Mathf.Tau, 36, runicOuter, 1.5f);
-        DrawArc(center, 28f, 0, Mathf.Tau, 24, runicOuter, 1.0f);
-
-        // 8 Runic tick marks radiating outward
-        for (int i = 0; i < 8; i++)
+        // 6. Fog Gate Threshold (at 85% of MapLength)
+        float fogGateWorldY = MapLength * ExileMovementController.FogGateRatio;
+        float fogGateScreenY = CenterPosition.Y + (fogGateWorldY - ExileWorldPosition.Y);
+        if (fogGateScreenY >= -30f && fogGateScreenY <= ArenaHeight + 30f)
         {
-            float angle = i * (Mathf.Tau / 8f);
-            Vector2 dir = new(Mathf.Cos(angle), Mathf.Sin(angle));
-            DrawLine(center + dir * 28f, center + dir * 44f, runicOuter, 1.0f);
+            float shimmer = 0.7f + Mathf.Sin(_floorTime * 4.0f) * 0.3f;
+            Color fogColor = new(0.95f, 0.78f, 0.25f, 0.65f * shimmer);
+            Color fogGlow = new(1.0f, 0.85f, 0.35f, 0.25f * shimmer);
+
+            DrawLine(new Vector2(ExileMovementController.MinCorridorX, fogGateScreenY),
+                new Vector2(ExileMovementController.MaxCorridorX, fogGateScreenY), fogGlow, 8.0f);
+            DrawLine(new Vector2(ExileMovementController.MinCorridorX, fogGateScreenY),
+                new Vector2(ExileMovementController.MaxCorridorX, fogGateScreenY), fogColor, 2.5f);
         }
 
-        // Ambient drifting atmospheric dust motes in 2D
-        Color moteColor = new(0.42f, 0.50f, 0.68f, 0.35f);
+        // 7. Ambient drifting atmospheric dust motes
+        Color moteColor = new(0.42f, 0.50f, 0.68f, 0.30f);
         for (int i = 0; i < 8; i++)
         {
-            float mx = (i * 55f + _floorTime * (12f + (i % 3) * 6f)) % ArenaWidth;
+            float mx = (i * 55f + _floorTime * (10f + (i % 3) * 5f)) % ArenaWidth;
             float my = (25f + (i * 24f) + Mathf.Sin(_floorTime * 1.5f + i) * 8f) % ArenaHeight;
             DrawCircle(new Vector2(mx, my), 1.2f, moteColor);
         }
 
-        // Vignette edge shadows (Top-down dungeon lighting)
+        // 8. Vignette edge shadows
         Color vignetteEdge = new(0.015f, 0.018f, 0.025f, 0.65f);
         DrawRect(new Rect2(0, 0, ArenaWidth, 6), vignetteEdge);
         DrawRect(new Rect2(0, ArenaHeight - 6, ArenaWidth, 6), vignetteEdge);
-        DrawRect(new Rect2(0, 0, 6, ArenaHeight), vignetteEdge);
-        DrawRect(new Rect2(ArenaWidth - 6, 0, 6, ArenaHeight), vignetteEdge);
+    }
+
+    private void DrawCorridorTorch(Vector2 pos, bool isLeft)
+    {
+        // Iron bracket anchored to wall
+        Vector2 bracketEnd = pos + new Vector2(isLeft ? 5f : -5f, 0f);
+        DrawLine(pos, bracketEnd, new Color(0.28f, 0.30f, 0.36f), 2.0f);
+
+        // Torch flame flicker
+        float flicker = 0.85f + Mathf.Sin(_floorTime * 14f + pos.Y) * 0.15f;
+        // Warm ambient light pool on ground
+        DrawCircle(bracketEnd, 16f * flicker, new Color(1.0f, 0.55f, 0.15f, 0.09f));
+        // Flame core
+        DrawCircle(bracketEnd, 3.2f * flicker, new Color(1.0f, 0.60f, 0.15f, 0.85f));
+        DrawCircle(bracketEnd + new Vector2(0, -1.8f), 1.8f, new Color(1.0f, 0.95f, 0.65f, 0.95f));
     }
 
     // ─────────────────────────────────────────────
@@ -467,7 +561,25 @@ public partial class Arena2D : Node2D
 
         // Micro-recoil backwards on attack
         Vector2 recoil = -facingDir * _exileAttackRecoil * 5f;
-        Vector2 pos = ExilePosition + recoil;
+
+        // Walking stride bobbing and footstep dust
+        bool isWalking = MovementState == ExileMovementState.Marching || MovementState == ExileMovementState.Advancing;
+        Vector2 walkOffset = Vector2.Zero;
+        if (isWalking)
+        {
+            float bobPhase = _floorTime * 14f;
+            walkOffset = new Vector2(
+                Mathf.Cos(bobPhase * 0.5f) * 0.9f,
+                Mathf.Sin(bobPhase) * 1.5f
+            );
+
+            // Trailing subtle dust puff behind Exile
+            float dustAlpha = 0.25f + Mathf.Sin(bobPhase * 2f) * 0.15f;
+            Vector2 dustPos = ExilePosition - facingDir * 10f;
+            DrawCircle(dustPos, 3.5f, new Color(0.32f, 0.30f, 0.28f, dustAlpha));
+        }
+
+        Vector2 pos = ExilePosition + recoil + walkOffset;
 
         // 1. Pulsing 360° Aura on the ground
         float auraPulse = 0.35f + Mathf.Sin(_exileAuraPulsePhase) * 0.15f;
@@ -838,12 +950,44 @@ public partial class Arena2D : Node2D
                     new Color(ColorBossAura.R, ColorBossAura.G, ColorBossAura.B, bossPulse * alpha), 2.5f);
             }
 
+            // Task 2.7: League Encounter Visual Indicators
+            if (m.EncounterType == LeagueEncounterType.BreachCrevice)
+            {
+                DrawArc(pos, 16f * m.Scale, 0, Mathf.Tau, 16, new Color(0.65f, 0.15f, 0.85f, 0.40f * alpha), 1.8f);
+            }
+            else if (m.EncounterType == LeagueEncounterType.SulphiteVein)
+            {
+                DrawArc(pos, 15f * m.Scale, 0, Mathf.Tau, 16, new Color(0.95f, 0.75f, 0.15f, 0.45f * alpha), 1.5f);
+            }
+
             // Monster Body Silhouette (Top-down token)
             Color bodyColor = m.HitFlashTimer > 0f ? Colors.White : m.CustomColor;
             bodyColor.A = alpha;
 
             float r = 8.5f * m.Scale;
             DrawCircle(pos, r, bodyColor);
+
+            // Task 2.7: Dormant Essence Monolith Crystal Encasement
+            if (m.IsDormant)
+            {
+                Color crystalFill = new(0.15f, 0.75f, 0.95f, 0.45f * alpha);
+                Color crystalBorder = new(0.50f, 0.90f, 1.0f, 0.85f * alpha);
+
+                Vector2[] crystalPoly =
+                [
+                    pos + new Vector2(0f, -14f * m.Scale),
+                    pos + new Vector2(12f * m.Scale, -4f * m.Scale),
+                    pos + new Vector2(10f * m.Scale, 11f * m.Scale),
+                    pos + new Vector2(0f, 16f * m.Scale),
+                    pos + new Vector2(-10f * m.Scale, 11f * m.Scale),
+                    pos + new Vector2(-12f * m.Scale, -4f * m.Scale)
+                ];
+                DrawColoredPolygon(crystalPoly, crystalFill);
+                for (int c = 0; c < crystalPoly.Length; c++)
+                {
+                    DrawLine(crystalPoly[c], crystalPoly[(c + 1) % crystalPoly.Length], crystalBorder, 1.5f);
+                }
+            }
 
             // Monster Eyes facing towards Exile
             Vector2 toExile = (ExilePosition - pos).Normalized();
@@ -1379,15 +1523,16 @@ public partial class Arena2D : Node2D
             token.MaxLife = inst.MaxLife;
             token.CurrentLife = inst.CurrentLife;
             token.IsAlive = inst.IsAlive;
+            token.IsAggroed = inst.IsAggroed;
             token.HitFlashTimer = 0f;
             token.DeathFadeTimer = inst.IsAlive ? 1.0f : 0f;
             token.BobbingPhase = i * 0.75f;
 
-            // 2D Positioning around Exile
+            // 2D Positioning around Exile (supports world coordinates & screen space)
             Vector2 spawnPos;
             if (inst.Position != Vector2D.Zero)
             {
-                spawnPos = new Vector2(inst.Position.X, inst.Position.Y);
+                spawnPos = CenterPosition + new Vector2(inst.Position.X - ExileWorldPosition.X, inst.Position.Y - ExileWorldPosition.Y);
             }
             else if (inst.Rarity == MonsterRarity.Boss)
             {
@@ -1425,6 +1570,25 @@ public partial class Arena2D : Node2D
                 MonsterRarity.Magic => new Color(0.12f, 0.20f, 0.32f),
                 _ => new Color(0.18f, 0.19f, 0.22f)
             };
+
+            // Task 2.7: Detect Encounter metadata from name
+            token.IsDormant = inst.Name.Contains("Imprisoned") || inst.Name.Contains("Crystalline");
+            if (inst.Name.Contains("Essence") || inst.Name.Contains("Imprisoned") || inst.Name.Contains("Crystalline"))
+            {
+                token.EncounterType = LeagueEncounterType.EssenceMonolith;
+            }
+            else if (inst.Name.Contains("Breachling") || inst.Name.Contains("Xoph") || inst.Name.Contains("Breach"))
+            {
+                token.EncounterType = LeagueEncounterType.BreachCrevice;
+            }
+            else if (inst.Name.Contains("Subterranean") || inst.Name.Contains("Burrower"))
+            {
+                token.EncounterType = LeagueEncounterType.SulphiteVein;
+            }
+            else
+            {
+                token.EncounterType = LeagueEncounterType.None;
+            }
         }
     }
 
@@ -1471,13 +1635,50 @@ public partial class Arena2D : Node2D
                 }
                 else if (token.IsAlive)
                 {
+                    token.IsAggroed = core.IsAggroed;
                     // Update base position from core simulation
-                    Vector2 targetPos = new(core.Position.X, core.Position.Y);
+                    Vector2 targetPos;
+                    if (core.Position != Vector2D.Zero)
+                    {
+                        targetPos = CenterPosition + new Vector2(core.Position.X - ExileWorldPosition.X, core.Position.Y - ExileWorldPosition.Y);
+                    }
+                    else
+                    {
+                        targetPos = token.BasePosition;
+                    }
+
                     token.BasePosition = targetPos;
 
                     // Smooth lerp toward target position for visual fluidity
                     token.Position = token.Position.Lerp(targetPos, 0.25f);
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Updates Exile real-world coordinates and movement telemetry for relative corridor rendering (Task 2.7).
+    /// </summary>
+    public void UpdateExileWorldPosition(Vector2 worldPos, ExileMovementState state = ExileMovementState.Idle, float speed = 0f, float mapLength = 2400f)
+    {
+        ExileWorldPosition = worldPos;
+        MovementState = state;
+        MovementSpeed = speed;
+        if (mapLength > 0f) MapLength = mapLength;
+        QueueRedraw();
+    }
+
+    /// <summary>
+    /// Awaken dormant monsters in the arena (e.g. Essence Monolith shattered).
+    /// </summary>
+    public void WakeUpAllMonsters()
+    {
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            if (_monsters[i].IsDormant)
+            {
+                _monsters[i].IsDormant = false;
+                _monsters[i].HitFlashTimer = 0.22f; // Crystal shatter flash
             }
         }
     }

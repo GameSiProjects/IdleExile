@@ -756,6 +756,17 @@ public sealed class SkillLoadout
     }
 
     /// <summary>
+    /// Fully refills all flask charges (e.g. from Sulphite Vein harvest or town fountain).
+    /// </summary>
+    public void RefillAllFlaskCharges()
+    {
+        foreach (var flask in Flasks)
+        {
+            flask.AddCharges(flask.MaxCharges);
+        }
+    }
+
+    /// <summary>
     /// Ticks guard skill and all flasks.
     /// </summary>
     public void Tick(float deltaTime, PlayerState? player = null)

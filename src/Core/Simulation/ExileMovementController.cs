@@ -593,8 +593,8 @@ public sealed class ExileMovementController
             Velocity = Vector2D.Zero;
         }
 
-        // If Advancing without enemies, transition back to regular Marching
-        if (CurrentState == ExileMovementState.Advancing && aliveMonsters.Count == 0)
+        // If Advancing without an engaged target, transition back to regular Marching
+        if (CurrentState == ExileMovementState.Advancing && CurrentEngagedTarget == null)
         {
             SetState(ExileMovementState.Marching);
         }
@@ -708,16 +708,17 @@ public sealed class ExileMovementController
     {
         if (candidates.Count == 0) return null;
 
-        // Filter to candidates within perception range
+        // Filter to candidates that are aggroed or within perception range
         var inRange = candidates
-            .Where(m => m.IsAlive && Position.DistanceTo(m.Position) <= PerceptionRange)
+            .Where(m => m.IsAlive && (m.IsAggroed || Position.DistanceTo(m.Position) <= PerceptionRange))
             .ToList();
 
         if (inRange.Count == 0) return null;
 
-        // Prioritize Boss > Rare > Magic > Closest
+        // Prioritize aggroed enemies first, then Boss > Rare > Magic > Closest
         return inRange
-            .OrderByDescending(m => m.Rarity switch
+            .OrderByDescending(m => m.IsAggroed ? 1 : 0)
+            .ThenByDescending(m => m.Rarity switch
             {
                 MonsterRarity.Boss => 1000f,
                 MonsterRarity.Rare => 500f,

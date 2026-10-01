@@ -88,6 +88,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.SeededDropTests.RunAll();
         IdleExile.Core.Tests.SpatialGeometryTests.RunAll();
         IdleExile.Core.Tests.ExileMovementControllerTests.RunAll();
+        IdleExile.Core.Tests.CorridorMonsterLayoutTests.RunAll();
         IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
         BattleViewportTests.RunAll();
         MapHeaderBarTests.RunAll();
@@ -264,14 +265,37 @@ public partial class Main : Control
         Engine.OnTickProcessed += args =>
         {
             _battleViewport?.SetMapProgress(args.ClearProgress * 100f);
+            if (Engine != null)
+            {
+                _battleViewport?.UpdateExileWorldPosition(
+                    new Vector2(Engine.ExilePosition.X, Engine.ExilePosition.Y),
+                    Engine.Movement.CurrentState,
+                    Engine.Movement.CurrentSpeed,
+                    Engine.Movement.MapLength
+                );
+
+#if DEBUG
+                if (OS.IsDebugBuild())
+                {
+                    _battleViewport?.UpdateDebugCoordinates(
+                        new Vector2(Engine.ExilePosition.X, Engine.ExilePosition.Y),
+                        Engine.Movement.CurrentState,
+                        Engine.Movement.CurrentSpeed,
+                        Engine.Movement.DistanceTraveled,
+                        Engine.Movement.MapLength,
+                        Engine.Movement.MapProgressPercent
+                    );
+                }
+#endif
+            }
 
             // Sync monster positions from core simulation (monsters advance toward Exile each tick)
-            if (_battleViewport?.Arena != null && Engine.CurrentWave != null)
+            if (_battleViewport?.Arena != null && Engine?.CurrentWave != null)
             {
                 _battleViewport.Arena.SyncMonsterPositions(Engine.CurrentWave.Monsters);
 
                 // Track CombatEngine current target for continuous Auto-Facing
-                if (Engine.CurrentTarget != null && Engine.CurrentTarget.IsAlive)
+                if (Engine?.CurrentTarget != null && Engine.CurrentTarget.IsAlive)
                 {
                     _battleViewport.SetTarget(
                         Engine.CurrentTarget.InstanceId,
@@ -302,6 +326,18 @@ public partial class Main : Control
         Engine.OnBossArenaEntered += () =>
         {
             GD.Print("[Movement] Entered Boss Arena Chamber! Final Map Boss encounter ready.");
+        };
+
+        Engine.OnLeagueEncounterTriggered += args =>
+        {
+            _battleViewport?.WakeUpAllMonsters();
+            string modInfo = !string.IsNullOrEmpty(args.Encounter.EssenceModifierName) ? $" ({args.Encounter.EssenceModifierName})" : "";
+            GD.Print($"[Encounter] ✦ Activated: {args.Encounter.Name}{modInfo}!");
+        };
+
+        Engine.OnLeagueEncounterCompleted += args =>
+        {
+            GD.Print($"[Encounter] ✦ Completed: {args.Encounter.Name}! {args.Encounter.RewardDescription}");
         };
 
         Engine.OnLootDropped += drop =>

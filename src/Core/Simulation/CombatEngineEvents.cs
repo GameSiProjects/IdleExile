@@ -112,3 +112,10 @@ public sealed record MonsterAttackEventArgs(
     /// <summary>Raw total damage of the hit (used for indicator intensity scaling).</summary>
     float RawDamage
 );
+
+/// <summary>
+/// Event arguments emitted when a roadside League Encounter transitions state (Task 2.7).
+/// </summary>
+public sealed record LeagueEncounterEventArgs(
+    LeagueEncounterInstance Encounter
+);

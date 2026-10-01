@@ -92,6 +92,12 @@ public sealed class CombatEngine
     /// <summary>True while an active map encounter is executing.</summary>
     public bool IsInCombat { get; private set; } = false;
 
+    /// <summary>
+    /// True when the player is actively engaged in combat with an enemy in reach or when nearby enemies are aggroed.
+    /// When false, the Exile is out of combat and automatically marches along the corridor towards the end of the map.
+    /// </summary>
+    public bool IsEngagedInCombat => IsInCombat && (Movement.CurrentState == ExileMovementState.Engaging || CurrentTarget != null || (CurrentWave?.Alive.Any(m => m.IsAggroed) == true));
+
     /// <summary>True once all waves including the boss wave have been defeated.</summary>
     public bool IsMapComplete { get; private set; } = false;
 
@@ -172,6 +178,18 @@ public sealed class CombatEngine
 
     /// <summary>Fired when the Exile arrives in the center of the Boss Arena.</summary>
     public event Action? OnBossArenaEntered;
+
+    /// <summary>Fired when a roadside League Encounter is triggered along the corridor (Task 2.7).</summary>
+    public event Action<LeagueEncounterEventArgs>? OnLeagueEncounterTriggered;
+
+    /// <summary>Fired when a roadside League Encounter is completed (Task 2.7).</summary>
+    public event Action<LeagueEncounterEventArgs>? OnLeagueEncounterCompleted;
+
+    /// <summary>Active structured corridor layout for the current map run (Task 2.7).</summary>
+    public CorridorMonsterLayout? CurrentLayout => Spawner.CurrentLayout;
+
+    /// <summary>Current active corridor pack metadata and spatial formation (Task 2.7).</summary>
+    public CorridorPack? CurrentPack => CurrentWave?.Pack;
 
     /// <summary>2D spatial position of the Exile within the world corridor.</summary>
     public Vector2D ExilePosition
@@ -259,6 +277,7 @@ public sealed class CombatEngine
         OnMapStarted?.Invoke(config);
 
         Movement.StartMap(2400f, ExilePosition);
+        Spawner.BeginMap(config, Movement.MapLength);
 
         var firstWave = Spawner.SpawnNextWave();
         if (firstWave != null)
@@ -300,7 +319,12 @@ public sealed class CombatEngine
     public void SetCurrentWave(MonsterWave wave)
     {
         CurrentWave = wave;
-        CurrentTarget = Targeting.SelectTarget(wave.Alive);
+
+        // If monsters are within perception range of Exile, acquire initial target; otherwise start null until in range
+        var inPerception = wave.Alive
+            .Where(m => m.IsAggroed || ExilePosition.DistanceTo(m.Position) <= Movement.PerceptionRange)
+            .ToList();
+        CurrentTarget = inPerception.Count > 0 ? Targeting.SelectTarget(inPerception, ExilePosition) : null;
 
         _monsterActionAccumulators.Clear();
         _monsterAilments.Clear();
@@ -511,6 +535,23 @@ public sealed class CombatEngine
         var aliveMonsters = CurrentWave?.Alive.ToList() ?? new List<MonsterInstance>();
         Movement.Tick(deltaTime, aliveMonsters, Player, GearStats, PassiveStats);
         Player.Position = Movement.Position;
+
+        // Task 2.7: Check roadside League Encounter proximity trigger
+        if (CurrentWave?.Pack?.Encounter is { State: LeagueEncounterState.Dormant } encounter)
+        {
+            if (encounter.TryTrigger(ExilePosition))
+            {
+                CurrentWave.Pack.WakeUp();
+
+                // Sulphite bonus: instantaneous flask charges refill
+                if (encounter.Type == LeagueEncounterType.SulphiteVein)
+                {
+                    Loadout.RefillAllFlaskCharges();
+                }
+
+                OnLeagueEncounterTriggered?.Invoke(new LeagueEncounterEventArgs(encounter));
+            }
+        }
     }
 
     // ─────────────────────────────────────────────
@@ -525,6 +566,19 @@ public sealed class CombatEngine
 
         if (CurrentWave == null || !CurrentWave.Alive.Any())
             return;
+
+        // 1. Identify engageable monsters: must be either actively aggroed or within Exile's perception range
+        var engageable = CurrentWave.Alive
+            .Where(m => m.IsAggroed || ExilePosition.DistanceTo(m.Position) <= Movement.PerceptionRange)
+            .ToList();
+
+        if (engageable.Count == 0)
+        {
+            // Out of combat: no enemies in range to engage!
+            CurrentTarget = null;
+            while (_playerActionAccumulator.TryConsumeAction()) { }
+            return;
+        }
 
         // CC Action Speed Multipliers from Player Ailments
         float actionSpeedMultiplier = 1.0f;
@@ -547,19 +601,45 @@ public sealed class CombatEngine
         // Trigger attacks when action interval is reached
         while (_playerActionAccumulator.TryConsumeAction())
         {
-            // 1. Check & Spend Mana (PoE Rules: If insufficient mana, fall back to Default Attack instead of freezing)
-            float manaCost = Loadout.PrimarySkill.CalculateEffectiveManaCost();
-            bool isDefaultAttack = !Player.TrySpendMana(manaCost);
-
-            // 2. Skill Geometry & Autonomous Target Selection (Threat Scoring - Docs 4.3)
-            var geometry = isDefaultAttack ? SkillGeometryType.SingleTarget : Loadout.PrimarySkill.GetGeometryType();
+            // 1. Skill Geometry & Autonomous Target Selection (Threat Scoring - Docs 4.3)
+            var geometry = Loadout.PrimarySkill.GetGeometryType();
             bool isAoE = geometry != SkillGeometryType.SingleTarget;
 
-            CurrentTarget = Targeting.SelectTarget(CurrentWave!.Alive, ExilePosition, CurrentTarget, isAoESkill: isAoE);
+            CurrentTarget = (Movement.CurrentEngagedTarget != null && Movement.CurrentEngagedTarget.IsAlive && engageable.Contains(Movement.CurrentEngagedTarget))
+                ? Movement.CurrentEngagedTarget
+                : Targeting.SelectTarget(engageable, ExilePosition, CurrentTarget, isAoESkill: isAoE);
+
             if (CurrentTarget == null)
             {
                 break;
             }
+
+            // 2. Attack Reach Check: ensure target is within weapon/skill reach
+            bool isMeleeSkill = (Loadout.PrimarySkill.ActiveGem?.Tags?.Contains("Melee", StringComparer.OrdinalIgnoreCase) ?? false)
+                || (Loadout.PrimarySkill.ActiveGem == null && (Player.MainHand == null || Player.MainHand.BaseDefinition.IsMelee));
+            float skillBaseRange = Loadout.PrimarySkill.GetBaseRadiusOrRange();
+            float effectiveAttackReach = isMeleeSkill
+                ? SpatialCombatService.MeleeRange + 25f + CurrentTarget.Radius
+                : MathF.Max(skillBaseRange + 25f + CurrentTarget.Radius, 175f);
+
+            float distToTarget = ExilePosition.DistanceTo(CurrentTarget.Position);
+            if (distToTarget > effectiveAttackReach)
+            {
+                // Target is perceived ahead but out of weapon reach: Exile is closing distance
+                break;
+            }
+
+            // 3. In reach! Check & Spend Mana (PoE Rules: If insufficient mana, fall back to Default Attack)
+            float manaCost = Loadout.PrimarySkill.CalculateEffectiveManaCost();
+            bool isDefaultAttack = !Player.TrySpendMana(manaCost);
+            if (isDefaultAttack)
+            {
+                geometry = SkillGeometryType.SingleTarget;
+            }
+
+            // Target aggros upon being engaged
+            var targetEntity = CurrentTarget!;
+            targetEntity.Aggro();
 
             // 3. Spatial Hit Testing (Docs 4.2: Radial AoE, Cones/Arcs, Multi-Vector Projectile Spread)
             float baseRadiusOrRange = isDefaultAttack ? SpatialCombatService.MeleeRange : Loadout.PrimarySkill.GetBaseRadiusOrRange();
@@ -575,28 +655,28 @@ public sealed class CombatEngine
             if (geometry == SkillGeometryType.Cone)
             {
                 targets = Targeting.SelectSpatialAoETargets(
-                    CurrentWave.Alive, ExilePosition, CurrentTarget, SkillGeometryType.Cone,
+                    CurrentWave!.Alive, ExilePosition, targetEntity, SkillGeometryType.Cone,
                     baseRadiusOrRange, coneAngle, maxTargets: 8);
             }
             else if (geometry == SkillGeometryType.RadialAoE)
             {
                 targets = Targeting.SelectSpatialAoETargets(
-                    CurrentWave.Alive, ExilePosition, CurrentTarget, SkillGeometryType.RadialAoE,
+                    CurrentWave!.Alive, ExilePosition, targetEntity, SkillGeometryType.RadialAoE,
                     baseRadiusOrRange, coneAngleDegrees: 0f, maxTargets: 8);
             }
             else if (geometry == SkillGeometryType.ProjectileSpread)
             {
-                Vector2D toTarget = CurrentTarget.Position - ExilePosition;
+                Vector2D toTarget = targetEntity.Position - ExilePosition;
                 float aimAngle = toTarget.LengthSquared > 0.001f ? toTarget.Angle() : 0f;
                 float spreadStepRad = (spreadAngle / Math.Max(1, projCount - 1)) * (MathF.PI / 180.0f);
                 if (projCount == 1) spreadStepRad = 0f;
 
                 projectileVectors = SpatialCombatService.CalculateSpread(aimAngle, projCount, spreadStepRad, projSpeed);
-                targets = Targeting.SelectAoETargets(CurrentWave.Alive, CurrentTarget, Math.Min(projCount, 8));
+                targets = Targeting.SelectAoETargets(CurrentWave!.Alive, targetEntity, Math.Min(projCount, 8));
             }
             else
             {
-                targets = new[] { CurrentTarget };
+                targets = new[] { targetEntity };
             }
 
             // 4. Build Unified Attack Payload for Player (Primary Skill or Default Attack)
@@ -608,7 +688,7 @@ public sealed class CombatEngine
             // 5. Fire Skill Event with Spatial Trajectories
             OnPlayerSkillFired?.Invoke(new PlayerSkillFiredEventArgs(
                 ExilePosition,
-                CurrentTarget,
+                targetEntity,
                 geometry,
                 playerAttack.PrimaryDamageType,
                 projectileVectors,
@@ -766,6 +846,12 @@ public sealed class CombatEngine
         {
             if (!Player.IsAlive) break;
 
+            // Task 2.7: Dormant monsters (e.g. sealed in Essence Monolith) cannot act until triggered
+            if (CurrentWave?.Pack?.IsDormant == true)
+            {
+                continue;
+            }
+
             // Monster Action Speed & Crowd Control
             float monsterSpeedMult = 1.0f;
             if (_monsterAilments.TryGetValue(monster.InstanceId, out var mTracker))
@@ -785,12 +871,42 @@ public sealed class CombatEngine
                 monsterSpeedMult *= (1.0f + waveHasteBonus / 100f);
             }
 
-            // ═══ Monster Movement Phase (Docs 4.1: Spatial Range Enforcement) ═══
-            // Monsters advance toward the Exile at their MovementSpeed each tick.
-            // Movement is affected by CC multipliers (Chill slows, Freeze stops).
             float distToExile = ExilePosition.DistanceTo(monster.Position);
             float effectiveAttackRange = monster.AttackRange + monster.Radius;
 
+            // ═══ Aggro Check: Monsters only aggro/advance when Exile moves close or when damaged ═══
+            if (!monster.IsAggroed)
+            {
+                if (distToExile <= monster.AggroRange)
+                {
+                    monster.Aggro();
+                }
+                else
+                {
+                    // Out of range & unaggroed: hold formation position, do not advance or attack
+                    if (_monsterActionAccumulators.TryGetValue(monster.InstanceId, out var idleAcc))
+                    {
+                        while (idleAcc.TryConsumeAction()) { }
+                    }
+                    continue;
+                }
+            }
+
+            // Alert nearby pack members within 120px
+            if (monster.IsAggroed && CurrentWave != null)
+            {
+                foreach (var ally in CurrentWave.Alive)
+                {
+                    if (!ally.IsAggroed && monster.Position.DistanceTo(ally.Position) <= 120f)
+                    {
+                        ally.Aggro();
+                    }
+                }
+            }
+
+            // ═══ Monster Movement Phase (Docs 4.1: Spatial Range Enforcement) ═══
+            // Aggroed monsters advance toward the Exile at their MovementSpeed each tick.
+            // Movement is affected by CC multipliers (Chill slows, Freeze stops).
             if (distToExile > effectiveAttackRange && monsterSpeedMult > 0f)
             {
                 float moveDistance = monster.MovementSpeed * monsterSpeedMult * deltaTime;
@@ -804,10 +920,11 @@ public sealed class CombatEngine
                     Vector2D toExile = (ExilePosition - monster.Position).Normalized();
                     Vector2D newPos = monster.Position + toExile * moveDistance;
 
-                    // Clamp to arena bounds (40–400 X, 28–180 Y)
+                    // Clamp to world corridor bounds (Task 2.7)
+                    float maxCorridorY = Movement.MapLength > 0f ? Movement.MapLength : ExileMovementController.DefaultMapLength;
                     newPos = new Vector2D(
-                        Math.Clamp(newPos.X, 40f, 400f),
-                        Math.Clamp(newPos.Y, 28f, 180f)
+                        Math.Clamp(newPos.X, ExileMovementController.MinCorridorX, ExileMovementController.MaxCorridorX),
+                        Math.Clamp(newPos.Y, 0f, maxCorridorY)
                     );
 
                     monster.Position = newPos;
@@ -946,6 +1063,13 @@ public sealed class CombatEngine
         // 2. Wave Progression & Map Completion
         if (CurrentWave != null && CurrentWave.IsCleared)
         {
+            // Task 2.7: Mark League Encounter completed if active wave was an encounter
+            if (CurrentWave.Pack?.Encounter is { State: LeagueEncounterState.Active } activeEnc)
+            {
+                activeEnc.Complete();
+                OnLeagueEncounterCompleted?.Invoke(new LeagueEncounterEventArgs(activeEnc));
+            }
+
             Movement.NotifyPackCleared();
 
             if (CurrentWave.IsBossWave || Spawner.IsMapComplete)
