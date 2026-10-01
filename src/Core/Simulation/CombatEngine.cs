@@ -36,6 +36,10 @@ public sealed class CombatEngine
     private readonly Dictionary<long, AilmentTracker> _monsterAilments = new();
     private readonly HashSet<long> _processedDeadMonsters = new();
 
+    private float _activeBossSlamWindUpTimer = 0f;
+    private BossSlamTelegraphEventArgs? _pendingBossSlam = null;
+    private float _bossSlamCooldown = 3.5f;
+
     // ─────────────────────────────────────────────
     //  Subsystems & State
     // ─────────────────────────────────────────────
@@ -101,6 +105,15 @@ public sealed class CombatEngine
     /// <summary>True once all waves including the boss wave have been defeated.</summary>
     public bool IsMapComplete { get; private set; } = false;
 
+    /// <summary>True while a Boss heavy slam attack is currently in its 1.4s telegraph wind-up phase (Task 2.8).</summary>
+    public bool IsBossSlamTelegraphing => _activeBossSlamWindUpTimer > 0f && _pendingBossSlam != null;
+
+    /// <summary>Remaining seconds of the active Boss slam telegraph wind-up (Task 2.8).</summary>
+    public float BossSlamWindUpRemaining => _activeBossSlamWindUpTimer;
+
+    /// <summary>True once the Exile has crossed the Fog Gate at 85% map progress and the gate has sealed (Task 2.8).</summary>
+    public bool IsFogGateSealed => Movement?.IsFogGateSealed ?? false;
+
     /// <summary>Monsters killed during the current active map run.</summary>
     public int TotalMonstersKilledInMap { get; private set; } = 0;
 
@@ -161,6 +174,9 @@ public sealed class CombatEngine
     /// <summary>Fired when a Boss winds up a heavy slam telegraph attack (>70% player EHP).</summary>
     public event Action<BossSlamTelegraphEventArgs>? OnBossSlamTelegraphed;
 
+    /// <summary>Fired when a Boss heavy slam attack detonates (Task 2.8).</summary>
+    public event Action<BossSlamDetonatedEventArgs>? OnBossSlamDetonated;
+
     /// <summary>Fired when the player attacks or casts an active skill with 2D spatial trajectory metadata.</summary>
     public event Action<PlayerSkillFiredEventArgs>? OnPlayerSkillFired;
 
@@ -175,6 +191,9 @@ public sealed class CombatEngine
 
     /// <summary>Fired when the Exile crosses the Fog Gate threshold at 85% of map length.</summary>
     public event Action? OnFogGateCrossed;
+
+    /// <summary>Fired when the Fog Gate is sealed shut behind the Exile (Task 2.8).</summary>
+    public event Action? OnFogGateSealed;
 
     /// <summary>Fired when the Exile arrives in the center of the Boss Arena.</summary>
     public event Action? OnBossArenaEntered;
@@ -232,6 +251,7 @@ public sealed class CombatEngine
         Movement.OnStateChanged += (oldS, newS) => OnMovementStateChanged?.Invoke(oldS, newS);
         Movement.OnPositionChanged += pos => OnExileMoved?.Invoke(pos);
         Movement.OnFogGateCrossed += () => OnFogGateCrossed?.Invoke();
+        Movement.OnFogGateSealed += () => OnFogGateSealed?.Invoke();
         Movement.OnBossArenaEntered += () => OnBossArenaEntered?.Invoke();
 
         // Forward internal events
@@ -273,6 +293,10 @@ public sealed class CombatEngine
         _monsterAilments.Clear();
         _processedDeadMonsters.Clear();
         PlayerAilments.Clear();
+
+        _pendingBossSlam = null;
+        _activeBossSlamWindUpTimer = 0f;
+        _bossSlamCooldown = 3.5f;
 
         OnMapStarted?.Invoke(config);
 
@@ -509,7 +533,21 @@ public sealed class CombatEngine
         // 1. Guard Skill & Flasks cooldowns and auto-instill triggers
         Loadout.Tick(deltaTime, Player);
 
-        // 2. Auto-respawn countdown if awaiting respawn
+        // 2. Boss Slam telegraph wind-up & detonation (Task 2.8)
+        if (_activeBossSlamWindUpTimer > 0f && _pendingBossSlam != null)
+        {
+            _activeBossSlamWindUpTimer -= deltaTime;
+            if (_activeBossSlamWindUpTimer <= 0f)
+            {
+                DetonatePendingBossSlam();
+            }
+        }
+        else if (_bossSlamCooldown > 0f)
+        {
+            _bossSlamCooldown -= deltaTime;
+        }
+
+        // 3. Auto-respawn countdown if awaiting respawn
         if (Death.IsAwaitingRespawn)
         {
             bool respawned = Death.Tick(deltaTime, Player, PlayerAilments);
@@ -952,6 +990,12 @@ public sealed class CombatEngine
                 continue;
             }
 
+            // Check if boss should initiate a heavy Slam telegraph (Task 2.8: 1.4s wind-up)
+            if (monster.Rarity == MonsterRarity.Boss && _bossSlamCooldown <= 0f && _pendingBossSlam == null && Player.IsAlive)
+            {
+                TriggerBossSlam(monster, ExilePosition, threatPercent: 85f, windUp: 1.4f, radius: 55f);
+            }
+
             while (mAccumulator.TryConsumeAction() && Player.IsAlive)
             {
                 var monsterAttack = CombatAttackService.CreateMonsterAttack(monster, MapModifiers);
@@ -983,9 +1027,9 @@ public sealed class CombatEngine
                 // Boss Slam Telegraph Warning check (>70% player EHP)
                 float playerMaxEhp = MathF.Max(1f, Player.MaxLife + Player.MaxEnergyShield);
                 float threatPercent = (result.Hit.Damage.Total / playerMaxEhp) * 100f;
-                if ((monster.Rarity == MonsterRarity.Boss || monster.Rarity == MonsterRarity.Rare) && threatPercent >= 70f)
+                if ((monster.Rarity == MonsterRarity.Boss || monster.Rarity == MonsterRarity.Rare) && threatPercent >= 70f && _pendingBossSlam == null)
                 {
-                    OnBossSlamTelegraphed?.Invoke(new BossSlamTelegraphEventArgs(monster, threatPercent));
+                    OnBossSlamTelegraphed?.Invoke(new BossSlamTelegraphEventArgs(monster, threatPercent, 1.4f, monster.Position, 55f));
                 }
 
                 OnPlayerDamaged?.Invoke(new PlayerDamagedEventArgs(
@@ -1007,6 +1051,76 @@ public sealed class CombatEngine
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Explicitly triggers a Boss Slam attack with 1.4s telegraph wind-up (Task 2.8).
+    /// </summary>
+    public void TriggerBossSlam(MonsterInstance boss, Vector2D? targetPos = null, float threatPercent = 85f, float windUp = 1.4f, float radius = 55f)
+    {
+        var pos = targetPos ?? ExilePosition;
+        _pendingBossSlam = new BossSlamTelegraphEventArgs(boss, threatPercent, windUp, pos, radius);
+        _activeBossSlamWindUpTimer = windUp;
+        OnBossSlamTelegraphed?.Invoke(_pendingBossSlam);
+    }
+
+    private void DetonatePendingBossSlam()
+    {
+        if (_pendingBossSlam == null) return;
+        var slam = _pendingBossSlam;
+        _pendingBossSlam = null;
+        _activeBossSlamWindUpTimer = 0f;
+        _bossSlamCooldown = 6.0f;
+
+        Vector2D targetPos = slam.TargetPosition ?? ExilePosition;
+        float dist = ExilePosition.DistanceTo(targetPos);
+        bool hitPlayer = dist <= slam.Radius;
+
+        if (hitPlayer && Player.IsAlive)
+        {
+            var basePool = slam.Boss.GetBaseDamagePool().Multiply(2.5f);
+            var context = slam.Boss.BuildDamageContext(MapModifiers);
+            var slamAttack = new AttackPayload(slam.Boss, basePool, context)
+            {
+                IsAttack = true,
+                Accuracy = slam.Boss.Accuracy * 1.5f,
+                PrimaryDamageType = slam.Boss.PrimaryDamageType
+            };
+
+            var result = CombatAttackService.ExecuteHit(
+                slam.Boss,
+                Player,
+                slamAttack,
+                EffectiveDefenses,
+                _random,
+                Loadout.GuardSkill
+            );
+
+            OnPlayerDamaged?.Invoke(new PlayerDamagedEventArgs(
+                Attacker: slam.Boss,
+                DefenseResult: result.Defense,
+                DamageApplied: result.DamageDealt,
+                MitigatedBreakdown: result.Defense.MitigatedBreakdown,
+                Evaded: result.Defense.Evaded,
+                Blocked: result.Defense.Blocked,
+                Suppressed: result.Defense.Suppressed,
+                IsReflect: false,
+                IsDoT: false
+            ));
+
+            if (result.TargetDied || !Player.IsAlive)
+            {
+                Death.HandleDeath(Player, $"{slam.Boss.Name}'s Lethal Slam");
+            }
+        }
+
+        OnBossSlamDetonated?.Invoke(new BossSlamDetonatedEventArgs(
+            slam.Boss,
+            targetPos,
+            slam.Radius,
+            slam.ThreatEhpPercent,
+            hitPlayer
+        ));
     }
 
     // ─────────────────────────────────────────────

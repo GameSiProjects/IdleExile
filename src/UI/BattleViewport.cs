@@ -400,6 +400,26 @@ public partial class BattleViewport : Control
     /// </summary>
     public void WakeUpAllMonsters() => Arena?.WakeUpAllMonsters();
 
+    /// <summary>
+    /// 2D Camera managing corridor follow and Boss Arena Lock (Task 2.8).
+    /// </summary>
+    public ArenaCamera? Camera => Arena?.Camera;
+
+    /// <summary>
+    /// True when the Fog Gate at 85% map progress has sealed shut behind the Exile (Task 2.8).
+    /// </summary>
+    public bool IsFogGateSealed => Arena?.IsFogGateSealed ?? false;
+
+    /// <summary>
+    /// Updates the Fog Gate sealed state in the arena viewport (Task 2.8).
+    /// </summary>
+    public void SetFogGateSealed(bool isSealed) => Arena?.SetFogGateSealed(isSealed);
+
+    /// <summary>
+    /// Awakens the Map Boss with visual shockwave, roaring screen shake, and 96px Overhead Boss Bar (Task 2.8).
+    /// </summary>
+    public void AwakenBoss() => Arena?.AwakenBoss();
+
 #if DEBUG
     // ─────────────────────────────────────────────
     //  Developer Debug Telemetry Overlay (STRIPPED IN RELEASE BUILDS)

@@ -69,12 +69,25 @@ public sealed record MapCompletedEventArgs(
 
 /// <summary>
 /// Event arguments emitted when a Boss initiates a heavy slam attack (>70% player EHP threat).
-/// Subscribed by Arena2D telegraph circle indicator and Emergency Portal warning hints.
+/// Subscribed by Arena2D telegraph circle indicator and Emergency Portal warning hints (Task 2.8).
 /// </summary>
 public sealed record BossSlamTelegraphEventArgs(
     MonsterInstance Boss,
     float ThreatEhpPercent,
-    float WindUpDuration = 1.35f
+    float WindUpDuration = 1.4f,
+    Vector2D? TargetPosition = null,
+    float Radius = 55f
+);
+
+/// <summary>
+/// Event arguments emitted when a Boss heavy slam attack detonates after its telegraph wind-up (Task 2.8).
+/// </summary>
+public sealed record BossSlamDetonatedEventArgs(
+    MonsterInstance Boss,
+    Vector2D Position,
+    float Radius,
+    float ThreatEhpPercent,
+    bool HitPlayer
 );
 
 /// <summary>

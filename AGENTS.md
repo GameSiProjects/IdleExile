@@ -159,7 +159,8 @@ dotnet build
 | **Mini-Window Equipment View (Task 3.4)** | Complete | `scenes/EquipmentView.tscn`, `src/UI/Components/EquipmentView.cs` |
 | **Item Generator & Affix Roller** | Planned | `src/Core/Services/ItemGenerator.cs` |
 | **Loot Filter System** | Planned | `src/Core/Services/LootFilterService.cs` |
-| **Mini-Window 2D Battle Viewport UI** | Complete (Tasks 2.1 - 2.7) | `scenes/BattleViewport.tscn`, `src/UI/BattleViewport.cs`, `src/UI/Components/` |
+| **Mini-Window 2D Battle Viewport UI** | Complete (Tasks 2.1 - 2.8) | `scenes/BattleViewport.tscn`, `src/UI/BattleViewport.cs`, `src/UI/Components/` |
+| **Boss Room Chamber & Arena Lock (Task 2.8)** | Complete | `src/UI/Components/ArenaCamera.cs`, `src/UI/Components/Arena2D.cs` |
 | **Passive Skill Tree Graph** | Planned | `data/passive_tree.json`, `src/Core/Models/` |
 
 ---

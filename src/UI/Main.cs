@@ -98,6 +98,7 @@ public partial class Main : Control
         StarterSelectionModalTests.RunAll();
         MapDeviceBarTests.RunAll();
         EquipmentViewTests.RunAll();
+        BossRoomChamberTests.RunAll();
 
         if (_statusLabel != null)
         {
@@ -321,11 +322,19 @@ public partial class Main : Control
         Engine.OnFogGateCrossed += () =>
         {
             GD.Print("[Movement] Fog Gate crossed at 85% map progress! Approaching Boss Arena.");
+            _battleViewport?.SetFogGateSealed(true);
+        };
+
+        Engine.OnFogGateSealed += () =>
+        {
+            GD.Print("[Movement] Fog Gate sealed behind the Exile!");
+            _battleViewport?.SetFogGateSealed(true);
         };
 
         Engine.OnBossArenaEntered += () =>
         {
             GD.Print("[Movement] Entered Boss Arena Chamber! Final Map Boss encounter ready.");
+            _battleViewport?.AwakenBoss();
         };
 
         Engine.OnLeagueEncounterTriggered += args =>
@@ -365,9 +374,16 @@ public partial class Main : Control
         {
             if (_battleViewport?.Arena != null)
             {
-                var bossPos = _battleViewport.Arena.GetMonsterPosition(args.Boss.InstanceId);
-                _battleViewport.TriggerBossSlam(bossPos, args.WindUpDuration, 50f, args.ThreatEhpPercent);
+                var slamPos = args.TargetPosition.HasValue && args.TargetPosition.Value != Vector2D.Zero
+                    ? _battleViewport.Arena.Camera.WorldToScreen(new Vector2(args.TargetPosition.Value.X, args.TargetPosition.Value.Y), Arena2D.CenterPosition)
+                    : _battleViewport.Arena.GetMonsterPosition(args.Boss.InstanceId);
+                _battleViewport.TriggerBossSlam(slamPos, args.WindUpDuration, args.Radius, args.ThreatEhpPercent);
             }
+        };
+
+        Engine.OnBossSlamDetonated += args =>
+        {
+            GD.Print($"[Combat] Boss Slam detonated at ({args.Position.X:F0}, {args.Position.Y:F0}) - Threat: {args.ThreatEhpPercent:F0}% EHP! Hit Player: {args.HitPlayer}");
         };
 
         Engine.OnPlayerSkillFired += args =>

@@ -158,6 +158,9 @@ public sealed class ExileMovementController
     /// <summary>True once the Exile has reached or crossed the Fog Gate threshold.</summary>
     public bool HasReachedFogGate { get; private set; } = false;
 
+    /// <summary>True once the Fog Gate threshold has been crossed and sealed behind the Exile (Task 2.8).</summary>
+    public bool IsFogGateSealed { get; private set; } = false;
+
     /// <summary>True once the Exile has arrived at the center of the Boss Arena.</summary>
     public bool HasEnteredBossRoom { get; private set; } = false;
 
@@ -176,6 +179,9 @@ public sealed class ExileMovementController
 
     /// <summary>Fired when the Exile crosses the Fog Gate threshold at 85% map progress.</summary>
     public event Action? OnFogGateCrossed;
+
+    /// <summary>Fired when the Fog Gate is sealed shut behind the Exile (Task 2.8).</summary>
+    public event Action? OnFogGateSealed;
 
     /// <summary>Fired when the Exile steps into the center of the Boss Arena chamber.</summary>
     public event Action? OnBossArenaEntered;
@@ -338,6 +344,7 @@ public sealed class ExileMovementController
         _accumulatedTravelDistance = 0f;
         Velocity = Vector2D.Zero;
         HasReachedFogGate = false;
+        IsFogGateSealed = false;
         HasEnteredBossRoom = false;
         CurrentEngagedTarget = null;
 
@@ -361,6 +368,7 @@ public sealed class ExileMovementController
         _accumulatedTravelDistance = 0f;
         Velocity = Vector2D.Zero;
         HasReachedFogGate = false;
+        IsFogGateSealed = false;
         HasEnteredBossRoom = false;
         CurrentEngagedTarget = null;
         SetState(ExileMovementState.Idle);
@@ -412,6 +420,18 @@ public sealed class ExileMovementController
         CurrentSpeed = 0f;
         CurrentEngagedTarget = null;
         SetState(ExileMovementState.Completed);
+    }
+
+    /// <summary>
+    /// Explicitly seals the Fog Gate behind the Exile, locking them inside the boss chamber (Task 2.8).
+    /// </summary>
+    public void SealFogGate()
+    {
+        if (!IsFogGateSealed)
+        {
+            IsFogGateSealed = true;
+            OnFogGateSealed?.Invoke();
+        }
     }
 
     /// <summary>
@@ -510,7 +530,9 @@ public sealed class ExileMovementController
         if (!HasReachedFogGate && distAlongForward >= FogGateDistance)
         {
             HasReachedFogGate = true;
+            IsFogGateSealed = true;
             OnFogGateCrossed?.Invoke();
+            OnFogGateSealed?.Invoke();
             if (CurrentState != ExileMovementState.InBossArena && CurrentState != ExileMovementState.EnteringBossRoom)
             {
                 SetState(ExileMovementState.EnteringBossRoom);
@@ -747,7 +769,8 @@ public sealed class ExileMovementController
         // If moving along +Y, clamp Y between start and MapLength
         if (ForwardDirection.Y > 0.5f)
         {
-            clampedY = Math.Clamp(Position.Y, _startPosition.Y, _startPosition.Y + MapLength);
+            float minY = IsFogGateSealed ? (_startPosition.Y + FogGateDistance) : _startPosition.Y;
+            clampedY = Math.Clamp(Position.Y, minY, _startPosition.Y + MapLength);
         }
 
         if (MathF.Abs(clampedX - Position.X) > 0.001f || MathF.Abs(clampedY - Position.Y) > 0.001f)

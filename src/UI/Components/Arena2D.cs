@@ -46,6 +46,9 @@ public sealed class MonsterVisualToken
     public bool IsDormant;
     public bool IsAggroed;
     public LeagueEncounterType EncounterType;
+    public bool IsAwakened = true;
+    public float AwakeningTimer;
+    public float AwakeningShockwaveRadius;
 }
 
 /// <summary>
@@ -120,6 +123,47 @@ public partial class Arena2D : Node2D
     public float ExileFacingAngle => _exileFacingAngle;
     private float _exileAttackRecoil;
     private float _exileAuraPulsePhase;
+
+    /// <summary>
+    /// Camera2D controller managing corridor follow, look-ahead offset, and Boss Arena lock (Task 2.6 & 2.8).
+    /// </summary>
+    public ArenaCamera Camera { get; } = new();
+
+    /// <summary>
+    /// True when the Fog Gate threshold at 85% map progress has been sealed shut behind the Exile (Task 2.8).
+    /// </summary>
+    public bool IsFogGateSealed { get; set; } = false;
+
+    /// <summary>
+    /// Active ground slam impact craters fading out over time.
+    /// </summary>
+    private readonly List<(Vector2 Position, float Timer)> _slamCraters = new();
+
+    /// <summary>
+    /// Updates the Fog Gate sealed status and triggers visual redraw (Task 2.8).
+    /// </summary>
+    public void SetFogGateSealed(bool sealedState)
+    {
+        IsFogGateSealed = sealedState;
+        QueueRedraw();
+    }
+
+    /// <summary>
+    /// Awaken Map Boss with shockwave ring, roaring screen shake, and Overhead Boss Bar charge-up (Task 2.8).
+    /// </summary>
+    public void AwakenBoss()
+    {
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            var m = _monsters[i];
+            if (m.Rarity == MonsterRarity.Boss && !m.IsAwakened)
+            {
+                m.IsAwakened = true;
+                m.AwakeningTimer = 1.0f;
+                ScreenShake(3.5f, 0.25f);
+            }
+        }
+    }
 
     /// <summary>
     /// Explicit target position currently tracked by the Exile (e.g. from CombatEngine.CurrentTarget).
@@ -260,6 +304,41 @@ public partial class Arena2D : Node2D
         float dt = (float)delta;
         _floorTime += dt;
 
+        // 0. Update Camera Tracking & Arena Lock (Task 2.6 & Task 2.8)
+        Vector2 bossCenterWorld = new(CenterPosition.X, MapLength * ExileMovementController.BossArenaRatio);
+        bool inBossPhase = IsFogGateSealed || MovementState == ExileMovementState.EnteringBossRoom || MovementState == ExileMovementState.InBossArena;
+        Camera.Update(dt, ExileWorldPosition, bossCenterWorld, inBossPhase);
+
+        if (inBossPhase)
+        {
+            AwakenBoss();
+        }
+
+        // Update visual ExilePosition relative to camera
+        if (MovementState == ExileMovementState.Idle && !inBossPhase)
+        {
+            ExilePosition = CenterPosition;
+        }
+        else
+        {
+            ExilePosition = Camera.WorldToScreen(ExileWorldPosition, CenterPosition);
+        }
+
+        // Update ground slam craters
+        for (int i = _slamCraters.Count - 1; i >= 0; i--)
+        {
+            var (cPos, cTime) = _slamCraters[i];
+            cTime -= dt;
+            if (cTime <= 0f)
+            {
+                _slamCraters.RemoveAt(i);
+            }
+            else
+            {
+                _slamCraters[i] = (cPos, cTime);
+            }
+        }
+
         // 1. Update Exile Dynamic Facing towards nearest active monster
         UpdateExileFacing(dt);
 
@@ -282,6 +361,11 @@ public partial class Arena2D : Node2D
             if (!m.IsAlive && m.DeathFadeTimer > 0f)
             {
                 m.DeathFadeTimer = Mathf.Max(0f, m.DeathFadeTimer - dt * 2.5f);
+            }
+            if (m.AwakeningTimer > 0f)
+            {
+                m.AwakeningTimer = Mathf.Max(0f, m.AwakeningTimer - dt);
+                m.AwakeningShockwaveRadius = Mathf.Lerp(130f, 0f, m.AwakeningTimer / 1.0f);
             }
         }
 
@@ -380,22 +464,25 @@ public partial class Arena2D : Node2D
         // 1. Draw Top-Down Flagstone Floor & Dungeon Tiles
         DrawTopDownFloor();
 
-        // 2. Draw Boss Slam Telegraph Indicator (Underneath characters)
+        // 2. Draw Ground Slam Impact Craters (underneath characters and indicators)
+        DrawSlamCraters();
+
+        // 3. Draw Boss Slam Telegraph Indicator (Underneath characters)
         if (_telegraph.IsActive)
         {
             DrawBossSlamTelegraph();
         }
 
-        // 3. Draw Melee Strike AoE Indicators (Underneath characters, above floor)
+        // 4. Draw Melee Strike AoE Indicators (Underneath characters, above floor)
         DrawMeleeStrikeIndicators();
 
-        // 4. Draw Monster Tokens, 360° Auras & Overhead Health Bars
+        // 5. Draw Monster Tokens, 360° Auras & Overhead Health Bars
         DrawMonsters();
 
-        // 5. Draw Exile Character with 360° Aura & Facing Vector
+        // 6. Draw Exile Character with 360° Aura & Facing Vector
         DrawExileCharacter();
 
-        // 6. Draw 360° In-Flight Projectiles
+        // 7. Draw 360° In-Flight Projectiles
         DrawProjectiles();
     }
 
@@ -405,7 +492,10 @@ public partial class Arena2D : Node2D
     private void DrawTopDownFloor()
     {
         // 1. Base dark stone foundation slab
-        DrawRect(new Rect2(0, 0, ArenaWidth, ArenaHeight), new Color(0.043f, 0.047f, 0.063f, 1.0f));
+        DrawRect(new Rect2(0, 0, ArenaWidth, ArenaHeight), new Color(0.038f, 0.041f, 0.055f, 1.0f));
+
+        // Use Camera position for smooth relative scrolling in corridor and fixed arena lock (Task 2.6 & 2.8)
+        float camY = Camera.CurrentPosition.Y;
 
         // 2. Playable Corridor Flagstone Tiles (between MinCorridorX=40 and MaxCorridorX=400)
         float tileW = 36f;
@@ -413,12 +503,12 @@ public partial class Arena2D : Node2D
         int cols = Mathf.CeilToInt((ExileMovementController.MaxCorridorX - ExileMovementController.MinCorridorX) / tileW);
         int rows = Mathf.CeilToInt(ArenaHeight / tileH) + 2;
 
-        float scrollY = -Mathf.PosMod(ExileWorldPosition.Y, tileH);
-        int tileWorldRowBase = Mathf.FloorToInt(ExileWorldPosition.Y / tileH);
+        float scrollY = -Mathf.PosMod(camY, tileH);
+        int tileWorldRowBase = Mathf.FloorToInt(camY / tileH);
 
-        Color groutColor = new(0.025f, 0.028f, 0.038f, 0.95f);
-        Color tileColorA = new(0.062f, 0.068f, 0.088f, 0.85f);
-        Color tileColorB = new(0.052f, 0.058f, 0.076f, 0.85f);
+        Color groutColor = new(0.022f, 0.025f, 0.035f, 0.95f);
+        Color tileColorA = new(0.058f, 0.064f, 0.082f, 0.85f);
+        Color tileColorB = new(0.048f, 0.054f, 0.070f, 0.85f);
 
         for (int r = -1; r <= rows; r++)
         {
@@ -449,7 +539,7 @@ public partial class Arena2D : Node2D
         }
 
         // 3. Side Walls (Dungeon corridors: Left 0..40, Right 400..440)
-        Color wallBase = new(0.022f, 0.024f, 0.032f, 1.0f);
+        Color wallBase = new(0.020f, 0.022f, 0.030f, 1.0f);
         Color curbBorder = new(0.18f, 0.20f, 0.26f, 0.95f);
         Color curbHighlight = new(0.28f, 0.32f, 0.42f, 0.70f);
 
@@ -457,7 +547,7 @@ public partial class Arena2D : Node2D
         DrawRect(new Rect2(0, 0, ExileMovementController.MinCorridorX, ArenaHeight), wallBase);
         DrawRect(new Rect2(ExileMovementController.MaxCorridorX, 0, ArenaWidth - ExileMovementController.MaxCorridorX, ArenaHeight), wallBase);
 
-        // Wall stone seams scrolling with Y
+        // Wall stone seams scrolling with camera Y
         for (int r = -1; r <= rows; r++)
         {
             float wy = r * tileH + scrollY;
@@ -472,13 +562,21 @@ public partial class Arena2D : Node2D
         DrawLine(new Vector2(ExileMovementController.MaxCorridorX, 0), new Vector2(ExileMovementController.MaxCorridorX, ArenaHeight), curbBorder, 2.0f);
         DrawLine(new Vector2(ExileMovementController.MaxCorridorX - 1f, 0), new Vector2(ExileMovementController.MaxCorridorX - 1f, ArenaHeight), curbHighlight, 1.0f);
 
-        // 4. Roadside Sconces / Torches (spaced every 140px along corridor)
+        // 4. Boss Room Chamber Dais (Task 2.8) - rendered if visible on screen
+        float bossCenterWorldY = MapLength * ExileMovementController.BossArenaRatio;
+        Vector2 bossCenterScreen = Camera.WorldToScreen(new Vector2(CenterPosition.X, bossCenterWorldY), CenterPosition);
+        if (bossCenterScreen.Y >= -140f && bossCenterScreen.Y <= ArenaHeight + 140f)
+        {
+            DrawBossRoomChamber(bossCenterScreen);
+        }
+
+        // 5. Roadside Sconces / Torches (spaced every 140px along corridor)
         float torchSpacing = 140f;
-        int torchBase = Mathf.FloorToInt((ExileWorldPosition.Y - 140f) / torchSpacing);
+        int torchBase = Mathf.FloorToInt((camY - 140f) / torchSpacing);
         for (int t = torchBase; t <= torchBase + 4; t++)
         {
             float worldTorchY = t * torchSpacing;
-            float screenY = CenterPosition.Y + (worldTorchY - ExileWorldPosition.Y);
+            float screenY = Camera.WorldToScreen(new Vector2(0, worldTorchY), CenterPosition).Y;
             if (screenY >= -25f && screenY <= ArenaHeight + 25f)
             {
                 DrawCorridorTorch(new Vector2(ExileMovementController.MinCorridorX - 3f, screenY), isLeft: true);
@@ -486,8 +584,8 @@ public partial class Arena2D : Node2D
             }
         }
 
-        // 5. Start Portal Dais (Milestone Altar at World Y = 40f)
-        float startDaisScreenY = CenterPosition.Y + (40f - ExileWorldPosition.Y);
+        // 6. Start Portal Dais (Milestone Altar at World Y = 40f)
+        float startDaisScreenY = Camera.WorldToScreen(new Vector2(0, 40f), CenterPosition).Y;
         if (startDaisScreenY >= -60f && startDaisScreenY <= ArenaHeight + 60f)
         {
             Vector2 daisCenter = new(CenterPosition.X, startDaisScreenY);
@@ -506,22 +604,15 @@ public partial class Arena2D : Node2D
             }
         }
 
-        // 6. Fog Gate Threshold (at 85% of MapLength)
+        // 7. Fog Gate Threshold (at 85% of MapLength) (Task 2.8)
         float fogGateWorldY = MapLength * ExileMovementController.FogGateRatio;
-        float fogGateScreenY = CenterPosition.Y + (fogGateWorldY - ExileWorldPosition.Y);
+        float fogGateScreenY = Camera.WorldToScreen(new Vector2(0, fogGateWorldY), CenterPosition).Y;
         if (fogGateScreenY >= -30f && fogGateScreenY <= ArenaHeight + 30f)
         {
-            float shimmer = 0.7f + Mathf.Sin(_floorTime * 4.0f) * 0.3f;
-            Color fogColor = new(0.95f, 0.78f, 0.25f, 0.65f * shimmer);
-            Color fogGlow = new(1.0f, 0.85f, 0.35f, 0.25f * shimmer);
-
-            DrawLine(new Vector2(ExileMovementController.MinCorridorX, fogGateScreenY),
-                new Vector2(ExileMovementController.MaxCorridorX, fogGateScreenY), fogGlow, 8.0f);
-            DrawLine(new Vector2(ExileMovementController.MinCorridorX, fogGateScreenY),
-                new Vector2(ExileMovementController.MaxCorridorX, fogGateScreenY), fogColor, 2.5f);
+            DrawFogGate(fogGateScreenY, IsFogGateSealed);
         }
 
-        // 7. Ambient drifting atmospheric dust motes
+        // 8. Ambient drifting atmospheric dust motes
         Color moteColor = new(0.42f, 0.50f, 0.68f, 0.30f);
         for (int i = 0; i < 8; i++)
         {
@@ -530,10 +621,154 @@ public partial class Arena2D : Node2D
             DrawCircle(new Vector2(mx, my), 1.2f, moteColor);
         }
 
-        // 8. Vignette edge shadows
+        // 9. Vignette edge shadows
         Color vignetteEdge = new(0.015f, 0.018f, 0.025f, 0.65f);
         DrawRect(new Rect2(0, 0, ArenaWidth, 6), vignetteEdge);
         DrawRect(new Rect2(0, ArenaHeight - 6, ArenaWidth, 6), vignetteEdge);
+    }
+
+    private void DrawSlamCraters()
+    {
+        for (int c = 0; c < _slamCraters.Count; c++)
+        {
+            var (pos, timer) = _slamCraters[c];
+            float alpha = Mathf.Clamp(timer / 3.0f, 0f, 1f);
+
+            // Cracked stone circle scorch
+            DrawCircle(pos, 52f, new Color(0.08f, 0.02f, 0.02f, 0.70f * alpha));
+            DrawArc(pos, 52f, 0, Mathf.Tau, 24, new Color(0.45f, 0.12f, 0.06f, 0.60f * alpha), 2f);
+
+            // Radial crack fissures
+            for (int i = 0; i < 6; i++)
+            {
+                float angle = i * (Mathf.Tau / 6f) + 0.35f;
+                Vector2 dir = new(Mathf.Cos(angle), Mathf.Sin(angle));
+                DrawLine(pos, pos + dir * 48f, new Color(0.95f, 0.32f, 0.06f, 0.75f * alpha), 1.5f);
+            }
+
+            // Glowing ember core
+            DrawCircle(pos, 14f, new Color(1.0f, 0.38f, 0.08f, 0.40f * alpha));
+        }
+    }
+
+    private void DrawFogGate(float screenY, bool isSealed)
+    {
+        float leftX = ExileMovementController.MinCorridorX;
+        float rightX = ExileMovementController.MaxCorridorX;
+        float shimmer = 0.7f + Mathf.Sin(_floorTime * 4.5f) * 0.3f;
+
+        if (!isSealed)
+        {
+            // Open / Approaching Fog Gate: Ethereal golden mist shimmer (Task 2.8)
+            Color mistGlow = new(1.0f, 0.85f, 0.35f, 0.35f * shimmer);
+            Color mistCore = new(0.98f, 0.82f, 0.28f, 0.75f * shimmer);
+            Color mistLine = new(1.0f, 0.95f, 0.70f, 0.90f);
+
+            // Broad mist field
+            DrawRect(new Rect2(leftX, screenY - 10f, rightX - leftX, 20f), new Color(1.0f, 0.80f, 0.20f, 0.12f * shimmer));
+            // Thick luminous glow
+            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), mistGlow, 12.0f);
+            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), mistCore, 4.0f);
+            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), mistLine, 1.5f);
+
+            // Shimmering vertical wisps
+            for (int w = 0; w < 12; w++)
+            {
+                float wx = leftX + (w * ((rightX - leftX) / 12f)) + Mathf.Sin(_floorTime * 3f + w) * 6f;
+                float wh = 12f + Mathf.Sin(_floorTime * 5f + w * 2f) * 6f;
+                DrawLine(new Vector2(wx, screenY - wh), new Vector2(wx, screenY + wh), new Color(1.0f, 0.88f, 0.4f, 0.25f * shimmer), 1.5f);
+            }
+        }
+        else
+        {
+            // Sealed Fog Gate: Impenetrable dark crimson / fiery runic barrier with iron spikes (Task 2.8)
+            float pulse = 0.8f + Mathf.Sin(_floorTime * 6f) * 0.2f;
+            Color barrierGlow = new(0.85f, 0.08f, 0.08f, 0.45f * pulse);
+            Color barrierCore = new(1.0f, 0.18f, 0.12f, 0.95f);
+            Color ironBar = new(0.18f, 0.18f, 0.22f, 0.95f);
+
+            // Pulsing crimson danger wash
+            DrawRect(new Rect2(leftX, screenY - 14f, rightX - leftX, 28f), new Color(0.6f, 0.02f, 0.02f, 0.25f * pulse));
+            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), barrierGlow, 16.0f);
+            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), barrierCore, 3.5f);
+
+            // Iron barrier lattice & runic spikes (preventing backtracking)
+            for (int s = 0; s < 14; s++)
+            {
+                float sx = leftX + s * ((rightX - leftX) / 13f);
+                DrawLine(new Vector2(sx, screenY - 12f), new Vector2(sx, screenY + 12f), ironBar, 2.0f);
+                // Spike head pointing toward corridor (north)
+                DrawLine(new Vector2(sx - 3f, screenY - 6f), new Vector2(sx, screenY - 13f), ironBar, 1.5f);
+                DrawLine(new Vector2(sx + 3f, screenY - 6f), new Vector2(sx, screenY - 13f), ironBar, 1.5f);
+            }
+
+            // Warning runes on the barrier
+            for (int r = 0; r < 5; r++)
+            {
+                float rx = leftX + 35f + r * 65f;
+                DrawCircle(new Vector2(rx, screenY), 4f, new Color(1.0f, 0.25f, 0.1f, 0.85f * pulse));
+            }
+        }
+    }
+
+    private void DrawBossRoomChamber(Vector2 center)
+    {
+        // 1. Dark obsidian arena circular dais (Radius = 115f) (Task 2.8)
+        float chamberRadius = 115f;
+        Color obsidianBase = new(0.045f, 0.020f, 0.028f, 0.95f);
+        Color runeRingOuter = new(0.85f, 0.18f, 0.18f, 0.40f);
+        Color runeRingInner = new(0.95f, 0.45f, 0.15f, 0.35f);
+        Color goldTrim = new(0.72f, 0.58f, 0.26f, 0.50f);
+
+        DrawCircle(center, chamberRadius, obsidianBase);
+
+        // Concentric ritual rings
+        DrawArc(center, chamberRadius, 0, Mathf.Tau, 48, goldTrim, 2.5f);
+        DrawArc(center, chamberRadius - 6f, 0, Mathf.Tau, 48, runeRingOuter, 1.2f);
+        DrawArc(center, 75f, 0, Mathf.Tau, 36, runeRingOuter, 1.5f);
+        DrawArc(center, 40f, 0, Mathf.Tau, 24, runeRingInner, 1.2f);
+
+        // Rotating demonic inscribed runes in the ring
+        float rotAngle = _floorTime * 0.25f;
+        for (int i = 0; i < 8; i++)
+        {
+            float a = rotAngle + i * (Mathf.Tau / 8f);
+            Vector2 p1 = center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 40f;
+            Vector2 p2 = center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 75f;
+            DrawLine(p1, p2, new Color(0.90f, 0.25f, 0.15f, 0.35f), 1.0f);
+        }
+
+        // 4 Flanking Sacrificial Braziers / Pillars at corners of the dais
+        Vector2[] brazierOffsets =
+        [
+            new(-88f, -70f),
+            new(88f, -70f),
+            new(-88f, 70f),
+            new(88f, 70f)
+        ];
+
+        foreach (var offset in brazierOffsets)
+        {
+            Vector2 bPos = center + offset;
+            DrawSacrificialBrazier(bPos);
+        }
+    }
+
+    private void DrawSacrificialBrazier(Vector2 pos)
+    {
+        // Stone pillar base
+        DrawCircle(pos, 9f, new Color(0.12f, 0.12f, 0.16f, 1.0f));
+        DrawArc(pos, 9f, 0, Mathf.Tau, 16, new Color(0.45f, 0.38f, 0.22f, 0.8f), 1.5f);
+
+        // Demonic fire flame flicker
+        float flicker = 0.85f + Mathf.Sin(_floorTime * 12f + pos.X) * 0.15f;
+        Color ambientAura = new(0.95f, 0.12f, 0.18f, 0.15f * flicker);
+        Color flameCore = new(1.0f, 0.35f, 0.12f, 0.90f * flicker);
+        Color flameHot = new(1.0f, 0.85f, 0.35f, 0.95f * flicker);
+
+        DrawCircle(pos, 22f * flicker, ambientAura);
+        DrawCircle(pos, 4.5f * flicker, flameCore);
+        DrawCircle(pos + new Vector2(0, -2.5f), 2.5f * flicker, flameHot);
     }
 
     private void DrawCorridorTorch(Vector2 pos, bool isLeft)
@@ -948,6 +1183,26 @@ public partial class Arena2D : Node2D
                 float bossPulse = 0.45f + Mathf.Sin(m.BobbingPhase * 2.0f) * 0.2f;
                 DrawArc(pos, 28f * m.Scale, 0, Mathf.Tau, 32,
                     new Color(ColorBossAura.R, ColorBossAura.G, ColorBossAura.B, bossPulse * alpha), 2.5f);
+
+                // Task 2.8: Rotating Demonic Rune Ring under the Boss
+                float runeRot = _floorTime * 1.5f;
+                DrawArc(pos, 20f * m.Scale, 0, Mathf.Tau, 24, new Color(0.95f, 0.20f, 0.15f, 0.45f * alpha), 1.5f);
+                for (int runeIdx = 0; runeIdx < 6; runeIdx++)
+                {
+                    float ra = runeRot + runeIdx * (Mathf.Tau / 6f);
+                    Vector2 rp = pos + new Vector2(Mathf.Cos(ra), Mathf.Sin(ra)) * (20f * m.Scale);
+                    DrawCircle(rp, 2.0f, new Color(1.0f, 0.35f, 0.12f, 0.85f * alpha));
+                }
+
+                // Task 2.8: Boss Awakening Fiery Shockwave Ring
+                if (m.AwakeningShockwaveRadius > 0f)
+                {
+                    float shockAlpha = Mathf.Clamp(m.AwakeningTimer / 1.0f, 0f, 1f);
+                    Color waveColor = new(1.0f, 0.40f, 0.10f, 0.85f * shockAlpha);
+                    Color waveInner = new(1.0f, 0.85f, 0.25f, 0.45f * shockAlpha);
+                    DrawArc(pos, m.AwakeningShockwaveRadius, 0, Mathf.Tau, 36, waveColor, 3.0f);
+                    DrawArc(pos, m.AwakeningShockwaveRadius * 0.75f, 0, Mathf.Tau, 24, waveInner, 1.5f);
+                }
             }
 
             // Task 2.7: League Encounter Visual Indicators
@@ -1034,21 +1289,48 @@ public partial class Arena2D : Node2D
 
     private void DrawBossOverheadBar(Vector2 pos, MonsterVisualToken m, float alpha)
     {
-        float barW = 68f;
-        float barH = 5f;
-        float barX = pos.X - barW / 2;
-        float barY = pos.Y - 32f;
+        // Task 2.8: Senior 96px Overhead Boss Bar with Gold Filigree and Skull Badge
+        float barW = 96f;
+        float barH = 6f;
+        float barX = pos.X - barW * 0.5f;
+        float barY = pos.Y - 38f;
 
-        // Gold border & Dark background
-        DrawRect(new Rect2(barX - 1, barY - 1, barW + 2, barH + 2), new Color(0.68f, 0.54f, 0.30f, alpha));
-        DrawRect(new Rect2(barX, barY, barW, barH), new Color(0.08f, 0.08f, 0.1f, 0.9f * alpha));
+        Color goldBorder = new(0.85f, 0.70f, 0.28f, alpha);
+        Color goldGlow = new(1.0f, 0.88f, 0.40f, 0.35f * alpha);
+        Color barBg = new(0.06f, 0.06f, 0.08f, 0.95f * alpha);
 
-        // Health fill
-        float fillW = barW * Mathf.Clamp(m.CurrentLife / m.MaxLife, 0f, 1f);
-        DrawRect(new Rect2(barX, barY, fillW, barH), new Color(0.85f, 0.15f, 0.15f, alpha));
+        // Outer glow & border
+        DrawRect(new Rect2(barX - 2, barY - 2, barW + 4, barH + 4), goldGlow);
+        DrawRect(new Rect2(barX - 1, barY - 1, barW + 2, barH + 2), goldBorder);
+        DrawRect(new Rect2(barX, barY, barW, barH), barBg);
 
-        // Boss skull / label indicator dot
-        DrawCircle(new Vector2(barX - 6, barY + 2.5f), 2.5f, new Color(1.0f, 0.3f, 0.3f, alpha));
+        // Filigree corner accents
+        DrawLine(new Vector2(barX - 3, barY - 3), new Vector2(barX, barY - 3), goldBorder, 1.5f);
+        DrawLine(new Vector2(barX - 3, barY - 3), new Vector2(barX - 3, barY), goldBorder, 1.5f);
+        DrawLine(new Vector2(barX + barW + 3, barY - 3), new Vector2(barX + barW, barY - 3), goldBorder, 1.5f);
+        DrawLine(new Vector2(barX + barW + 3, barY - 3), new Vector2(barX + barW + 3, barY), goldBorder, 1.5f);
+
+        // Life fill ratio (accounting for awakening animation)
+        float lifeRatio = Mathf.Clamp(m.CurrentLife / m.MaxLife, 0f, 1f);
+        if (m.AwakeningTimer > 0f)
+        {
+            float awakeProg = 1f - (m.AwakeningTimer / 1.0f);
+            lifeRatio *= awakeProg;
+        }
+
+        float fillW = barW * lifeRatio;
+        if (fillW > 0.5f)
+        {
+            // Crimson health fill with top specular line
+            DrawRect(new Rect2(barX, barY, fillW, barH), new Color(0.85f, 0.12f, 0.12f, alpha));
+            DrawLine(new Vector2(barX, barY + 1f), new Vector2(barX + fillW, barY + 1f), new Color(1.0f, 0.45f, 0.35f, 0.90f * alpha), 1.0f);
+        }
+
+        // Boss Skull / Crest Badge on the left
+        Vector2 skullPos = new(barX - 8f, barY + barH * 0.5f);
+        DrawCircle(skullPos, 5f, new Color(0.12f, 0.12f, 0.15f, alpha));
+        DrawArc(skullPos, 5f, 0, Mathf.Tau, 12, goldBorder, 1.2f);
+        DrawCircle(skullPos, 2.5f, new Color(0.95f, 0.25f, 0.25f, alpha));
     }
 
     // ─────────────────────────────────────────────
@@ -1082,21 +1364,24 @@ public partial class Arena2D : Node2D
         float baseRadius = _telegraph.Radius;
         float progress = _telegraph.Progress;
 
-        // 1. Static outer lethal danger zone (Alpha = 0.22)
-        Color zoneFill = new(0.95f, 0.15f, 0.15f, 0.22f);
-        Color zoneBorder = new(1.0f, 0.15f, 0.15f, 0.65f);
+        // 1. Static outer lethal danger zone (Alpha = 0.22 as specified in Task 2.8)
+        Color zoneFill = new(0.95f, 0.12f, 0.12f, 0.22f);
+        Color zoneBorder = new(1.0f, 0.18f, 0.18f, 0.70f + Mathf.Sin(_floorTime * 10f) * 0.25f);
         DrawCircle(pos, baseRadius, zoneFill);
-        DrawArc(pos, baseRadius, 0, Mathf.Tau, 36, zoneBorder, 1.5f);
+        DrawArc(pos, baseRadius, 0, Mathf.Tau, 36, zoneBorder, 1.8f);
 
-        // 2. Shrinking Ring indicator (from 1.6x down to 0.05x)
+        // 2. Shrinking Ring indicator (from 1.6x down to 0.05x over 1.4s wind-up)
         float currentShrinkRadius = Mathf.Lerp(baseRadius * 1.6f, baseRadius * 0.05f, progress);
-        Color shrinkRingColor = new(1.0f, 0.85f, 0.2f, 0.85f);
-        DrawArc(pos, currentShrinkRadius, 0, Mathf.Tau, 32, shrinkRingColor, 2.0f);
+        Color shrinkRingColor = new(1.0f, 0.85f, 0.20f, 0.95f);
+        DrawArc(pos, currentShrinkRadius, 0, Mathf.Tau, 32, shrinkRingColor, 2.5f);
 
-        // 3. Danger warning crosshair in center
-        Color crosshairColor = new(1.0f, 0.2f, 0.2f, 0.75f);
-        DrawLine(pos + new Vector2(-6, 0), pos + new Vector2(6, 0), crosshairColor, 1.5f);
-        DrawLine(pos + new Vector2(0, -6), pos + new Vector2(0, 6), crosshairColor, 1.5f);
+        // 3. Danger warning crosshair in center (pulses faster as progress nears 1.0)
+        float pulseSpeed = Mathf.Lerp(8f, 25f, progress);
+        float crossAlpha = 0.6f + Mathf.Sin(_floorTime * pulseSpeed) * 0.35f;
+        Color crosshairColor = new(1.0f, 0.2f, 0.2f, crossAlpha);
+        DrawLine(pos + new Vector2(-7, 0), pos + new Vector2(7, 0), crosshairColor, 1.8f);
+        DrawLine(pos + new Vector2(0, -7), pos + new Vector2(0, 7), crosshairColor, 1.8f);
+        DrawCircle(pos, 3f, crosshairColor);
     }
 
     // ─────────────────────────────────────────────
@@ -1356,7 +1641,7 @@ public partial class Arena2D : Node2D
     /// Triggers a Boss Slam telegraph warning indicator anywhere in the 2D arena.
     /// Only used for lethal attacks (>70% player EHP) to give a window for Emergency Portal (Space).
     /// </summary>
-    public void TriggerBossSlam(Vector2 targetPosition, float duration = 1.35f, float radius = 50f, float threatEhpPercent = 85f)
+    public void TriggerBossSlam(Vector2 targetPosition, float duration = 1.4f, float radius = 55f, float threatEhpPercent = 85f)
     {
         _telegraph = new BossSlamTelegraph
         {
@@ -1366,7 +1651,7 @@ public partial class Arena2D : Node2D
             TotalDuration = Mathf.Max(0.5f, duration),
             ElapsedDuration = 0f,
             ThreatEhpPercent = threatEhpPercent,
-            ScreenShakeIntensity = 3.5f
+            ScreenShakeIntensity = 6.0f
         };
     }
 
@@ -1386,13 +1671,16 @@ public partial class Arena2D : Node2D
 
         _telegraph.IsActive = false;
 
-        // Apply screen shake
-        ScreenShake(intensity, 0.15f);
+        // Add ground scorch impact crater (lasts 3.0s) (Task 2.8)
+        _slamCraters.Add((pos, 3.0f));
+
+        // Apply intense screen shake
+        ScreenShake(intensity > 0 ? intensity : 6.0f, 0.25f);
 
         // Flash recoil on exile if caught in the 2D blast radius
         if (pos.DistanceTo(ExilePosition) <= _telegraph.Radius)
         {
-            _exileAttackRecoil = 0.8f;
+            _exileAttackRecoil = 0.9f;
         }
 
         OnBossSlamDetonated?.Invoke(pos, threat);
@@ -1528,11 +1816,11 @@ public partial class Arena2D : Node2D
             token.DeathFadeTimer = inst.IsAlive ? 1.0f : 0f;
             token.BobbingPhase = i * 0.75f;
 
-            // 2D Positioning around Exile (supports world coordinates & screen space)
+            // 2D Positioning around Exile (supports world coordinates & screen space via Camera)
             Vector2 spawnPos;
             if (inst.Position != Vector2D.Zero)
             {
-                spawnPos = CenterPosition + new Vector2(inst.Position.X - ExileWorldPosition.X, inst.Position.Y - ExileWorldPosition.Y);
+                spawnPos = Camera.WorldToScreen(new Vector2(inst.Position.X, inst.Position.Y), CenterPosition);
             }
             else if (inst.Rarity == MonsterRarity.Boss)
             {
@@ -1636,11 +1924,11 @@ public partial class Arena2D : Node2D
                 else if (token.IsAlive)
                 {
                     token.IsAggroed = core.IsAggroed;
-                    // Update base position from core simulation
+                    // Update base position from core simulation via Camera (Task 2.8)
                     Vector2 targetPos;
                     if (core.Position != Vector2D.Zero)
                     {
-                        targetPos = CenterPosition + new Vector2(core.Position.X - ExileWorldPosition.X, core.Position.Y - ExileWorldPosition.Y);
+                        targetPos = Camera.WorldToScreen(new Vector2(core.Position.X, core.Position.Y), CenterPosition);
                     }
                     else
                     {
@@ -1657,7 +1945,7 @@ public partial class Arena2D : Node2D
     }
 
     /// <summary>
-    /// Updates Exile real-world coordinates and movement telemetry for relative corridor rendering (Task 2.7).
+    /// Updates Exile real-world coordinates and movement telemetry for relative corridor rendering (Task 2.7 & 2.8).
     /// </summary>
     public void UpdateExileWorldPosition(Vector2 worldPos, ExileMovementState state = ExileMovementState.Idle, float speed = 0f, float mapLength = 2400f)
     {
@@ -1665,6 +1953,14 @@ public partial class Arena2D : Node2D
         MovementState = state;
         MovementSpeed = speed;
         if (mapLength > 0f) MapLength = mapLength;
+
+        // Auto-seal Fog Gate if Exile advances past the 85% threshold (Task 2.8)
+        float fogGateWorldY = MapLength * ExileMovementController.FogGateRatio;
+        if (worldPos.Y >= fogGateWorldY && !IsFogGateSealed)
+        {
+            IsFogGateSealed = true;
+        }
+
         QueueRedraw();
     }
 

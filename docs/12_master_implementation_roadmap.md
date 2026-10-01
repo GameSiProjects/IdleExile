@@ -127,11 +127,11 @@ Tài liệu này là **Bản đồ chỉ dẫn thực thi chiến lược (Strat
   - [x] Gating phạm vi Aggro (75–95px): Quái vật chỉ kích hoạt khi nhân vật tiếp cận gần, cuộn mượt vào tầm mắt thay vì lao từ ngoài màn hình vào.
   - [x] Sàn hành lang cuộn trực quan: Tịnh tiến texture đá lát nền, đuốc bập bùng hai bên tường và bệ xuất phát (Start Dais) cuộn xa dần.
   - [x] Nhãn Debug Tọa Độ (`[DEBUG] P_E`): Hiển thị tọa độ thực, trạng thái và tốc độ; được bảo vệ bằng `#if DEBUG` (loại bỏ 100% trong bản Release).
-- [ ] **2.8: Cổng Sương Mù & Đấu Trường Boss Cuối Đường (Boss Room Chamber)**
-  - [ ] Cổng sương mù (Fog Gate) phong tỏa tại mốc 85% chiều dài map.
-  - [ ] Bước qua cổng: Camera2D khóa cố định vào tâm phòng Boss (Arena Lock).
-  - [ ] Map Boss thức tỉnh kèm thanh máu lớn trên đầu (Overhead Boss Bar).
-  - [ ] Đòn Boss Slam chí mạng: Vòng đỏ cảnh báo co dần 1.4s (Telegraph wind-up).
+- [x] **2.8: Cổng Sương Mù & Đấu Trường Boss Cuối Đường (Boss Room Chamber)**
+  - [x] Cổng sương mù (Fog Gate) phong tỏa tại mốc 85% chiều dài map.
+  - [x] Bước qua cổng: Camera2D khóa cố định vào tâm phòng Boss (Arena Lock).
+  - [x] Map Boss thức tỉnh kèm thanh máu lớn trên đầu (Overhead Boss Bar).
+  - [x] Đòn Boss Slam chí mạng: Vòng đỏ cảnh báo co dần 1.4s (Telegraph wind-up).
 - [ ] **2.9: Hiệu Ứng Dopamine Loot Rơi Đồ**
   - [ ] Cột sáng Shader (Drop Beam) chiếu từ trần xuống đúng tọa độ quái chết rơi đồ hiếm.
   - [ ] Banner Loot Toast trượt từ đỉnh Viewport kèm âm thanh "Ting!" đanh thép.
