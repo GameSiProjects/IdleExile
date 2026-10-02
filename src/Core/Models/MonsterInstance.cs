@@ -320,10 +320,10 @@ public sealed class MonsterInstance : ICombatEntity
 
         AggroRange = rarity switch
         {
-            MonsterRarity.Boss => 100f,
-            MonsterRarity.Rare => 95f,
-            MonsterRarity.Magic => 85f,
-            _ => 75f
+            MonsterRarity.Boss => 50f,
+            MonsterRarity.Rare => 47.5f,
+            MonsterRarity.Magic => 42.5f,
+            _ => 37.5f
         };
 
         if (initialPosition.HasValue)

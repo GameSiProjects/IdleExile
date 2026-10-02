@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using IdleExile.Core.Models;
+using IdleExile.Core.Services;
 using IdleExile.Core.Simulation;
+using IdleExile.Core.State;
 
 namespace IdleExile.UI.Components;
 
@@ -49,6 +51,8 @@ public sealed class MonsterVisualToken
     public bool IsAwakened = true;
     public float AwakeningTimer;
     public float AwakeningShockwaveRadius;
+    public float AttackLungeTimer;
+    public Vector2 AttackLungeOffset;
 }
 
 /// <summary>
@@ -115,7 +119,7 @@ public partial class Arena2D : Node2D
     //  Exile Character State (Top-Down)
     // ─────────────────────────────────────────────
     public Vector2 ExilePosition { get; set; } = CenterPosition;
-    public Vector2 ExileWorldPosition { get; set; } = new(220f, 104f);
+    public Vector2 ExileWorldPosition { get; set; } = new(40f, 104f);
     public ExileMovementState MovementState { get; set; } = ExileMovementState.Idle;
     public float MovementSpeed { get; set; } = 0f;
     public float MapLength { get; set; } = 2400f;
@@ -305,7 +309,7 @@ public partial class Arena2D : Node2D
         _floorTime += dt;
 
         // 0. Update Camera Tracking & Arena Lock (Task 2.6 & Task 2.8)
-        Vector2 bossCenterWorld = new(CenterPosition.X, MapLength * ExileMovementController.BossArenaRatio);
+        Vector2 bossCenterWorld = new(MapLength * ExileMovementController.BossArenaRatio, CenterPosition.Y);
         bool inBossPhase = IsFogGateSealed || MovementState == ExileMovementState.EnteringBossRoom || MovementState == ExileMovementState.InBossArena;
         Camera.Update(dt, ExileWorldPosition, bossCenterWorld, inBossPhase);
 
@@ -354,6 +358,10 @@ public partial class Arena2D : Node2D
         {
             var m = _monsters[i];
             m.BobbingPhase += dt * 2.8f;
+            if (m.AttackLungeTimer > 0f)
+            {
+                m.AttackLungeTimer = Mathf.Max(0f, m.AttackLungeTimer - dt);
+            }
             if (m.HitFlashTimer > 0f)
             {
                 m.HitFlashTimer = Mathf.Max(0f, m.HitFlashTimer - dt * 7f);
@@ -452,8 +460,8 @@ public partial class Arena2D : Node2D
         }
         else
         {
-            // Out of combat: smoothly face forward marching direction (+Y downward in corridor)
-            float desiredAngle = Mathf.Pi * 0.5f;
+            // Out of combat: smoothly face forward marching direction (+X rightward in corridor)
+            float desiredAngle = 0f;
             _exileFacingAngle = Mathf.LerpAngle(_exileFacingAngle, desiredAngle, dt * 6f);
             _exileFacingAngle = Mathf.Wrap(_exileFacingAngle, -Mathf.Pi, Mathf.Pi);
         }
@@ -495,100 +503,102 @@ public partial class Arena2D : Node2D
         DrawRect(new Rect2(0, 0, ArenaWidth, ArenaHeight), new Color(0.038f, 0.041f, 0.055f, 1.0f));
 
         // Use Camera position for smooth relative scrolling in corridor and fixed arena lock (Task 2.6 & 2.8)
-        float camY = Camera.CurrentPosition.Y;
+        float camX = Camera.CurrentPosition.X;
 
-        // 2. Playable Corridor Flagstone Tiles (between MinCorridorX=40 and MaxCorridorX=400)
+        // 2. Playable Corridor Flagstone Tiles (between MinCorridorY=32 and MaxCorridorY=176)
         float tileW = 36f;
         float tileH = 28f;
-        int cols = Mathf.CeilToInt((ExileMovementController.MaxCorridorX - ExileMovementController.MinCorridorX) / tileW);
-        int rows = Mathf.CeilToInt(ArenaHeight / tileH) + 2;
+        float topY = ExileMovementController.MinCorridorY;
+        float bottomY = ExileMovementController.MaxCorridorY;
+        int cols = Mathf.CeilToInt(ArenaWidth / tileW) + 2;
+        int rows = Mathf.CeilToInt((bottomY - topY) / tileH) + 1;
 
-        float scrollY = -Mathf.PosMod(camY, tileH);
-        int tileWorldRowBase = Mathf.FloorToInt(camY / tileH);
+        float scrollX = -Mathf.PosMod(camX, tileW);
+        int tileWorldColBase = Mathf.FloorToInt(camX / tileW);
 
         Color groutColor = new(0.022f, 0.025f, 0.035f, 0.95f);
         Color tileColorA = new(0.058f, 0.064f, 0.082f, 0.85f);
         Color tileColorB = new(0.048f, 0.054f, 0.070f, 0.85f);
 
-        for (int r = -1; r <= rows; r++)
+        for (int c = -1; c <= cols; c++)
         {
-            int worldR = tileWorldRowBase + r;
-            float rowOffset = ((worldR % 2 + 2) % 2 == 1) ? (tileW * 0.5f) : 0f;
-            float y = r * tileH + scrollY;
+            int worldC = tileWorldColBase + c;
+            float colOffset = ((worldC % 2 + 2) % 2 == 1) ? (tileH * 0.5f) : 0f;
+            float x = c * tileW + scrollX;
 
-            for (int c = -1; c <= cols + 1; c++)
+            for (int r = -1; r <= rows + 1; r++)
             {
-                float x = ExileMovementController.MinCorridorX + c * tileW + rowOffset;
-                if (x + tileW < ExileMovementController.MinCorridorX || x > ExileMovementController.MaxCorridorX)
+                float y = topY + r * tileH + colOffset;
+                if (y + tileH < topY || y > bottomY)
                     continue;
 
-                float drawX = Mathf.Max(x, ExileMovementController.MinCorridorX);
-                float drawW = Mathf.Min(x + tileW, ExileMovementController.MaxCorridorX) - drawX;
-                if (drawW <= 0.5f) continue;
+                float drawY = Mathf.Max(y, topY);
+                float drawH = Mathf.Min(y + tileH, bottomY) - drawY;
+                if (drawH <= 0.5f) continue;
 
-                Rect2 tileRect = new(drawX + 0.5f, y + 0.5f, drawW - 1f, tileH - 1f);
+                Rect2 tileRect = new(x + 0.5f, drawY + 0.5f, tileW - 1f, drawH - 1f);
 
-                // Deterministic tile shading based on world coordinates (c, worldR)
-                int shadeIndex = ((c + worldR) % 2 + 2) % 2;
+                // Deterministic tile shading based on world coordinates (worldC, r)
+                int shadeIndex = ((worldC + r) % 2 + 2) % 2;
                 Color col = (shadeIndex == 0) ? tileColorA : tileColorB;
                 DrawRect(tileRect, col);
             }
 
-            // Horizontal grout seams
-            DrawLine(new Vector2(ExileMovementController.MinCorridorX, y), new Vector2(ExileMovementController.MaxCorridorX, y), groutColor, 1.0f);
+            // Vertical grout seams
+            DrawLine(new Vector2(x, topY), new Vector2(x, bottomY), groutColor, 1.0f);
         }
 
-        // 3. Side Walls (Dungeon corridors: Left 0..40, Right 400..440)
+        // 3. Top & Bottom Walls (Dungeon corridor: Top 0..32, Bottom 176..208)
         Color wallBase = new(0.020f, 0.022f, 0.030f, 1.0f);
         Color curbBorder = new(0.18f, 0.20f, 0.26f, 0.95f);
         Color curbHighlight = new(0.28f, 0.32f, 0.42f, 0.70f);
 
-        // Left wall slab & Right wall slab
-        DrawRect(new Rect2(0, 0, ExileMovementController.MinCorridorX, ArenaHeight), wallBase);
-        DrawRect(new Rect2(ExileMovementController.MaxCorridorX, 0, ArenaWidth - ExileMovementController.MaxCorridorX, ArenaHeight), wallBase);
+        // Top wall slab & Bottom wall slab
+        DrawRect(new Rect2(0, 0, ArenaWidth, topY), wallBase);
+        DrawRect(new Rect2(0, bottomY, ArenaWidth, ArenaHeight - bottomY), wallBase);
 
-        // Wall stone seams scrolling with camera Y
-        for (int r = -1; r <= rows; r++)
+        // Wall stone seams scrolling with camera X
+        for (int c = -1; c <= cols; c++)
         {
-            float wy = r * tileH + scrollY;
-            DrawLine(new Vector2(0, wy), new Vector2(ExileMovementController.MinCorridorX, wy), groutColor, 1.2f);
-            DrawLine(new Vector2(ExileMovementController.MaxCorridorX, wy), new Vector2(ArenaWidth, wy), groutColor, 1.2f);
+            float wx = c * tileW + scrollX;
+            DrawLine(new Vector2(wx, 0), new Vector2(wx, topY), groutColor, 1.2f);
+            DrawLine(new Vector2(wx, bottomY), new Vector2(wx, ArenaHeight), groutColor, 1.2f);
         }
 
-        // Curb edges
-        DrawLine(new Vector2(ExileMovementController.MinCorridorX, 0), new Vector2(ExileMovementController.MinCorridorX, ArenaHeight), curbBorder, 2.0f);
-        DrawLine(new Vector2(ExileMovementController.MinCorridorX + 1f, 0), new Vector2(ExileMovementController.MinCorridorX + 1f, ArenaHeight), curbHighlight, 1.0f);
+        // Curb edges (Horizontal lines at topY and bottomY)
+        DrawLine(new Vector2(0, topY), new Vector2(ArenaWidth, topY), curbBorder, 2.0f);
+        DrawLine(new Vector2(0, topY + 1f), new Vector2(ArenaWidth, topY + 1f), curbHighlight, 1.0f);
 
-        DrawLine(new Vector2(ExileMovementController.MaxCorridorX, 0), new Vector2(ExileMovementController.MaxCorridorX, ArenaHeight), curbBorder, 2.0f);
-        DrawLine(new Vector2(ExileMovementController.MaxCorridorX - 1f, 0), new Vector2(ExileMovementController.MaxCorridorX - 1f, ArenaHeight), curbHighlight, 1.0f);
+        DrawLine(new Vector2(0, bottomY), new Vector2(ArenaWidth, bottomY), curbBorder, 2.0f);
+        DrawLine(new Vector2(0, bottomY - 1f), new Vector2(ArenaWidth, bottomY - 1f), curbHighlight, 1.0f);
 
         // 4. Boss Room Chamber Dais (Task 2.8) - rendered if visible on screen
-        float bossCenterWorldY = MapLength * ExileMovementController.BossArenaRatio;
-        Vector2 bossCenterScreen = Camera.WorldToScreen(new Vector2(CenterPosition.X, bossCenterWorldY), CenterPosition);
-        if (bossCenterScreen.Y >= -140f && bossCenterScreen.Y <= ArenaHeight + 140f)
+        float bossCenterWorldX = MapLength * ExileMovementController.BossArenaRatio;
+        Vector2 bossCenterScreen = Camera.WorldToScreen(new Vector2(bossCenterWorldX, CenterPosition.Y), CenterPosition);
+        if (bossCenterScreen.X >= -140f && bossCenterScreen.X <= ArenaWidth + 140f)
         {
             DrawBossRoomChamber(bossCenterScreen);
         }
 
-        // 5. Roadside Sconces / Torches (spaced every 140px along corridor)
+        // 5. Roadside Sconces / Torches (spaced every 140px along corridor in world X)
         float torchSpacing = 140f;
-        int torchBase = Mathf.FloorToInt((camY - 140f) / torchSpacing);
-        for (int t = torchBase; t <= torchBase + 4; t++)
+        int torchBase = Mathf.FloorToInt((camX - 140f) / torchSpacing);
+        for (int t = torchBase; t <= torchBase + 5; t++)
         {
-            float worldTorchY = t * torchSpacing;
-            float screenY = Camera.WorldToScreen(new Vector2(0, worldTorchY), CenterPosition).Y;
-            if (screenY >= -25f && screenY <= ArenaHeight + 25f)
+            float worldTorchX = t * torchSpacing;
+            float screenX = Camera.WorldToScreen(new Vector2(worldTorchX, 0), CenterPosition).X;
+            if (screenX >= -25f && screenX <= ArenaWidth + 25f)
             {
-                DrawCorridorTorch(new Vector2(ExileMovementController.MinCorridorX - 3f, screenY), isLeft: true);
-                DrawCorridorTorch(new Vector2(ExileMovementController.MaxCorridorX + 3f, screenY), isLeft: false);
+                DrawCorridorTorch(new Vector2(screenX, topY - 3f), isTop: true);
+                DrawCorridorTorch(new Vector2(screenX, bottomY + 3f), isTop: false);
             }
         }
 
-        // 6. Start Portal Dais (Milestone Altar at World Y = 40f)
-        float startDaisScreenY = Camera.WorldToScreen(new Vector2(0, 40f), CenterPosition).Y;
-        if (startDaisScreenY >= -60f && startDaisScreenY <= ArenaHeight + 60f)
+        // 6. Start Portal Dais (Milestone Altar at World X = 40f)
+        float startDaisScreenX = Camera.WorldToScreen(new Vector2(40f, 0), CenterPosition).X;
+        if (startDaisScreenX >= -60f && startDaisScreenX <= ArenaWidth + 60f)
         {
-            Vector2 daisCenter = new(CenterPosition.X, startDaisScreenY);
+            Vector2 daisCenter = new(startDaisScreenX, CenterPosition.Y);
             Color runicOuter = new(0.20f, 0.45f, 0.85f, 0.45f);
             Color runicInner = new(0.12f, 0.25f, 0.45f, 0.25f);
 
@@ -605,11 +615,11 @@ public partial class Arena2D : Node2D
         }
 
         // 7. Fog Gate Threshold (at 85% of MapLength) (Task 2.8)
-        float fogGateWorldY = MapLength * ExileMovementController.FogGateRatio;
-        float fogGateScreenY = Camera.WorldToScreen(new Vector2(0, fogGateWorldY), CenterPosition).Y;
-        if (fogGateScreenY >= -30f && fogGateScreenY <= ArenaHeight + 30f)
+        float fogGateWorldX = MapLength * ExileMovementController.FogGateRatio;
+        float fogGateScreenX = Camera.WorldToScreen(new Vector2(fogGateWorldX, 0), CenterPosition).X;
+        if (fogGateScreenX >= -30f && fogGateScreenX <= ArenaWidth + 30f)
         {
-            DrawFogGate(fogGateScreenY, IsFogGateSealed);
+            DrawFogGate(fogGateScreenX, IsFogGateSealed);
         }
 
         // 8. Ambient drifting atmospheric dust motes
@@ -651,10 +661,10 @@ public partial class Arena2D : Node2D
         }
     }
 
-    private void DrawFogGate(float screenY, bool isSealed)
+    private void DrawFogGate(float screenX, bool isSealed)
     {
-        float leftX = ExileMovementController.MinCorridorX;
-        float rightX = ExileMovementController.MaxCorridorX;
+        float topY = ExileMovementController.MinCorridorY;
+        float bottomY = ExileMovementController.MaxCorridorY;
         float shimmer = 0.7f + Mathf.Sin(_floorTime * 4.5f) * 0.3f;
 
         if (!isSealed)
@@ -665,18 +675,18 @@ public partial class Arena2D : Node2D
             Color mistLine = new(1.0f, 0.95f, 0.70f, 0.90f);
 
             // Broad mist field
-            DrawRect(new Rect2(leftX, screenY - 10f, rightX - leftX, 20f), new Color(1.0f, 0.80f, 0.20f, 0.12f * shimmer));
+            DrawRect(new Rect2(screenX - 10f, topY, 20f, bottomY - topY), new Color(1.0f, 0.80f, 0.20f, 0.12f * shimmer));
             // Thick luminous glow
-            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), mistGlow, 12.0f);
-            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), mistCore, 4.0f);
-            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), mistLine, 1.5f);
+            DrawLine(new Vector2(screenX, topY), new Vector2(screenX, bottomY), mistGlow, 12.0f);
+            DrawLine(new Vector2(screenX, topY), new Vector2(screenX, bottomY), mistCore, 4.0f);
+            DrawLine(new Vector2(screenX, topY), new Vector2(screenX, bottomY), mistLine, 1.5f);
 
-            // Shimmering vertical wisps
-            for (int w = 0; w < 12; w++)
+            // Shimmering horizontal wisps
+            for (int w = 0; w < 10; w++)
             {
-                float wx = leftX + (w * ((rightX - leftX) / 12f)) + Mathf.Sin(_floorTime * 3f + w) * 6f;
-                float wh = 12f + Mathf.Sin(_floorTime * 5f + w * 2f) * 6f;
-                DrawLine(new Vector2(wx, screenY - wh), new Vector2(wx, screenY + wh), new Color(1.0f, 0.88f, 0.4f, 0.25f * shimmer), 1.5f);
+                float wy = topY + (w * ((bottomY - topY) / 10f)) + Mathf.Sin(_floorTime * 3f + w) * 5f;
+                float ww = 12f + Mathf.Sin(_floorTime * 5f + w * 2f) * 6f;
+                DrawLine(new Vector2(screenX - ww, wy), new Vector2(screenX + ww, wy), new Color(1.0f, 0.88f, 0.4f, 0.25f * shimmer), 1.5f);
             }
         }
         else
@@ -688,25 +698,25 @@ public partial class Arena2D : Node2D
             Color ironBar = new(0.18f, 0.18f, 0.22f, 0.95f);
 
             // Pulsing crimson danger wash
-            DrawRect(new Rect2(leftX, screenY - 14f, rightX - leftX, 28f), new Color(0.6f, 0.02f, 0.02f, 0.25f * pulse));
-            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), barrierGlow, 16.0f);
-            DrawLine(new Vector2(leftX, screenY), new Vector2(rightX, screenY), barrierCore, 3.5f);
+            DrawRect(new Rect2(screenX - 14f, topY, 28f, bottomY - topY), new Color(0.6f, 0.02f, 0.02f, 0.25f * pulse));
+            DrawLine(new Vector2(screenX, topY), new Vector2(screenX, bottomY), barrierGlow, 16.0f);
+            DrawLine(new Vector2(screenX, topY), new Vector2(screenX, bottomY), barrierCore, 3.5f);
 
-            // Iron barrier lattice & runic spikes (preventing backtracking)
-            for (int s = 0; s < 14; s++)
+            // Iron barrier lattice & runic spikes (preventing backtracking to the left)
+            for (int s = 0; s < 10; s++)
             {
-                float sx = leftX + s * ((rightX - leftX) / 13f);
-                DrawLine(new Vector2(sx, screenY - 12f), new Vector2(sx, screenY + 12f), ironBar, 2.0f);
-                // Spike head pointing toward corridor (north)
-                DrawLine(new Vector2(sx - 3f, screenY - 6f), new Vector2(sx, screenY - 13f), ironBar, 1.5f);
-                DrawLine(new Vector2(sx + 3f, screenY - 6f), new Vector2(sx, screenY - 13f), ironBar, 1.5f);
+                float sy = topY + s * ((bottomY - topY) / 9f);
+                DrawLine(new Vector2(screenX - 12f, sy), new Vector2(screenX + 12f, sy), ironBar, 2.0f);
+                // Spike head pointing toward corridor (west / left)
+                DrawLine(new Vector2(screenX - 6f, sy - 3f), new Vector2(screenX - 13f, sy), ironBar, 1.5f);
+                DrawLine(new Vector2(screenX - 6f, sy + 3f), new Vector2(screenX - 13f, sy), ironBar, 1.5f);
             }
 
             // Warning runes on the barrier
-            for (int r = 0; r < 5; r++)
+            for (int r = 0; r < 4; r++)
             {
-                float rx = leftX + 35f + r * 65f;
-                DrawCircle(new Vector2(rx, screenY), 4f, new Color(1.0f, 0.25f, 0.1f, 0.85f * pulse));
+                float ry = topY + 25f + r * 35f;
+                DrawCircle(new Vector2(screenX, ry), 4f, new Color(1.0f, 0.25f, 0.1f, 0.85f * pulse));
             }
         }
     }
@@ -771,14 +781,14 @@ public partial class Arena2D : Node2D
         DrawCircle(pos + new Vector2(0, -2.5f), 2.5f * flicker, flameHot);
     }
 
-    private void DrawCorridorTorch(Vector2 pos, bool isLeft)
+    private void DrawCorridorTorch(Vector2 pos, bool isTop)
     {
         // Iron bracket anchored to wall
-        Vector2 bracketEnd = pos + new Vector2(isLeft ? 5f : -5f, 0f);
+        Vector2 bracketEnd = pos + new Vector2(0f, isTop ? 5f : -5f);
         DrawLine(pos, bracketEnd, new Color(0.28f, 0.30f, 0.36f), 2.0f);
 
         // Torch flame flicker
-        float flicker = 0.85f + Mathf.Sin(_floorTime * 14f + pos.Y) * 0.15f;
+        float flicker = 0.85f + Mathf.Sin(_floorTime * 14f + pos.X) * 0.15f;
         // Warm ambient light pool on ground
         DrawCircle(bracketEnd, 16f * flicker, new Color(1.0f, 0.55f, 0.15f, 0.09f));
         // Flame core
@@ -1158,7 +1168,11 @@ public partial class Arena2D : Node2D
 
             float alpha = m.IsAlive ? 1.0f : Mathf.Clamp(m.DeathFadeTimer / 0.4f, 0f, 1f);
             float bob = Mathf.Sin(m.BobbingPhase) * 1.2f;
-            Vector2 pos = new(m.Position.X, m.Position.Y + bob);
+            float lunge = m.AttackLungeTimer > 0f ? Mathf.Sin((m.AttackLungeTimer / 0.16f) * Mathf.Pi) : 0f;
+            Vector2 pos = new(
+                m.Position.X + m.AttackLungeOffset.X * lunge,
+                m.Position.Y + bob + m.AttackLungeOffset.Y * lunge
+            );
 
             // Ground shadow
             float shadowRadius = 9f * m.Scale;
@@ -1768,6 +1782,112 @@ public partial class Arena2D : Node2D
     }
 
     /// <summary>
+    /// Triggers an attack lunge animation for a monster token towards its target.
+    /// </summary>
+    public void TriggerMonsterAttackLunge(long instanceId, Vector2 direction)
+    {
+        for (int i = 0; i < _activeMonsterCount; i++)
+        {
+            if (_monsters[i].InstanceId == instanceId)
+            {
+                _monsters[i].AttackLungeTimer = 0.16f;
+                _monsters[i].AttackLungeOffset = direction * 7f;
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Unified visual attack pipeline for ANY combatant (Exile, Monster, Minion, Boss).
+    /// Guarantees symmetrical handling of screen coordinates, attacker recoil/lunge, facing angle,
+    /// melee slash sweep indicators, and in-flight projectiles.
+    /// </summary>
+    public void ExecuteAttackVisual(CombatAttackEventArgs args)
+    {
+        bool isExileAttacker = args.Attacker is PlayerState || args.Attacker.Id == 0;
+
+        // 1. Resolve Attacker Screen Coordinate
+        Vector2 attackerScreen;
+        if (isExileAttacker)
+        {
+            attackerScreen = ExilePosition;
+        }
+        else if (!TryGetMonsterPosition(args.Attacker.Id, out attackerScreen))
+        {
+            attackerScreen = Camera.WorldToScreen(new Vector2(args.Origin.X, args.Origin.Y), CenterPosition);
+        }
+
+        // 2. Resolve Target Screen Coordinate
+        Vector2 targetScreen;
+        if (args.Target is PlayerState || (args.Target != null && args.Target.Id == 0))
+        {
+            targetScreen = ExilePosition;
+        }
+        else if (args.Target != null && TryGetMonsterPosition(args.Target.Id, out targetScreen))
+        {
+            // Successfully resolved monster token position
+        }
+        else if (args.TargetPosition.HasValue)
+        {
+            targetScreen = Camera.WorldToScreen(new Vector2(args.TargetPosition.Value.X, args.TargetPosition.Value.Y), CenterPosition);
+        }
+        else
+        {
+            targetScreen = isExileAttacker
+                ? attackerScreen + new Vector2(90f, 0f)
+                : ExilePosition;
+        }
+
+        // 3. Directional Vector & Angle in Screen Space
+        Vector2 toTarget = targetScreen - attackerScreen;
+        float dirAngle = toTarget.LengthSquared() > 0.001f
+            ? Mathf.Atan2(toTarget.Y, toTarget.X)
+            : (isExileAttacker ? _exileFacingAngle : Mathf.Pi);
+
+        // 4. Attacker Animation: Recoil / Lunge
+        if (isExileAttacker)
+        {
+            _exileAttackRecoil = 0.85f;
+            _exileFacingAngle = Mathf.Wrap(dirAngle, -Mathf.Pi, Mathf.Pi);
+            TargetPosition = targetScreen;
+        }
+        else
+        {
+            TriggerMonsterAttackLunge(args.Attacker.Id, toTarget.Normalized());
+        }
+
+        // 5. Visual Effects (VFX) Dispatch based on GeometryType & IsMelee
+        if (!args.IsMelee && (args.GeometryType == SkillGeometryType.ProjectileSpread || args.GeometryType == SkillGeometryType.SingleTarget || (args.Projectiles != null && args.Projectiles.Count > 0)))
+        {
+            Vector2 launchOrigin = isExileAttacker ? GetWeaponTipPosition() : attackerScreen;
+            if (args.Projectiles != null && args.Projectiles.Count > 0)
+            {
+                foreach (var p in args.Projectiles)
+                {
+                    Vector2 pTarget = launchOrigin + new Vector2(p.Direction.X, p.Direction.Y) * 220f;
+                    float speed = (float)p.Velocity.Length;
+                    SpawnProjectile(launchOrigin, pTarget, args.DamageType, speed > 0f ? speed : 520f);
+                }
+            }
+            else
+            {
+                SpawnProjectile(launchOrigin, targetScreen, args.DamageType);
+            }
+        }
+        else if (args.GeometryType == SkillGeometryType.RadialAoE)
+        {
+            float radius = Mathf.Max(30f, args.Range);
+            TriggerMeleeStrikeIndicator(targetScreen, 0f, radius, args.DamageType, args.IsCrit, Mathf.Tau);
+        }
+        else // Melee strike, Cone slash sweep, or close-quarters Strike
+        {
+            float arcSpan = args.ConeAngle > 0f ? Mathf.DegToRad(args.ConeAngle) : Mathf.DegToRad(70f);
+            float reach = Mathf.Max(25f, args.Range);
+            TriggerMeleeStrikeIndicator(attackerScreen, dirAngle, reach, args.DamageType, args.IsCrit, arcSpan);
+        }
+    }
+
+    /// <summary>
     /// Triggers a subtle screen shake for lethal impacts and critical slams.
     /// </summary>
     public void ScreenShake(float magnitude = 3.0f, float duration = 0.15f)
@@ -1955,8 +2075,8 @@ public partial class Arena2D : Node2D
         if (mapLength > 0f) MapLength = mapLength;
 
         // Auto-seal Fog Gate if Exile advances past the 85% threshold (Task 2.8)
-        float fogGateWorldY = MapLength * ExileMovementController.FogGateRatio;
-        if (worldPos.Y >= fogGateWorldY && !IsFogGateSealed)
+        float fogGateWorldX = MapLength * ExileMovementController.FogGateRatio;
+        if (worldPos.X >= fogGateWorldX && !IsFogGateSealed)
         {
             IsFogGateSealed = true;
         }
@@ -1980,17 +2100,32 @@ public partial class Arena2D : Node2D
     }
 
     /// <summary>
-    /// Returns the 2D arena position for the specified monster instance.
-    /// Falls back to default upper arena if not found.
+    /// Attempts to find the 2D visual screen position for the specified monster instance.
+    /// Returns true and the token's screen position if found, false otherwise.
     /// </summary>
-    public Vector2 GetMonsterPosition(long instanceId)
+    public bool TryGetMonsterPosition(long instanceId, out Vector2 position)
     {
         for (int i = 0; i < _activeMonsterCount; i++)
         {
             if (_monsters[i].InstanceId == instanceId)
             {
-                return _monsters[i].Position;
+                position = _monsters[i].Position;
+                return true;
             }
+        }
+        position = Vector2.Zero;
+        return false;
+    }
+
+    /// <summary>
+    /// Returns the 2D arena position for the specified monster instance.
+    /// Falls back to default upper arena if not found.
+    /// </summary>
+    public Vector2 GetMonsterPosition(long instanceId)
+    {
+        if (TryGetMonsterPosition(instanceId, out var pos))
+        {
+            return pos;
         }
         return new Vector2(220f, 60f);
     }

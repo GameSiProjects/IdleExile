@@ -156,8 +156,8 @@ public sealed class PlayerState : ICombatEntity
     /// <summary>Display name of player character.</summary>
     public string Name => Archetype?.DisplayName ?? "Exile";
 
-    /// <summary>2D coordinate (X, Y) within the arena.</summary>
-    public Vector2D Position { get; set; } = new Vector2D(220f, 104f);
+    /// <summary>2D coordinate (X, Y) within the arena (starts at left entrance X = 40, Y = 104).</summary>
+    public Vector2D Position { get; set; } = new Vector2D(40f, 104f);
 
     /// <summary>Effective collision/hitbox radius in pixels.</summary>
     public float Radius => 10f;

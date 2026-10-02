@@ -63,13 +63,28 @@ public sealed class ExileMovementController
     /// <summary>Default corridor width W_corridor in world pixels (440px).</summary>
     public const float DefaultCorridorWidth = 440.0f;
 
-    /// <summary>Playable lane minimum X boundary inside corridor.</summary>
+    /// <summary>Default corridor height in world pixels (208px).</summary>
+    public const float DefaultCorridorHeight = 208.0f;
+
+    /// <summary>Playable lane minimum Y boundary inside horizontal corridor.</summary>
+    public const float MinCorridorY = 32.0f;
+
+    /// <summary>Playable lane maximum Y boundary inside horizontal corridor.</summary>
+    public const float MaxCorridorY = 176.0f;
+
+    /// <summary>Corridor central lane Y coordinate.</summary>
+    public const float DefaultCenterY = 104.0f;
+
+    /// <summary>Corridor default starting X coordinate.</summary>
+    public const float DefaultStartX = 40.0f;
+
+    /// <summary>Playable lane minimum X boundary inside vertical corridor (legacy).</summary>
     public const float MinCorridorX = 40.0f;
 
-    /// <summary>Playable lane maximum X boundary inside corridor.</summary>
+    /// <summary>Playable lane maximum X boundary inside vertical corridor (legacy).</summary>
     public const float MaxCorridorX = 400.0f;
 
-    /// <summary>Corridor central lane X coordinate.</summary>
+    /// <summary>Corridor central lane X coordinate (legacy).</summary>
     public const float DefaultCenterX = 220.0f;
 
     /// <summary>Fog Gate / Sealed Threshold progress ratio along corridor length (85%).</summary>
@@ -95,13 +110,13 @@ public sealed class ExileMovementController
     public ExileMovementState CurrentState { get; private set; } = ExileMovementState.Idle;
 
     /// <summary>Current real-world coordinate P_E(t) = (X_world, Y_world) along the corridor.</summary>
-    public Vector2D Position { get; set; } = new Vector2D(DefaultCenterX, 40.0f);
+    public Vector2D Position { get; set; } = new Vector2D(DefaultStartX, DefaultCenterY);
 
     /// <summary>Current directional velocity vector in pixels per second.</summary>
     public Vector2D Velocity { get; private set; } = Vector2D.Zero;
 
-    /// <summary>Corridor forward marching axis (default: +Y downwards along the corridor).</summary>
-    public Vector2D ForwardDirection { get; set; } = new Vector2D(0f, 1f);
+    /// <summary>Corridor forward marching axis (default: +X rightward along the corridor).</summary>
+    public Vector2D ForwardDirection { get; set; } = new Vector2D(1f, 0f);
 
     /// <summary>Base movement speed in pixels per second before gear, flask, and passive multipliers.</summary>
     public float BaseSpeed { get; set; } = DefaultBaseSpeed;
@@ -134,7 +149,7 @@ public sealed class ExileMovementController
     //  Corridor Progress Telemetry
     // ─────────────────────────────────────────────
 
-    private Vector2D _startPosition = new(DefaultCenterX, 40.0f);
+    private Vector2D _startPosition = new(DefaultStartX, DefaultCenterY);
     private float _accumulatedTravelDistance = 0f;
 
     /// <summary>Total distance in pixels traveled from starting point.</summary>
@@ -204,7 +219,7 @@ public sealed class ExileMovementController
         Loadout = loadout;
         MapLength = mapLength > 0f ? mapLength : DefaultMapLength;
         BaseSpeed = baseSpeed > 0f ? baseSpeed : DefaultBaseSpeed;
-        ForwardDirection = (forwardDirection ?? new Vector2D(0f, 1f)).Normalized();
+        ForwardDirection = (forwardDirection ?? new Vector2D(1f, 0f)).Normalized();
 
         _startPosition = player.Position;
         Position = player.Position;
@@ -363,7 +378,7 @@ public sealed class ExileMovementController
             MapLength = mapLength.Value;
         }
 
-        _startPosition = position ?? new Vector2D(DefaultCenterX, 40.0f);
+        _startPosition = position ?? new Vector2D(DefaultStartX, DefaultCenterY);
         Position = _startPosition;
         _accumulatedTravelDistance = 0f;
         Velocity = Vector2D.Zero;
@@ -598,9 +613,18 @@ public sealed class ExileMovementController
         // No monsters detected: advance along forward corridor axis
         if (speed > 0f)
         {
-            // Soft lane centering towards DefaultCenterX
-            float lateralCorrection = (DefaultCenterX - Position.X) * 0.5f * deltaTime;
-            Vector2D lateralDir = new Vector2D(lateralCorrection, 0f);
+            // Soft lane centering towards corridor central axis
+            Vector2D lateralDir;
+            if (ForwardDirection.X > 0.5f)
+            {
+                float lateralCorrection = (DefaultCenterY - Position.Y) * 0.5f * deltaTime;
+                lateralDir = new Vector2D(0f, lateralCorrection);
+            }
+            else
+            {
+                float lateralCorrection = (DefaultCenterX - Position.X) * 0.5f * deltaTime;
+                lateralDir = new Vector2D(lateralCorrection, 0f);
+            }
 
             Velocity = ForwardDirection * speed;
             Vector2D stepVector = ForwardDirection * (speed * deltaTime) + lateralDir;
@@ -763,14 +787,24 @@ public sealed class ExileMovementController
 
     private void ClampPositionToCorridor()
     {
-        float clampedX = Math.Clamp(Position.X, MinCorridorX, MaxCorridorX);
+        float clampedX = Position.X;
         float clampedY = Position.Y;
 
-        // If moving along +Y, clamp Y between start and MapLength
-        if (ForwardDirection.Y > 0.5f)
+        // If moving along +X, clamp Y to horizontal corridor lane, and X between start and MapLength
+        if (ForwardDirection.X > 0.5f)
         {
-            float minY = IsFogGateSealed ? (_startPosition.Y + FogGateDistance) : _startPosition.Y;
-            clampedY = Math.Clamp(Position.Y, minY, _startPosition.Y + MapLength);
+            clampedY = Math.Clamp(Position.Y, MinCorridorY, MaxCorridorY);
+            float minX = IsFogGateSealed ? (_startPosition.X + FogGateDistance) : _startPosition.X;
+            clampedX = Math.Clamp(Position.X, minX, _startPosition.X + MapLength);
+        }
+        else
+        {
+            clampedX = Math.Clamp(Position.X, MinCorridorX, MaxCorridorX);
+            if (ForwardDirection.Y > 0.5f)
+            {
+                float minY = IsFogGateSealed ? (_startPosition.Y + FogGateDistance) : _startPosition.Y;
+                clampedY = Math.Clamp(Position.Y, minY, _startPosition.Y + MapLength);
+            }
         }
 
         if (MathF.Abs(clampedX - Position.X) > 0.001f || MathF.Abs(clampedY - Position.Y) > 0.001f)

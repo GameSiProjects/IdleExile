@@ -318,7 +318,7 @@ public static class CombatEngineTests
             baseExperience: 10f,
             itemQuantityMultiplier: 1f,
             itemRarityMultiplier: 1f,
-            initialPosition: new Vector2D(220f, 65f)
+            initialPosition: new Vector2D(65f, 104f)
         );
 
         var wave = new MonsterWave
@@ -389,7 +389,7 @@ public static class CombatEngineTests
 
         engine.StartMap(new MapRunConfig(mapDef, rolledMods));
 
-        var monster = new MonsterInstance(102, "Target Mob", MonsterRarity.Normal, 1, 1000f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(220f, 65f));
+        var monster = new MonsterInstance(102, "Target Mob", MonsterRarity.Normal, 1, 1000f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(65f, 104f));
         engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = new[] { monster } });
 
         bool reflectDamaged = false;
@@ -419,7 +419,7 @@ public static class CombatEngineTests
         var engine = new CombatEngine(player, loadout);
 
         // Boss monster dealing 80 damage (80% of player's 100 max EHP)
-        // Positioned within attack range of Exile (220, 104)
+        // Positioned within attack range of Exile (40, 104)
         var boss = new MonsterInstance(
             instanceId: 999,
             name: "Tidal Behemoth",
@@ -436,7 +436,7 @@ public static class CombatEngineTests
             baseExperience: 100f,
             itemQuantityMultiplier: 5f,
             itemRarityMultiplier: 5f,
-            initialPosition: new Vector2D(240f, 104f) // ~20px from Exile, within Boss AttackRange (45px + 16px Radius)
+            initialPosition: new Vector2D(60f, 104f) // ~20px from Exile, within Boss AttackRange (45px + 16px Radius)
         );
 
         var mapDef = new MapDefinition("t1", "Strand", 1, 1, false, 0, 100, "Tidal Behemoth", "");
@@ -639,7 +639,7 @@ public static class CombatEngineTests
                 baseExperience: 10f,
                 itemQuantityMultiplier: 1f,
                 itemRarityMultiplier: 1f,
-                initialPosition: new Vector2D(220f, 65f + m * 5f)
+                initialPosition: new Vector2D(65f + m * 5f, 104f)
             ));
         }
 

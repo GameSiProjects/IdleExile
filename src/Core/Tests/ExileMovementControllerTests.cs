@@ -99,28 +99,28 @@ public static class ExileMovementControllerTests
     {
         var player = new PlayerState();
         var controller = new ExileMovementController(player, mapLength: 2400.0f, baseSpeed: 100.0f);
-        controller.StartMap(2400.0f, new Vector2D(220.0f, 40.0f));
+        controller.StartMap(2400.0f, new Vector2D(40.0f, 104.0f));
 
-        AssertEqual(220.0f, controller.Position.X, 0.01f, "Initial X should be 220");
-        AssertEqual(40.0f, controller.Position.Y, 0.01f, "Initial Y should be 40");
+        AssertEqual(40.0f, controller.Position.X, 0.01f, "Initial X should be 40");
+        AssertEqual(104.0f, controller.Position.Y, 0.01f, "Initial Y should be 104");
         AssertEqual(0.0f, controller.DistanceTraveled, 0.01f, "Initial distance traveled should be 0");
         AssertEqual(0.0f, controller.MapProgressPercent, 0.01f, "Initial progress percent should be 0%");
 
-        // Simulate 2.0 seconds of marching without monsters (speed 100 px/s -> advances 200px)
+        // Simulate 2.0 seconds of marching without monsters (speed 100 px/s -> advances 200px along +X)
         controller.Tick(2.0f, Array.Empty<MonsterInstance>(), player);
 
-        AssertEqual(240.0f, controller.Position.Y, 0.5f, "Y position should advance by 200px to 240px");
+        AssertEqual(240.0f, controller.Position.X, 0.5f, "X position should advance by 200px to 240px");
         AssertEqual(200.0f, controller.DistanceTraveled, 0.5f, "Distance traveled should be 200px");
         AssertEqual((200f / 2400f) * 100f, controller.MapProgressPercent, 0.1f, "Progress percent should reflect distance / L_map");
 
-        // Verify lateral X clamping: attempt to push position beyond bounds
-        controller.Position = new Vector2D(10.0f, 500.0f); // X < MinCorridorX (40)
+        // Verify lateral Y clamping: attempt to push position beyond bounds
+        controller.Position = new Vector2D(500.0f, 10.0f); // Y < MinCorridorY (32)
         controller.Tick(0.033f, Array.Empty<MonsterInstance>(), player);
-        AssertTrue(controller.Position.X >= ExileMovementController.MinCorridorX, "X must not be less than MinCorridorX (40)");
+        AssertTrue(controller.Position.Y >= ExileMovementController.MinCorridorY, "Y must not be less than MinCorridorY (32)");
 
-        controller.Position = new Vector2D(500.0f, 500.0f); // X > MaxCorridorX (400)
+        controller.Position = new Vector2D(500.0f, 300.0f); // Y > MaxCorridorY (176)
         controller.Tick(0.033f, Array.Empty<MonsterInstance>(), player);
-        AssertTrue(controller.Position.X <= ExileMovementController.MaxCorridorX, "X must not exceed MaxCorridorX (400)");
+        AssertTrue(controller.Position.Y <= ExileMovementController.MaxCorridorY, "Y must not exceed MaxCorridorY (176)");
     }
 
     // ─────────────────────────────────────────────
@@ -131,11 +131,11 @@ public static class ExileMovementControllerTests
     {
         var player = new PlayerState();
         var controller = new ExileMovementController(player, baseSpeed: 100.0f);
-        controller.StartMap(2400.0f, new Vector2D(220.0f, 40.0f));
+        controller.StartMap(2400.0f, new Vector2D(40.0f, 104.0f));
 
         AssertTrue(controller.CurrentState == ExileMovementState.Marching, "Should start in Marching state");
 
-        // Setup a normal monster 150px ahead at (220, 190)
+        // Setup a normal monster 150px ahead at (190, 104)
         var monster = new MonsterInstance(
             instanceId: 101,
             name: "Roa Scavenger",
@@ -154,7 +154,7 @@ public static class ExileMovementControllerTests
             itemRarityMultiplier: 1f
         )
         {
-            Position = new Vector2D(220.0f, 190.0f)
+            Position = new Vector2D(190.0f, 104.0f)
         };
 
         var monsters = new[] { monster };
@@ -168,9 +168,9 @@ public static class ExileMovementControllerTests
         };
 
         // Tick 1: Monster is 150px away (> 35px), Exile should close distance
-        controller.Tick(0.5f, monsters, player); // moves 50px forward
+        controller.Tick(0.5f, monsters, player); // moves 50px forward along +X
         AssertTrue(controller.CurrentState == ExileMovementState.Marching, "Still closing distance");
-        AssertTrue(controller.Position.Y > 40.0f, "Should have advanced forward");
+        AssertTrue(controller.Position.X > 40.0f, "Should have advanced forward");
 
         // Tick 2: Step until within 35px
         // Distance remaining: (190 - 90) = 100px. At 100px/s, in 0.7s Exile closes 70px -> distance 30px <= 35px.
@@ -230,7 +230,7 @@ public static class ExileMovementControllerTests
     {
         var player = new PlayerState();
         var controller = new ExileMovementController(player, baseSpeed: 100.0f);
-        controller.StartMap(2400.0f, new Vector2D(220.0f, 40.0f));
+        controller.StartMap(2400.0f, new Vector2D(40.0f, 104.0f));
 
         var monster = new MonsterInstance(
             instanceId: 102,
@@ -250,7 +250,7 @@ public static class ExileMovementControllerTests
             itemRarityMultiplier: 1f
         )
         {
-            Position = new Vector2D(220.0f, 70.0f) // exactly 30px away <= 35px
+            Position = new Vector2D(70.0f, 104.0f) // exactly 30px away <= 35px
         };
 
         controller.OptimalRangeOverride = 35.0f;
@@ -285,7 +285,7 @@ public static class ExileMovementControllerTests
     {
         var player = new PlayerState();
         var controller = new ExileMovementController(player, mapLength: 2000.0f, baseSpeed: 100.0f);
-        controller.StartMap(2000.0f, new Vector2D(220.0f, 0.0f));
+        controller.StartMap(2000.0f, new Vector2D(0.0f, 104.0f));
 
         // Fog Gate is at 85% of 2000px = 1700px
         AssertEqual(1700.0f, controller.FogGateDistance, 0.1f, "Fog Gate distance should be 1700px");
@@ -299,7 +299,7 @@ public static class ExileMovementControllerTests
         controller.OnBossArenaEntered += () => bossArenaEntered = true;
 
         // Fast-forward position to just before Fog Gate (1690px)
-        controller.Position = new Vector2D(220.0f, 1690.0f);
+        controller.Position = new Vector2D(1690.0f, 104.0f);
         controller.Tick(0.05f, Array.Empty<MonsterInstance>(), player); // advances 5px to 1695px
         AssertTrue(!fogGateCrossed, "Fog Gate should not be crossed yet at 1695px");
 
@@ -310,7 +310,7 @@ public static class ExileMovementControllerTests
         AssertTrue(controller.CurrentState == ExileMovementState.EnteringBossRoom, "State should be EnteringBossRoom");
 
         // Fast-forward towards Boss Arena center (1860px)
-        controller.Position = new Vector2D(220.0f, 1850.0f); // 10px from center
+        controller.Position = new Vector2D(1850.0f, 104.0f); // 10px from center
         controller.Tick(0.05f, Array.Empty<MonsterInstance>(), player);
 
         AssertTrue(bossArenaEntered, "OnBossArenaEntered must fire when entering boss arena center");
@@ -326,7 +326,7 @@ public static class ExileMovementControllerTests
     {
         var player = new PlayerState();
         var controller = new ExileMovementController(player, baseSpeed: 120.0f);
-        controller.StartMap(2400.0f, new Vector2D(220.0f, 40.0f));
+        controller.StartMap(2400.0f, new Vector2D(40.0f, 104.0f));
 
         AssertTrue(controller.CurrentState == ExileMovementState.Marching, "Should be Marching");
 
@@ -361,9 +361,9 @@ public static class ExileMovementControllerTests
 
         var mapDef = new MapDefinition("strand", "Strand Map", 1, 1, false, 10, 100, "Tidal Behemoth", "");
         engine.StartMap(new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>()));
-        engine.ExilePosition = new Vector2D(220f, 40f);
+        engine.ExilePosition = new Vector2D(40f, 104f);
 
-        // Position a monster pack ahead along the corridor (downwards at Y = 280)
+        // Position a monster pack ahead along the corridor (rightwards at X = 280)
         var waveMonsters = new List<MonsterInstance>
         {
             new MonsterInstance(
@@ -384,7 +384,7 @@ public static class ExileMovementControllerTests
                 itemRarityMultiplier: 1f
             )
             {
-                Position = new Vector2D(220f, 280f)
+                Position = new Vector2D(280f, 104f)
             }
         };
         engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = waveMonsters });
@@ -400,7 +400,7 @@ public static class ExileMovementControllerTests
 
         // Verify movement advanced forward along corridor
         AssertTrue(engine.Movement.DistanceTraveled > 0f, "Exile must have traveled distance along corridor");
-        AssertTrue(engine.ExilePosition.Y > 40.0f, "ExilePosition must reflect movement along corridor");
-        AssertEqual(player.Position.Y, engine.Movement.Position.Y, 0.001f, "Player.Position must synchronize with Movement.Position");
+        AssertTrue(engine.ExilePosition.X > 40.0f, "ExilePosition must reflect movement along corridor");
+        AssertEqual(player.Position.X, engine.Movement.Position.X, 0.001f, "Player.Position must synchronize with Movement.Position");
     }
 }

@@ -353,8 +353,8 @@ public static class SpatialGeometryTests
         foreach (var m in wave!.Monsters)
         {
             // All monsters must have valid 2D coordinates inside the corridor bounds (Task 2.5 & 2.7)
-            AssertTrue(m.Position.X >= 20f && m.Position.X <= 420f, $"Monster X ({m.Position.X}) must be within corridor width");
-            AssertTrue(m.Position.Y >= 15f && m.Position.Y <= ExileMovementController.DefaultMapLength, $"Monster Y ({m.Position.Y}) must be within corridor length");
+            AssertTrue(m.Position.X >= 20f && m.Position.X <= ExileMovementController.DefaultMapLength, $"Monster X ({m.Position.X}) must be within corridor length");
+            AssertTrue(m.Position.Y >= 15f && m.Position.Y <= 208f, $"Monster Y ({m.Position.Y}) must be within corridor height");
             AssertTrue(m.Radius >= 8f, $"Monster Radius ({m.Radius}) must be valid");
         }
     }

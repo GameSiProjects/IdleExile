@@ -298,9 +298,15 @@ public partial class Main : Control
                 // Track CombatEngine current target for continuous Auto-Facing
                 if (Engine?.CurrentTarget != null && Engine.CurrentTarget.IsAlive)
                 {
-                    _battleViewport.SetTarget(
-                        Engine.CurrentTarget.InstanceId,
-                        new Vector2(Engine.CurrentTarget.Position.X, Engine.CurrentTarget.Position.Y));
+                    Vector2 screenTarget;
+                    if (!_battleViewport.TryGetMonsterPosition(Engine.CurrentTarget.InstanceId, out screenTarget))
+                    {
+                        screenTarget = _battleViewport.Arena.Camera.WorldToScreen(
+                            new Vector2(Engine.CurrentTarget.Position.X, Engine.CurrentTarget.Position.Y),
+                            Arena2D.CenterPosition);
+                    }
+
+                    _battleViewport.SetTarget(Engine.CurrentTarget.InstanceId, screenTarget);
                 }
                 else
                 {
@@ -386,60 +392,10 @@ public partial class Main : Control
             GD.Print($"[Combat] Boss Slam detonated at ({args.Position.X:F0}, {args.Position.Y:F0}) - Threat: {args.ThreatEhpPercent:F0}% EHP! Hit Player: {args.HitPlayer}");
         };
 
-        Engine.OnPlayerSkillFired += args =>
+        // Unified Combat Attack Visual Pipeline (Both Player and Monsters use the same pipeline)
+        Engine.OnAttackExecuted += args =>
         {
-            if (_battleViewport?.Arena != null)
-            {
-                Vector2? targetPos = args.PrimaryTarget != null
-                    ? new Vector2(args.PrimaryTarget.Position.X, args.PrimaryTarget.Position.Y)
-                    : null;
-
-                if (targetPos.HasValue)
-                {
-                    _battleViewport.FaceTarget(targetPos.Value);
-                    _battleViewport.SetTarget(args.PrimaryTarget?.InstanceId, targetPos.Value);
-                }
-
-                _battleViewport.TriggerExileAttackRecoil(1.0f);
-                Vector2 wandTip = _battleViewport.GetWeaponTipPosition();
-
-                if (args.Projectiles != null && args.Projectiles.Count > 0)
-                {
-                    if (!targetPos.HasValue && args.Projectiles.Count > 0)
-                    {
-                        var p0 = args.Projectiles[0];
-                        _battleViewport.SetFacingAngle(Mathf.Atan2(p0.Direction.Y, p0.Direction.X));
-                        wandTip = _battleViewport.GetWeaponTipPosition();
-                    }
-
-                    foreach (var p in args.Projectiles)
-                    {
-                        Vector2 target = wandTip + new Vector2(p.Direction.X, p.Direction.Y) * 220f;
-                        _battleViewport.SpawnProjectile(wandTip, target, args.PrimaryDamageType);
-                    }
-                }
-                else if (args.IsMelee || args.GeometryType == SkillGeometryType.Cone)
-                {
-                    float range = args.RadiusOrRange > 0f ? args.RadiusOrRange : 45f;
-                    float? arcAngle = args.ConeAngleDegrees > 0f ? Mathf.DegToRad(args.ConeAngleDegrees) : null;
-                    _battleViewport.FireExileMeleeAttack(targetPos, range, args.PrimaryDamageType, arcAngle);
-                }
-                else if (targetPos.HasValue)
-                {
-                    _battleViewport.SpawnProjectile(wandTip, targetPos.Value, args.PrimaryDamageType);
-                }
-            }
-        };
-
-        Engine.OnMonsterAttacked += args =>
-        {
-            if (_battleViewport?.Arena != null)
-            {
-                Vector2 origin = new(args.AttackOrigin.X, args.AttackOrigin.Y);
-                float dirAngle = Mathf.Atan2(args.AttackDirection.Y, args.AttackDirection.X);
-                _battleViewport.Arena.TriggerMeleeStrikeIndicator(
-                    origin, dirAngle, args.EffectiveRange, args.DamageType, args.IsCrit);
-            }
+            _battleViewport?.ExecuteAttackVisual(args);
         };
 
         Engine.StartMap(config);

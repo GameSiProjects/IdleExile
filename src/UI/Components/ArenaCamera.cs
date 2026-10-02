@@ -39,8 +39,8 @@ public partial class ArenaCamera : Node2D
     /// <summary>Target world-space focal coordinate that the camera is interpolating toward.</summary>
     public Vector2 TargetPosition { get; set; } = Arena2D.CenterPosition;
 
-    /// <summary>Look-ahead offset applied in forward marching direction (+Y) during corridor travel.</summary>
-    public Vector2 LookAheadOffset { get; set; } = new(0f, 18f);
+    /// <summary>Look-ahead offset applied in forward marching direction (+X) during corridor travel.</summary>
+    public Vector2 LookAheadOffset { get; set; } = new(24f, 0f);
 
     /// <summary>Lerp smoothing coefficient when following the Exile along the corridor.</summary>
     public float FollowLerpSpeed { get; set; } = 8.0f;

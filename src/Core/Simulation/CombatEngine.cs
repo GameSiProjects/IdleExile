@@ -177,6 +177,9 @@ public sealed class CombatEngine
     /// <summary>Fired when a Boss heavy slam attack detonates (Task 2.8).</summary>
     public event Action<BossSlamDetonatedEventArgs>? OnBossSlamDetonated;
 
+    /// <summary>Unified event emitted whenever any combatant (Player, Monster, Minion, Boss) attacks or casts a skill.</summary>
+    public event Action<CombatAttackEventArgs>? OnAttackExecuted;
+
     /// <summary>Fired when the player attacks or casts an active skill with 2D spatial trajectory metadata.</summary>
     public event Action<PlayerSkillFiredEventArgs>? OnPlayerSkillFired;
 
@@ -723,7 +726,21 @@ public sealed class CombatEngine
                 : CombatAttackService.CreatePlayerAttack(Player, Loadout, PassiveStats, GearStats);
             var basePool = playerAttack.BaseDamage;
 
-            // 5. Fire Skill Event with Spatial Trajectories
+            // 5. Fire Unified Combat Attack Event & Legacy Player Skill Event
+            OnAttackExecuted?.Invoke(new CombatAttackEventArgs(
+                Attacker: Player,
+                Target: targetEntity,
+                Origin: ExilePosition,
+                TargetPosition: targetEntity.Position,
+                GeometryType: geometry,
+                DamageType: playerAttack.PrimaryDamageType,
+                Range: baseRadiusOrRange,
+                IsMelee: playerAttack.IsMelee,
+                IsCrit: false,
+                ConeAngle: coneAngle,
+                Projectiles: projectileVectors
+            ));
+
             OnPlayerSkillFired?.Invoke(new PlayerSkillFiredEventArgs(
                 ExilePosition,
                 targetEntity,
@@ -958,11 +975,11 @@ public sealed class CombatEngine
                     Vector2D toExile = (ExilePosition - monster.Position).Normalized();
                     Vector2D newPos = monster.Position + toExile * moveDistance;
 
-                    // Clamp to world corridor bounds (Task 2.7)
-                    float maxCorridorY = Movement.MapLength > 0f ? Movement.MapLength : ExileMovementController.DefaultMapLength;
+                    // Clamp to world corridor bounds (Horizontal: X along length, Y along corridor width)
+                    float maxCorridorX = Movement.MapLength > 0f ? Movement.MapLength : ExileMovementController.DefaultMapLength;
                     newPos = new Vector2D(
-                        Math.Clamp(newPos.X, ExileMovementController.MinCorridorX, ExileMovementController.MaxCorridorX),
-                        Math.Clamp(newPos.Y, 0f, maxCorridorY)
+                        Math.Clamp(newPos.X, 0f, maxCorridorX),
+                        Math.Clamp(newPos.Y, ExileMovementController.MinCorridorY, ExileMovementController.MaxCorridorY)
                     );
 
                     monster.Position = newPos;
@@ -1013,6 +1030,21 @@ public sealed class CombatEngine
                     _random,
                     Loadout.GuardSkill
                 );
+
+                // ═══ Unified Combat Attack Event & Legacy Monster Attack Event ═══
+                OnAttackExecuted?.Invoke(new CombatAttackEventArgs(
+                    Attacker: monster,
+                    Target: Player,
+                    Origin: monster.Position,
+                    TargetPosition: ExilePosition,
+                    GeometryType: SkillGeometryType.Cone,
+                    DamageType: monster.PrimaryDamageType,
+                    Range: effectiveAttackRange,
+                    IsMelee: true,
+                    IsCrit: result.Hit.IsCrit,
+                    ConeAngle: 70f,
+                    Projectiles: null
+                ));
 
                 OnMonsterAttacked?.Invoke(new MonsterAttackEventArgs(
                     Attacker: monster,

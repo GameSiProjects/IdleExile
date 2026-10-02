@@ -35,6 +35,12 @@ public sealed class CorridorMonsterLayout
     // ─────────────────────────────────────────────
     //  Corridor Boundary Constants
     // ─────────────────────────────────────────────
+    public const float MinPlayableY = ExileMovementController.MinCorridorY; // 32f
+    public const float MaxPlayableY = ExileMovementController.MaxCorridorY; // 176f
+    public const float CenterY = ExileMovementController.DefaultCenterY;    // 104f
+    public const float DefaultCorridorHeight = ExileMovementController.DefaultCorridorHeight; // 208f
+
+    // Backward compatibility aliases
     public const float MinPlayableX = ExileMovementController.MinCorridorX; // 40f
     public const float MaxPlayableX = ExileMovementController.MaxCorridorX; // 400f
     public const float CenterX = ExileMovementController.DefaultCenterX;    // 220f
@@ -102,8 +108,8 @@ public sealed class CorridorMonsterLayout
         // ═════════════════════════════════════════════
         //  Pack 1: Vanguard Trash Swarm (~17%)
         // ═════════════════════════════════════════════
-        float y1 = mapLength * Pack1VanguardRatio;
-        var vanguardCenter = new Vector2D(CenterX, y1);
+        float x1 = mapLength * Pack1VanguardRatio;
+        var vanguardCenter = new Vector2D(x1, CenterY);
         bool useVee = rng.NextDouble() < 0.5;
         var pack1Formation = useVee ? CorridorPackFormationType.VanguardVee : CorridorPackFormationType.VanguardLine;
 
@@ -116,11 +122,11 @@ public sealed class CorridorMonsterLayout
 
         if (useVee)
         {
-            PositionVanguardVee(vanguardMobs, vanguardCenter, width: 280f, depth: 55f);
+            PositionVanguardVee(vanguardMobs, vanguardCenter, height: 110f, depth: 55f);
         }
         else
         {
-            PositionVanguardLine(vanguardMobs, vanguardCenter, width: 290f, jitter: 10f, rng);
+            PositionVanguardLine(vanguardMobs, vanguardCenter, height: 115f, jitter: 10f, rng);
         }
 
         packs.Add(new CorridorPack(
@@ -134,8 +140,8 @@ public sealed class CorridorMonsterLayout
         // ═════════════════════════════════════════════
         //  Pack 2: Rare Commander & Phalanx (~37%)
         // ═════════════════════════════════════════════
-        float y2 = mapLength * Pack2CommanderRatio;
-        var commanderCenter = new Vector2D(CenterX, y2);
+        float x2 = mapLength * Pack2CommanderRatio;
+        var commanderCenter = new Vector2D(x2, CenterY);
 
         var commander = createMonster(MonsterRarity.Rare, null);
         int lieutenantCount = rng.NextDouble() < 0.6 ? 2 : 1;
@@ -167,10 +173,10 @@ public sealed class CorridorMonsterLayout
         // ═════════════════════════════════════════════
         //  Mid-Corridor League Encounter (~56%)
         // ═════════════════════════════════════════════
-        float yEnc = mapLength * EncounterRatio;
-        bool isLeftSide = rng.NextDouble() < 0.5;
-        float encX = isLeftSide ? 75f : 365f;
-        var encPos = new Vector2D(encX, yEnc);
+        float xEnc = mapLength * EncounterRatio;
+        bool isTopSide = rng.NextDouble() < 0.5;
+        float encY = isTopSide ? (MinPlayableY + 15f) : (MaxPlayableY - 15f);
+        var encPos = new Vector2D(xEnc, encY);
 
         LeagueEncounterType encType = forceEncounter ?? RollEncounterType(rng);
         var (encounterInstance, encounterPack) = CreateLeagueEncounter(
@@ -188,24 +194,24 @@ public sealed class CorridorMonsterLayout
         // ═════════════════════════════════════════════
         //  Pack 3: Ambush / Flankers (~71%)
         // ═════════════════════════════════════════════
-        float y3 = mapLength * Pack3FlankersRatio;
-        var flankerCenter = new Vector2D(CenterX, y3);
+        float x3 = mapLength * Pack3FlankersRatio;
+        var flankerCenter = new Vector2D(x3, CenterY);
 
         int flankPerSide = Math.Max(2, (int)MathF.Round(3 * packSizeFactor));
-        var leftFlank = new List<MonsterInstance>();
-        var rightFlank = new List<MonsterInstance>();
+        var topFlank = new List<MonsterInstance>();
+        var bottomFlank = new List<MonsterInstance>();
 
         for (int i = 0; i < flankPerSide; i++)
         {
-            leftFlank.Add(createMonster(i == 0 && rng.NextDouble() < 0.4 ? MonsterRarity.Magic : MonsterRarity.Normal, null));
-            rightFlank.Add(createMonster(i == 0 && rng.NextDouble() < 0.4 ? MonsterRarity.Magic : MonsterRarity.Normal, null));
+            topFlank.Add(createMonster(i == 0 && rng.NextDouble() < 0.4 ? MonsterRarity.Magic : MonsterRarity.Normal, null));
+            bottomFlank.Add(createMonster(i == 0 && rng.NextDouble() < 0.4 ? MonsterRarity.Magic : MonsterRarity.Normal, null));
         }
 
-        PositionFlankerPincer(leftFlank, rightFlank, flankerCenter);
+        PositionFlankerPincer(topFlank, bottomFlank, flankerCenter);
 
         var pack3All = new List<MonsterInstance>();
-        pack3All.AddRange(leftFlank);
-        pack3All.AddRange(rightFlank);
+        pack3All.AddRange(topFlank);
+        pack3All.AddRange(bottomFlank);
 
         packs.Add(new CorridorPack(
             packIndex: 4,
@@ -218,8 +224,8 @@ public sealed class CorridorMonsterLayout
         // ═════════════════════════════════════════════
         //  Pack 4: Gate Phalanx (~81%, right before 85% Fog Gate)
         // ═════════════════════════════════════════════
-        float y4 = mapLength * Pack4GatePhalanxRatio;
-        var gateCenter = new Vector2D(CenterX, y4);
+        float x4 = mapLength * Pack4GatePhalanxRatio;
+        var gateCenter = new Vector2D(x4, CenterY);
 
         int gateGuardCount = Math.Max(4, (int)MathF.Round(6 * packSizeFactor));
         var gateGuards = new List<MonsterInstance>();
@@ -245,8 +251,8 @@ public sealed class CorridorMonsterLayout
         // ═════════════════════════════════════════════
         //  Boss Chamber (~93%)
         // ═════════════════════════════════════════════
-        float yBoss = mapLength * BossChamberRatio;
-        var bossCenter = new Vector2D(CenterX, yBoss);
+        float xBoss = mapLength * BossChamberRatio;
+        var bossCenter = new Vector2D(xBoss, CenterY);
 
         string bossName = config.Map.BossName ?? $"Guardian of {config.Map.Name}";
         var boss = createMonster(MonsterRarity.Boss, bossName);
@@ -279,134 +285,134 @@ public sealed class CorridorMonsterLayout
     // ─────────────────────────────────────────────
 
     /// <summary>
-    /// Arranges Vanguard mobs in a horizontal defensive line spanning the corridor.
+    /// Arranges Vanguard mobs in a vertical defensive line spanning across the corridor.
     /// </summary>
     public static void PositionVanguardLine(
         IReadOnlyList<MonsterInstance> mobs,
         Vector2D center,
-        float width = 280f,
+        float height = 115f,
         float jitter = 8f,
         Random? rng = null)
     {
         if (mobs.Count == 0) return;
         var random = rng ?? Random.Shared;
 
-        float leftX = MathF.Max(MinPlayableX + 15f, center.X - width * 0.5f);
-        float rightX = MathF.Min(MaxPlayableX - 15f, center.X + width * 0.5f);
-        float stepX = mobs.Count > 1 ? (rightX - leftX) / (mobs.Count - 1) : 0f;
+        float topY = MathF.Max(MinPlayableY + 10f, center.Y - height * 0.5f);
+        float bottomY = MathF.Min(MaxPlayableY - 10f, center.Y + height * 0.5f);
+        float stepY = mobs.Count > 1 ? (bottomY - topY) / (mobs.Count - 1) : 0f;
 
         for (int i = 0; i < mobs.Count; i++)
         {
-            float x = mobs.Count == 1 ? center.X : leftX + i * stepX;
-            float yOffset = ((float)random.NextDouble() * 2f - 1f) * jitter;
+            float y = mobs.Count == 1 ? center.Y : topY + i * stepY;
+            float xOffset = ((float)random.NextDouble() * 2f - 1f) * jitter;
             mobs[i].Position = new Vector2D(
-                Math.Clamp(x, MinPlayableX, MaxPlayableX),
-                center.Y + yOffset
+                center.X + xOffset,
+                Math.Clamp(y, MinPlayableY, MaxPlayableY)
             );
         }
     }
 
     /// <summary>
-    /// Arranges Vanguard mobs in a V-shaped wedge pointing toward the approaching Exile (apex at lowest Y).
+    /// Arranges Vanguard mobs in a V-shaped wedge pointing left toward the approaching Exile (apex at lowest X).
     /// </summary>
     public static void PositionVanguardVee(
         IReadOnlyList<MonsterInstance> mobs,
         Vector2D center,
-        float width = 280f,
+        float height = 110f,
         float depth = 50f)
     {
         if (mobs.Count == 0) return;
 
-        // Apex mob at center.X and apex Y (center.Y - depth * 0.5)
-        float apexY = center.Y - depth * 0.5f;
-        mobs[0].Position = new Vector2D(center.X, apexY);
+        // Apex mob at apex X (center.X - depth * 0.5f) and center.Y
+        float apexX = center.X - depth * 0.5f;
+        mobs[0].Position = new Vector2D(apexX, center.Y);
 
         int remaining = mobs.Count - 1;
         if (remaining <= 0) return;
 
         int pairs = (remaining + 1) / 2;
-        float xStep = (width * 0.5f) / MathF.Max(1, pairs);
-        float yStep = depth / MathF.Max(1, pairs);
+        float yStep = (height * 0.5f) / MathF.Max(1, pairs);
+        float xStep = depth / MathF.Max(1, pairs);
 
         int mobIdx = 1;
         for (int p = 1; p <= pairs && mobIdx < mobs.Count; p++)
         {
-            float deltaX = p * xStep;
-            float wingY = apexY + p * yStep;
+            float deltaY = p * yStep;
+            float wingX = apexX + p * xStep;
 
-            // Left wing
+            // Top wing
             mobs[mobIdx++].Position = new Vector2D(
-                Math.Clamp(center.X - deltaX, MinPlayableX, MaxPlayableX),
-                wingY
+                wingX,
+                Math.Clamp(center.Y - deltaY, MinPlayableY, MaxPlayableY)
             );
 
-            // Right wing
+            // Bottom wing
             if (mobIdx < mobs.Count)
             {
                 mobs[mobIdx++].Position = new Vector2D(
-                    Math.Clamp(center.X + deltaX, MinPlayableX, MaxPlayableX),
-                    wingY
+                    wingX,
+                    Math.Clamp(center.Y + deltaY, MinPlayableY, MaxPlayableY)
                 );
             }
         }
     }
 
     /// <summary>
-    /// Positions a Rare Commander at the center-rear, with minions forming a perimeter protective arc in front.
+    /// Positions a Rare Commander at the center-rear (+X), with minions forming a perimeter protective arc in front (facing left toward incoming Exile).
     /// </summary>
     public static void PositionCommanderPhalanx(
         MonsterInstance commander,
         IReadOnlyList<MonsterInstance> minions,
         Vector2D center)
     {
-        // Commander sits slightly back from center along the forward marching axis (+Y)
-        commander.Position = new Vector2D(center.X, center.Y + 28f);
+        // Commander sits slightly back to the right along +X
+        commander.Position = new Vector2D(center.X + 28f, center.Y);
 
         if (minions.Count == 0) return;
 
-        // Minions form a shield arc in front (lower Y, closer to advancing Exile)
-        float arcRadius = 45f;
-        float startAngle = -MathF.PI * 0.85f;
-        float endAngle = -MathF.PI * 0.15f;
+        // Minions form a shield arc in front (lower X, closer to advancing Exile)
+        float arcRadius = 40f;
+        float startAngle = MathF.PI * 0.65f;
+        float endAngle = MathF.PI * 1.35f;
         float angleStep = minions.Count > 1 ? (endAngle - startAngle) / (minions.Count - 1) : 0f;
 
         for (int i = 0; i < minions.Count; i++)
         {
-            float angle = minions.Count == 1 ? -MathF.PI * 0.5f : startAngle + i * angleStep;
-            float mx = commander.Position.X + MathF.Cos(angle) * (arcRadius + (i % 2) * 8f);
+            float angle = minions.Count == 1 ? MathF.PI : startAngle + i * angleStep;
+            float mx = commander.Position.X + MathF.Cos(angle) * (arcRadius + (i % 2) * 6f);
             float my = commander.Position.Y + MathF.Sin(angle) * (arcRadius + (i % 2) * 5f);
 
             minions[i].Position = new Vector2D(
-                Math.Clamp(mx, MinPlayableX, MaxPlayableX),
-                my
+                mx,
+                Math.Clamp(my, MinPlayableY, MaxPlayableY)
             );
         }
     }
 
     /// <summary>
-    /// Positions Flankers split into two groups hugging the left and right corridor walls.
+    /// Positions Flankers split into two groups hugging the top and bottom corridor walls.
     /// </summary>
     public static void PositionFlankerPincer(
-        IReadOnlyList<MonsterInstance> leftFlank,
-        IReadOnlyList<MonsterInstance> rightFlank,
+        IReadOnlyList<MonsterInstance> topFlank,
+        IReadOnlyList<MonsterInstance> bottomFlank,
         Vector2D center)
     {
-        // Left flank hugs left wall (MinPlayableX + ~20px)
-        float leftWallX = MinPlayableX + 25f;
-        float leftStepY = leftFlank.Count > 1 ? 55f / (leftFlank.Count - 1) : 0f;
-        for (int i = 0; i < leftFlank.Count; i++)
+        // Top flank hugs top wall
+        float topWallY = MinPlayableY + 12f;
+        float topStepX = topFlank.Count > 1 ? 55f / (topFlank.Count - 1) : 0f;
+        for (int i = 0; i < topFlank.Count; i++)
         {
-            float y = center.Y - 25f + i * leftStepY;
-            leftFlank[i].Position = new Vector2D(leftWallX + (i % 2) * 12f, y);
+            float x = center.X - 25f + i * topStepX;
+            topFlank[i].Position = new Vector2D(x, topWallY + (i % 2) * 8f);
         }
 
-        // Right flank hugs right wall (MaxPlayableX - ~20px)
-        float rightWallX = MaxPlayableX - 25f;
-        float rightStepY = rightFlank.Count > 1 ? 55f / (rightFlank.Count - 1) : 0f;
-        for (int i = 0; i < rightFlank.Count; i++)
+        // Bottom flank hugs bottom wall
+        float bottomWallY = MaxPlayableY - 12f;
+        float bottomStepX = bottomFlank.Count > 1 ? 55f / (bottomFlank.Count - 1) : 0f;
+        for (int i = 0; i < bottomFlank.Count; i++)
         {
-            float y = center.Y - 25f + i * rightStepY;
-            rightFlank[i].Position = new Vector2D(rightWallX - (i % 2) * 12f, y);
+            float x = center.X - 25f + i * bottomStepX;
+            bottomFlank[i].Position = new Vector2D(x, bottomWallY - (i % 2) * 8f);
         }
     }
 
@@ -419,22 +425,22 @@ public sealed class CorridorMonsterLayout
     {
         if (guards.Count == 0) return;
 
-        // Arrayed in two tight ranks: frontline and backline
+        // Arrayed in two tight ranks: frontline and backline along X
         int half = (guards.Count + 1) / 2;
-        float width = 230f;
-        float leftX = center.X - width * 0.5f;
-        float stepX = half > 1 ? width / (half - 1) : 0f;
+        float height = 110f;
+        float topY = center.Y - height * 0.5f;
+        float stepY = half > 1 ? height / (half - 1) : 0f;
 
         for (int i = 0; i < guards.Count; i++)
         {
             bool isFrontRank = i < half;
             int rankIdx = isFrontRank ? i : i - half;
-            float x = leftX + rankIdx * stepX + (isFrontRank ? 0f : stepX * 0.5f);
-            float y = center.Y + (isFrontRank ? -14f : 16f);
+            float y = topY + rankIdx * stepY + (isFrontRank ? 0f : stepY * 0.5f);
+            float x = center.X + (isFrontRank ? -14f : 16f);
 
             guards[i].Position = new Vector2D(
-                Math.Clamp(x, MinPlayableX, MaxPlayableX),
-                y
+                x,
+                Math.Clamp(y, MinPlayableY, MaxPlayableY)
             );
         }
     }
@@ -452,12 +458,12 @@ public sealed class CorridorMonsterLayout
         for (int i = 0; i < adds.Count; i++)
         {
             float angle = (i * MathF.Tau / Math.Max(1, adds.Count)) + 0.4f;
-            float rx = 52f + (i % 2) * 12f;
-            float ry = 36f + (i % 2) * 8f;
+            float rx = 45f + (i % 2) * 10f;
+            float ry = 35f + (i % 2) * 8f;
 
             adds[i].Position = new Vector2D(
-                Math.Clamp(center.X + MathF.Cos(angle) * rx, MinPlayableX, MaxPlayableX),
-                center.Y + MathF.Sin(angle) * ry
+                center.X + MathF.Cos(angle) * rx,
+                Math.Clamp(center.Y + MathF.Sin(angle) * ry, MinPlayableY, MaxPlayableY)
             );
         }
     }

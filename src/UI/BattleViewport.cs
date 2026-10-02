@@ -325,6 +325,11 @@ public partial class BattleViewport : Control
         Arena?.FireExileAttack(type, targetPosition);
 
     /// <summary>
+    /// Unified visual pipeline for executing attack animations and VFX for ANY combatant (Exile or Monster).
+    /// </summary>
+    public void ExecuteAttackVisual(CombatAttackEventArgs args) => Arena?.ExecuteAttackVisual(args);
+
+    /// <summary>
     /// Triggers Exile melee attack visual arc in the 2D arena.
     /// </summary>
     public void FireExileMeleeAttack(Vector2? targetPosition, float range, DamageType type, float? arcAngle = null, bool isCrit = false) =>
@@ -388,6 +393,19 @@ public partial class BattleViewport : Control
     /// Updates monster remaining life in the 2D arena.
     /// </summary>
     public void UpdateArenaMonsterLife(long instanceId, float currentLife) => Arena?.UpdateMonsterLife(instanceId, currentLife);
+
+    /// <summary>
+    /// Attempts to find the 2D visual screen position for the specified monster instance.
+    /// </summary>
+    public bool TryGetMonsterPosition(long instanceId, out Vector2 position)
+    {
+        if (Arena != null)
+        {
+            return Arena.TryGetMonsterPosition(instanceId, out position);
+        }
+        position = Vector2.Zero;
+        return false;
+    }
 
     /// <summary>
     /// Updates Exile world position and movement telemetry in the 2D arena for relative corridor rendering (Task 2.7).

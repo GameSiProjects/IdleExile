@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using IdleExile.Core.Models;
+using IdleExile.Core.Services;
+using IdleExile.Core.State;
 using IdleExile.UI.Components;
 
 namespace IdleExile.UI;
@@ -33,6 +35,7 @@ public static class Arena2DTests
         TestBattleViewportIntegration();
         TestEquippedWeaponVisuals();
         TestExileAutoFacingAndTargetTracking();
+        TestUnifiedAttackVisualPipeline();
 
         GD.Print("[Tests] All Arena2DTests PASSED successfully!");
     }
@@ -376,6 +379,89 @@ public static class Arena2DTests
         arena._Process(0.5);
         Assert(Mathf.Abs(Mathf.AngleDifference(arena.ExileFacingAngle, Mathf.Pi)) < 0.25f,
             $"Auto-Facing must track priority target (West) even when another mob is closer, got {arena.ExileFacingAngle}");
+
+        arena.QueueFree();
+    }
+
+    private static void TestUnifiedAttackVisualPipeline()
+    {
+        var arena = new Arena2D();
+        arena._Ready();
+
+        var player = new PlayerState();
+        var monster = new MonsterInstance(
+            instanceId: 777,
+            name: "Test Marauder",
+            rarity: MonsterRarity.Rare,
+            monsterLevel: 1,
+            maxLife: 500f,
+            primaryDamageType: DamageType.Fire,
+            damageMin: 20f,
+            damageMax: 30f,
+            attacksPerSecond: 1.0f,
+            critChance: 10f,
+            critMultiplier: 150f,
+            accuracy: 100f,
+            baseExperience: 50f,
+            itemQuantityMultiplier: 1f,
+            itemRarityMultiplier: 1f,
+            initialPosition: new Vector2D(300f, 104f)
+        );
+
+        arena.SetMonsters(new[] { monster });
+
+        // 1. Unified Player Melee Attack
+        int meleeBefore = arena.ActiveMeleeIndicatorCount;
+        var playerAttackArgs = new CombatAttackEventArgs(
+            Attacker: player,
+            Target: monster,
+            Origin: new Vector2D(40f, 104f),
+            TargetPosition: new Vector2D(300f, 104f),
+            GeometryType: SkillGeometryType.Cone,
+            DamageType: DamageType.Physical,
+            Range: 45f,
+            IsMelee: true,
+            IsCrit: false,
+            ConeAngle: 75f
+        );
+
+        arena.ExecuteAttackVisual(playerAttackArgs);
+        Assert(arena.ActiveMeleeIndicatorCount > meleeBefore, "Player melee attack must spawn melee strike indicator");
+
+        // 2. Unified Monster Melee Attack
+        int meleeAfterPlayer = arena.ActiveMeleeIndicatorCount;
+        var monsterAttackArgs = new CombatAttackEventArgs(
+            Attacker: monster,
+            Target: player,
+            Origin: new Vector2D(300f, 104f),
+            TargetPosition: new Vector2D(40f, 104f),
+            GeometryType: SkillGeometryType.Cone,
+            DamageType: DamageType.Fire,
+            Range: 40f,
+            IsMelee: true,
+            IsCrit: true,
+            ConeAngle: 70f
+        );
+
+        arena.ExecuteAttackVisual(monsterAttackArgs);
+        Assert(arena.ActiveMeleeIndicatorCount > meleeAfterPlayer, "Monster melee attack must spawn melee strike indicator through the same pipeline");
+
+        // 3. Unified Projectile Attack (e.g. Player or Ranged Monster)
+        int projBefore = arena.ActiveProjectileCount;
+        var projectileAttackArgs = new CombatAttackEventArgs(
+            Attacker: player,
+            Target: monster,
+            Origin: new Vector2D(40f, 104f),
+            TargetPosition: new Vector2D(300f, 104f),
+            GeometryType: SkillGeometryType.SingleTarget,
+            DamageType: DamageType.Lightning,
+            Range: 150f,
+            IsMelee: false,
+            IsCrit: false
+        );
+
+        arena.ExecuteAttackVisual(projectileAttackArgs);
+        Assert(arena.ActiveProjectileCount > projBefore, "Ranged attack must spawn projectile through the same pipeline");
 
         arena.QueueFree();
     }

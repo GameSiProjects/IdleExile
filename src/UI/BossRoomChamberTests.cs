@@ -40,10 +40,10 @@ public static class BossRoomChamberTests
         var player = new PlayerState();
         var movement = new ExileMovementController(player, baseSpeed: 100f);
         float mapLength = 2000f;
-        movement.StartMap(mapLength, new Vector2D(220f, 40f));
+        movement.StartMap(mapLength, new Vector2D(40f, 104f));
 
-        float expectedFogY = 40f + (mapLength * ExileMovementController.FogGateRatio); // 40 + 1700 = 1740f
-        float expectedBossY = 40f + (mapLength * ExileMovementController.BossArenaRatio); // 40 + 1860 = 1900f
+        float expectedFogX = 40f + (mapLength * ExileMovementController.FogGateRatio); // 40 + 1700 = 1740f
+        float expectedBossX = 40f + (mapLength * ExileMovementController.BossArenaRatio); // 40 + 1860 = 1900f
 
         Assert(Mathf.Abs(ExileMovementController.FogGateRatio - 0.85f) < 0.001f, "FogGateRatio must be 0.85 (85%)");
         Assert(Mathf.Abs(ExileMovementController.BossArenaRatio - 0.93f) < 0.001f, "BossArenaRatio must be 0.93 (93%)");
@@ -53,21 +53,21 @@ public static class BossRoomChamberTests
         movement.OnFogGateSealed += () => sealedEventFired = true;
 
         // Position Exile close to Fog Gate before 85%
-        movement.Position = new Vector2D(220f, expectedFogY - 10f);
+        movement.Position = new Vector2D(expectedFogX - 10f, 104f);
         movement.Tick(0.033f, Array.Empty<MonsterInstance>(), player);
         Assert(!movement.IsFogGateSealed, "Fog Gate should not be sealed before 85%");
 
         // Advance Exile past Fog Gate threshold
-        movement.Position = new Vector2D(220f, expectedFogY + 10f);
+        movement.Position = new Vector2D(expectedFogX + 10f, 104f);
         movement.Tick(0.033f, Array.Empty<MonsterInstance>(), player);
         Assert(movement.IsFogGateSealed, "Fog Gate must be sealed when crossing 85% threshold");
         Assert(sealedEventFired, "OnFogGateSealed event must fire when crossing Fog Gate");
 
         // Test backtracking prevention: attempting to step or move behind the sealed gate
-        movement.Position = new Vector2D(220f, expectedFogY - 100f);
+        movement.Position = new Vector2D(expectedFogX - 100f, 104f);
         movement.Tick(0.033f, Array.Empty<MonsterInstance>(), player);
-        Assert(movement.Position.Y >= expectedFogY,
-            $"Exile position must be clamped to Fog Gate Y ({expectedFogY}), got {movement.Position.Y}");
+        Assert(movement.Position.X >= expectedFogX,
+            $"Exile position must be clamped to Fog Gate X ({expectedFogX}), got {movement.Position.X}");
     }
 
     private static void TestArenaCameraCorridorFollowAndBossArenaLock()
@@ -75,16 +75,16 @@ public static class BossRoomChamberTests
         var camera = new ArenaCamera();
         Vector2 screenCenter = Arena2D.CenterPosition; // (220, 104)
         float mapLength = 2400f;
-        Vector2 bossCenterWorld = new(screenCenter.X, mapLength * ExileMovementController.BossArenaRatio); // (220, 2232)
+        Vector2 bossCenterWorld = new(mapLength * ExileMovementController.BossArenaRatio, screenCenter.Y); // (2232, 104)
 
         // 1. In corridor phase: camera tracks exile position + look ahead
-        Vector2 exileCorridorPos = new(220f, 600f);
+        Vector2 exileCorridorPos = new(600f, 104f);
         camera.Update(0.1f, exileCorridorPos, bossCenterWorld, shouldLockToArena: false);
         Assert(camera.Mode == ArenaCameraMode.CorridorFollow, "Camera should be in CorridorFollow mode");
-        Assert(camera.TargetPosition.Y < bossCenterWorld.Y, "Camera target should follow corridor");
+        Assert(camera.TargetPosition.X < bossCenterWorld.X, "Camera target should follow corridor");
 
         // 2. Transition into boss arena lock
-        camera.Update(0.1f, new Vector2(220f, 2100f), bossCenterWorld, shouldLockToArena: true);
+        camera.Update(0.1f, new Vector2(2100f, 104f), bossCenterWorld, shouldLockToArena: true);
         Assert(camera.Mode == ArenaCameraMode.BossArenaLock, "Camera should switch to BossArenaLock mode");
         Assert(Mathf.Abs(camera.TargetPosition.X - bossCenterWorld.X) < 0.01f, "Camera target X must match boss chamber center");
         Assert(Mathf.Abs(camera.TargetPosition.Y - bossCenterWorld.Y) < 0.01f, "Camera target Y must match boss chamber center");
@@ -92,7 +92,7 @@ public static class BossRoomChamberTests
         // Step camera multiple frames to complete smooth lerp into locked position
         for (int i = 0; i < 60; i++)
         {
-            camera.Update(0.05f, new Vector2(220f, 2150f), bossCenterWorld, shouldLockToArena: true);
+            camera.Update(0.05f, new Vector2(2150f, 104f), bossCenterWorld, shouldLockToArena: true);
         }
 
         Assert(camera.CurrentPosition.DistanceTo(bossCenterWorld) < 1.0f,
@@ -193,7 +193,7 @@ public static class BossRoomChamberTests
         };
 
         // Trigger heavy slam on engine with 1.4s duration and 55px radius
-        engine.TriggerBossSlam(boss, new Vector2D(220, 2232), threatPercent: 85f, windUp: 1.4f, radius: 55f);
+        engine.TriggerBossSlam(boss, new Vector2D(2232, 104), threatPercent: 85f, windUp: 1.4f, radius: 55f);
 
         Assert(engine.IsBossSlamTelegraphing, "CombatEngine.IsBossSlamTelegraphing should be true");
         Assert(slamTelegraphedFired, "OnBossSlamTelegraphed event must fire");
@@ -245,7 +245,7 @@ public static class BossRoomChamberTests
             baseExperience: 250f,
             itemQuantityMultiplier: 5f,
             itemRarityMultiplier: 5f,
-            initialPosition: new Vector2D(220, 2232)
+            initialPosition: new Vector2D(2232, 104)
         );
     }
 

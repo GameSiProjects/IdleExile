@@ -90,41 +90,41 @@ public static class CorridorMonsterLayoutTests
         var p1 = layout.Packs[0];
         AssertTrue(p1.FormationType == CorridorPackFormationType.VanguardLine || p1.FormationType == CorridorPackFormationType.VanguardVee,
             $"Pack 1 must be Vanguard, got {p1.FormationType}");
-        AssertTrue(p1.CenterPosition.Y >= 350f && p1.CenterPosition.Y <= 450f, $"Pack 1 Y ({p1.CenterPosition.Y}) must be ~408px");
+        AssertTrue(p1.CenterPosition.X >= 350f && p1.CenterPosition.X <= 450f, $"Pack 1 X ({p1.CenterPosition.X}) must be ~408px");
 
         // Pack 2: Commander Phalanx
         var p2 = layout.Packs[1];
         AssertTrue(p2.FormationType == CorridorPackFormationType.CommanderPhalanx, $"Pack 2 must be CommanderPhalanx, got {p2.FormationType}");
-        AssertTrue(p2.CenterPosition.Y >= 800f && p2.CenterPosition.Y <= 950f, $"Pack 2 Y ({p2.CenterPosition.Y}) must be ~888px");
+        AssertTrue(p2.CenterPosition.X >= 800f && p2.CenterPosition.X <= 950f, $"Pack 2 X ({p2.CenterPosition.X}) must be ~888px");
 
         // Pack 3: League Encounter
         var p3 = layout.Packs[2];
         AssertTrue(p3.FormationType == CorridorPackFormationType.EncounterAmbush, $"Pack 3 must be EncounterAmbush, got {p3.FormationType}");
         AssertTrue(p3.IsEncounterPack, "Pack 3 must be flagged as an encounter pack");
         AssertTrue(p3.Encounter != null, "Pack 3 must have an associated LeagueEncounterInstance");
-        AssertTrue(p3.CenterPosition.Y >= 1250f && p3.CenterPosition.Y <= 1450f, $"Pack 3 Y ({p3.CenterPosition.Y}) must be ~1344px");
+        AssertTrue(p3.CenterPosition.X >= 1250f && p3.CenterPosition.X <= 1450f, $"Pack 3 X ({p3.CenterPosition.X}) must be ~1344px");
 
         // Pack 4: Flanker Pincer
         var p4 = layout.Packs[3];
         AssertTrue(p4.FormationType == CorridorPackFormationType.FlankerPincer, $"Pack 4 must be FlankerPincer, got {p4.FormationType}");
-        AssertTrue(p4.CenterPosition.Y >= 1600f && p4.CenterPosition.Y <= 1800f, $"Pack 4 Y ({p4.CenterPosition.Y}) must be ~1704px");
+        AssertTrue(p4.CenterPosition.X >= 1600f && p4.CenterPosition.X <= 1800f, $"Pack 4 X ({p4.CenterPosition.X}) must be ~1704px");
 
         // Pack 5: Gate Phalanx
         var p5 = layout.Packs[4];
         AssertTrue(p5.FormationType == CorridorPackFormationType.GatePhalanx, $"Pack 5 must be GatePhalanx, got {p5.FormationType}");
-        AssertTrue(p5.CenterPosition.Y >= 1850f && p5.CenterPosition.Y <= 2020f, $"Pack 5 Y ({p5.CenterPosition.Y}) must be ~1944px");
-        AssertTrue(p5.CenterPosition.Y < 2400f * 0.85f, "Gate Phalanx must sit before the 85% Fog Gate threshold");
+        AssertTrue(p5.CenterPosition.X >= 1850f && p5.CenterPosition.X <= 2020f, $"Pack 5 X ({p5.CenterPosition.X}) must be ~1944px");
+        AssertTrue(p5.CenterPosition.X < 2400f * 0.85f, "Gate Phalanx must sit before the 85% Fog Gate threshold");
 
         // Pack 6: Boss Chamber
         var p6 = layout.Packs[5];
         AssertTrue(p6.FormationType == CorridorPackFormationType.BossChamber, $"Pack 6 must be BossChamber, got {p6.FormationType}");
-        AssertTrue(p6.CenterPosition.Y >= 2150f && p6.CenterPosition.Y <= 2300f, $"Pack 6 Y ({p6.CenterPosition.Y}) must be ~2232px");
+        AssertTrue(p6.CenterPosition.X >= 2150f && p6.CenterPosition.X <= 2300f, $"Pack 6 X ({p6.CenterPosition.X}) must be ~2232px");
 
-        // Strict Y monotonicity
+        // Strict X monotonicity
         for (int i = 0; i < layout.Packs.Count - 1; i++)
         {
-            AssertTrue(layout.Packs[i].CenterPosition.Y < layout.Packs[i + 1].CenterPosition.Y,
-                $"Packs must strictly advance along corridor: Pack {i + 1} Y ({layout.Packs[i].CenterPosition.Y}) < Pack {i + 2} Y ({layout.Packs[i + 1].CenterPosition.Y})");
+            AssertTrue(layout.Packs[i].CenterPosition.X < layout.Packs[i + 1].CenterPosition.X,
+                $"Packs must strictly advance along corridor: Pack {i + 1} X ({layout.Packs[i].CenterPosition.X}) < Pack {i + 2} X ({layout.Packs[i + 1].CenterPosition.X})");
         }
     }
 
@@ -143,15 +143,15 @@ public static class CorridorMonsterLayoutTests
         {
             lineMobs.Add(new MonsterInstance(i + 1, "Skeleton", MonsterRarity.Normal, 1, 100f, DamageType.Physical, 2f, 4f, 1f, 5f, 130f, 50f, 10f, 1f, 1f));
         }
-        var center = new Vector2D(220f, 400f);
-        CorridorMonsterLayout.PositionVanguardLine(lineMobs, center, width: 280f, jitter: 0f);
+        var center = new Vector2D(400f, 104f);
+        CorridorMonsterLayout.PositionVanguardLine(lineMobs, center, height: 110f, jitter: 0f);
 
         for (int i = 0; i < lineMobs.Count; i++)
         {
-            AssertTrue(lineMobs[i].Position.X >= 40f && lineMobs[i].Position.X <= 400f, $"Line mob {i} X ({lineMobs[i].Position.X}) within corridor");
-            AssertEqual(400f, lineMobs[i].Position.Y, 0.01f, $"Line mob {i} Y must be at center Y");
+            AssertTrue(lineMobs[i].Position.Y >= 32f && lineMobs[i].Position.Y <= 176f, $"Line mob {i} Y ({lineMobs[i].Position.Y}) within corridor");
+            AssertEqual(400f, lineMobs[i].Position.X, 0.01f, $"Line mob {i} X must be at center X");
         }
-        AssertTrue(lineMobs[0].Position.X < lineMobs[^1].Position.X, "Line mobs must be distributed horizontally from left to right");
+        AssertTrue(lineMobs[0].Position.Y < lineMobs[^1].Position.Y, "Line mobs must be distributed vertically from top to bottom");
 
         // Test VanguardVee positioning
         var veeMobs = new List<MonsterInstance>();
@@ -159,17 +159,17 @@ public static class CorridorMonsterLayoutTests
         {
             veeMobs.Add(new MonsterInstance(i + 10, "Crawler", MonsterRarity.Normal, 1, 100f, DamageType.Physical, 2f, 4f, 1f, 5f, 130f, 50f, 10f, 1f, 1f));
         }
-        CorridorMonsterLayout.PositionVanguardVee(veeMobs, center, width: 260f, depth: 50f);
+        CorridorMonsterLayout.PositionVanguardVee(veeMobs, center, height: 110f, depth: 50f);
 
-        // Apex mob at center X and lowest Y (apexY = 400 - 25 = 375)
-        AssertEqual(220f, veeMobs[0].Position.X, 0.01f, "Vee apex mob must be at central lane X (220)");
-        AssertEqual(375f, veeMobs[0].Position.Y, 0.01f, "Vee apex mob must be at apex Y");
+        // Apex mob at center Y and lowest X (apexX = 400 - 25 = 375)
+        AssertEqual(375f, veeMobs[0].Position.X, 0.01f, "Vee apex mob must be at apex X");
+        AssertEqual(104f, veeMobs[0].Position.Y, 0.01f, "Vee apex mob must be at central lane Y (104)");
 
-        // Wing mobs must have Y > apex Y
+        // Wing mobs must have X > apex X
         for (int i = 1; i < veeMobs.Count; i++)
         {
-            AssertTrue(veeMobs[i].Position.Y > veeMobs[0].Position.Y, $"Vee wing mob {i} Y ({veeMobs[i].Position.Y}) must lag behind apex");
-            AssertTrue(veeMobs[i].Position.X >= 40f && veeMobs[i].Position.X <= 400f, $"Vee wing mob {i} X ({veeMobs[i].Position.X}) within corridor");
+            AssertTrue(veeMobs[i].Position.X > veeMobs[0].Position.X, $"Vee wing mob {i} X ({veeMobs[i].Position.X}) must lag behind apex");
+            AssertTrue(veeMobs[i].Position.Y >= 32f && veeMobs[i].Position.Y <= 176f, $"Vee wing mob {i} Y ({veeMobs[i].Position.Y}) within corridor");
         }
     }
 
@@ -190,17 +190,17 @@ public static class CorridorMonsterLayoutTests
         AssertTrue(commander != null, "Pack 2 must contain a Rare Commander");
         AssertTrue(commander!.AuraModifiers.Count > 0, "Rare Commander must possess at least one AuraModifier");
 
-        // Commander is at center X and rear (+Y)
-        AssertEqual(220f, commander.Position.X, 0.01f, "Commander must be centered horizontally");
+        // Commander is at center Y and rear (+X)
+        AssertEqual(104f, commander.Position.Y, 0.01f, "Commander must be centered vertically");
 
-        // Minions are stationed in a protective shield arc in front (Y <= commander.Y)
+        // Minions are stationed in a protective shield arc in front (X <= commander.X)
         var minions = pack2.Monsters.Where(m => m != commander).ToList();
         AssertTrue(minions.Count >= 4, $"Phalanx must contain at least 4 escort minions, got {minions.Count}");
         foreach (var minion in minions)
         {
-            AssertTrue(minion.Position.Y <= commander.Position.Y,
-                $"Phalanx minion Y ({minion.Position.Y}) must form perimeter in front of Commander ({commander.Position.Y})");
-            AssertTrue(minion.Position.X >= 40f && minion.Position.X <= 400f, "Phalanx minion must be within corridor width");
+            AssertTrue(minion.Position.X <= commander.Position.X,
+                $"Phalanx minion X ({minion.Position.X}) must form perimeter in front of Commander ({commander.Position.X})");
+            AssertTrue(minion.Position.Y >= 32f && minion.Position.Y <= 176f, "Phalanx minion must be within corridor height");
         }
     }
 
@@ -217,23 +217,23 @@ public static class CorridorMonsterLayoutTests
         var flankPack = spawner.CurrentLayout!.Packs.First(p => p.FormationType == CorridorPackFormationType.FlankerPincer);
         AssertTrue(flankPack.Monsters.Count >= 4, "Flanker pack must have multiple mobs");
 
-        int leftCount = 0;
-        int rightCount = 0;
+        int topCount = 0;
+        int bottomCount = 0;
 
         foreach (var mob in flankPack.Monsters)
         {
-            if (mob.Position.X <= 120f)
+            if (mob.Position.Y <= 60f)
             {
-                leftCount++;
+                topCount++;
             }
-            else if (mob.Position.X >= 320f)
+            else if (mob.Position.Y >= 148f)
             {
-                rightCount++;
+                bottomCount++;
             }
         }
 
-        AssertTrue(leftCount >= 2, $"Flankers must have at least 2 mobs hugging left wall, got {leftCount}");
-        AssertTrue(rightCount >= 2, $"Flankers must have at least 2 mobs hugging right wall, got {rightCount}");
+        AssertTrue(topCount >= 2, $"Flankers must have at least 2 mobs hugging top wall, got {topCount}");
+        AssertTrue(bottomCount >= 2, $"Flankers must have at least 2 mobs hugging bottom wall, got {bottomCount}");
     }
 
     // ─────────────────────────────────────────────
@@ -254,9 +254,9 @@ public static class CorridorMonsterLayoutTests
         AssertTrue(magicCount >= 2, $"Gate Phalanx must have at least 2 Magic gate wardens, got {magicCount}");
 
         // Arrayed across the corridor right before Fog Gate (85% = 2040px)
-        float fogGateY = 2400f * 0.85f;
-        AssertTrue(gatePack.CenterPosition.Y < fogGateY, $"Gate Phalanx ({gatePack.CenterPosition.Y}) must stand before Fog Gate ({fogGateY})");
-        AssertTrue(gatePack.CenterPosition.Y >= 1800f, "Gate Phalanx must be positioned near the end of the corridor");
+        float fogGateX = 2400f * 0.85f;
+        AssertTrue(gatePack.CenterPosition.X < fogGateX, $"Gate Phalanx ({gatePack.CenterPosition.X}) must stand before Fog Gate ({fogGateX})");
+        AssertTrue(gatePack.CenterPosition.X >= 1800f, "Gate Phalanx must be positioned near the end of the corridor");
     }
 
     // ─────────────────────────────────────────────
@@ -358,8 +358,8 @@ public static class CorridorMonsterLayoutTests
         }
 
         AssertTrue(engine.Movement.DistanceTraveled > 0f, "Exile must have marched forward along corridor");
-        AssertTrue(engine.ExilePosition.Y > 40f, "Exile position Y must have advanced");
-        AssertTrue(!encounterTriggeredEventFired, "Encounter must not fire yet during initial 30 ticks at Y < 100");
+        AssertTrue(engine.ExilePosition.X > 40f, "Exile position X must have advanced");
+        AssertTrue(!encounterTriggeredEventFired, "Encounter must not fire yet during initial 30 ticks at X < 100");
     }
 
     // ─────────────────────────────────────────────
@@ -395,7 +395,7 @@ public static class CorridorMonsterLayoutTests
 
         var engine = new CombatEngine(player, loadout);
 
-        // Distant monster positioned at Y = 400 (AggroRange = 75, initial dist = 360px from Exile at Y = 40)
+        // Distant monster positioned at X = 400 (AggroRange = 37.5, initial dist = 360px from Exile at X = 40)
         var distantMonster = new MonsterInstance(
             instanceId: 901,
             name: "Distant Skeleton",
@@ -412,7 +412,7 @@ public static class CorridorMonsterLayoutTests
             baseExperience: 10f,
             itemQuantityMultiplier: 1f,
             itemRarityMultiplier: 1f,
-            initialPosition: new Vector2D(220f, 400f)
+            initialPosition: new Vector2D(400f, 104f)
         );
 
         var wave = new MonsterWave
@@ -424,7 +424,7 @@ public static class CorridorMonsterLayoutTests
         var config = CreateTestConfig();
         engine.StartMap(config);
         engine.SetCurrentWave(wave);
-        engine.ExilePosition = new Vector2D(220f, 40f);
+        engine.ExilePosition = new Vector2D(40f, 104f);
 
         bool damageDealtFired = false;
         bool playerDamagedFired = false;
@@ -433,33 +433,33 @@ public static class CorridorMonsterLayoutTests
 
         float dt = 1f / 30f;
 
-        // 1. Advance 20 ticks (0.66s): Exile moves from Y=40 to ~120px. Dist is 280px (> 75px AggroRange)
+        // 1. Advance 20 ticks (0.66s): Exile moves from X=40 to ~120px. Dist is 280px (> 37.5px AggroRange)
         for (int i = 0; i < 20; i++)
         {
             engine.ProcessTick(dt);
         }
 
         AssertTrue(!distantMonster.IsAggroed, "Monster must NOT be aggroed while Exile is far away (> AggroRange)");
-        AssertEqual(400f, distantMonster.Position.Y, 0.01f, "Monster must hold its formation position while unaggroed");
+        AssertEqual(400f, distantMonster.Position.X, 0.01f, "Monster must hold its formation position while unaggroed");
         AssertTrue(!damageDealtFired, "Player must NOT attack or damage monsters that are out of range");
         AssertTrue(!playerDamagedFired, "Unaggroed monster must NOT attack the player");
         AssertEqual(100f, player.CurrentMana, 0.01f, "Player must NOT spend mana while out of combat");
         AssertTrue(engine.Movement.CurrentState == ExileMovementState.Marching, "Exile must be Marching while out of combat");
         AssertTrue(!engine.IsEngagedInCombat, "IsEngagedInCombat must be false while marching between encounters");
-        AssertTrue(engine.ExilePosition.Y > 40f, "Exile must automatically move forward towards the end of the map (+Y)");
+        AssertTrue(engine.ExilePosition.X > 40f, "Exile must automatically move forward towards the end of the map (+X)");
 
-        // 2. Advance more ticks until Exile is within AggroRange (<= 75px)
-        // At speed 120px/s, Exile reaches Y ~ 340px after ~75 total ticks (400 - 340 = 60px <= 75px)
-        for (int i = 0; i < 60; i++)
+        // 2. Advance more ticks until Exile is within AggroRange (<= 37.5px)
+        // At speed 120px/s, Exile moves 260px over 65 ticks (400 - 380 = 20px <= 37.5px)
+        for (int i = 0; i < 65; i++)
         {
             engine.ProcessTick(dt);
         }
 
         AssertTrue(distantMonster.IsAggroed, "Monster must aggro once Exile approaches within AggroRange");
-        AssertTrue(distantMonster.Position.Y < 400f, "Monster must advance towards Exile once aggroed");
+        AssertTrue(distantMonster.Position.X < 400f, "Monster must advance towards Exile once aggroed");
 
         // 3. Advance until in melee combat range (optimalRange = 35px)
-        for (int i = 0; i < 25; i++)
+        for (int i = 0; i < 20; i++)
         {
             engine.ProcessTick(dt);
         }
@@ -475,14 +475,14 @@ public static class CorridorMonsterLayoutTests
         var loadout = new SkillLoadout();
         var engine = new CombatEngine(player, loadout);
 
-        // Pack of 2 monsters separated by 40px (< 120px alert radius)
-        var m1 = new MonsterInstance(1, "Mob1", MonsterRarity.Normal, 1, 100f, DamageType.Physical, 5, 10, 1, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(200f, 350f));
-        var m2 = new MonsterInstance(2, "Mob2", MonsterRarity.Normal, 1, 100f, DamageType.Physical, 5, 10, 1, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(240f, 350f));
+        // Pack of 2 monsters separated by 30px (< 120px alert radius)
+        var m1 = new MonsterInstance(1, "Mob1", MonsterRarity.Normal, 1, 100f, DamageType.Physical, 5, 10, 1, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(350f, 90f));
+        var m2 = new MonsterInstance(2, "Mob2", MonsterRarity.Normal, 1, 100f, DamageType.Physical, 5, 10, 1, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(350f, 120f));
 
         var wave = new MonsterWave { WaveNumber = 1, Monsters = new[] { m1, m2 } };
         engine.StartMap(CreateTestConfig());
         engine.SetCurrentWave(wave);
-        engine.ExilePosition = new Vector2D(220f, 40f);
+        engine.ExilePosition = new Vector2D(40f, 104f);
 
         AssertTrue(!m1.IsAggroed && !m2.IsAggroed, "Both monsters start unaggroed");
 
@@ -504,12 +504,12 @@ public static class CorridorMonsterLayoutTests
         var engine = new CombatEngine(player, loadout);
 
         // Mob placed at contact range
-        var mob = new MonsterInstance(10, "Target", MonsterRarity.Normal, 1, 50f, DamageType.Physical, 2, 4, 1, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(220f, 60f));
+        var mob = new MonsterInstance(10, "Target", MonsterRarity.Normal, 1, 50f, DamageType.Physical, 2, 4, 1, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(60f, 104f));
         var wave = new MonsterWave { WaveNumber = 1, Monsters = new[] { mob } };
 
         engine.StartMap(CreateTestConfig());
         engine.SetCurrentWave(wave);
-        engine.ExilePosition = new Vector2D(220f, 40f);
+        engine.ExilePosition = new Vector2D(40f, 104f);
 
         // Step 1 tick to engage target
         engine.ProcessTick(1f / 30f);
@@ -519,17 +519,17 @@ public static class CorridorMonsterLayoutTests
         mob.TakeDamage(100f, DamageType.Physical);
         AssertTrue(!mob.IsAlive, "Mob is dead");
 
-        float yBefore = engine.ExilePosition.Y;
+        float xBefore = engine.ExilePosition.X;
 
         // Process tick: Phase 5 clears pack, transitions state
         engine.ProcessTick(1f / 30f);
         AssertTrue(engine.Movement.CurrentEngagedTarget == null, "Engaged target must be cleared");
 
-        // Process next tick: Exile resumes marching forward along corridor (+Y)
+        // Process next tick: Exile resumes marching forward along corridor (+X)
         engine.ProcessTick(1f / 30f);
 
         AssertTrue(engine.Movement.CurrentState == ExileMovementState.Marching, "State must resume to Marching");
-        AssertTrue(engine.ExilePosition.Y >= yBefore, "Exile must continue moving towards end of map (+Y)");
+        AssertTrue(engine.ExilePosition.X >= xBefore, "Exile must continue moving towards end of map (+X)");
         AssertTrue(!engine.IsEngagedInCombat, "Exile must be out of combat while marching between packs");
     }
 }
