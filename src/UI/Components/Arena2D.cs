@@ -9,6 +9,18 @@ using IdleExile.Core.State;
 namespace IdleExile.UI.Components;
 
 /// <summary>
+/// Pending visual damage and life update queued to detonate upon projectile impact.
+/// </summary>
+public struct PendingDamageEntry
+{
+    public long MonsterId;
+    public float Damage;
+    public float NewLife;
+    public bool IsCrit;
+    public Vector2 Position;
+}
+
+/// <summary>
 /// Data structure representing an active in-flight projectile streak in 2D space.
 /// Pre-allocated in an object pool to guarantee zero runtime GC allocations.
 /// </summary>
@@ -24,6 +36,9 @@ public struct ProjectileData
     public float StreakLength;
     public Color BaseColor;
     public Color GlowColor;
+    public float AoeRadius;
+    public bool IsCrit;
+    public long TargetMonsterId;
 }
 
 /// <summary>
@@ -199,6 +214,7 @@ public partial class Arena2D : Node2D
     //  Entity & Projectile Pools (Zero GC per frame)
     // ─────────────────────────────────────────────
     private readonly ProjectileData[] _projectiles = new ProjectileData[MaxProjectiles];
+    private readonly List<PendingDamageEntry>[] _projectilePendingHits = new List<PendingDamageEntry>[MaxProjectiles];
     private readonly MonsterVisualToken[] _monsters = new MonsterVisualToken[MaxMonsters];
     private int _activeMonsterCount;
 
@@ -287,12 +303,25 @@ public partial class Arena2D : Node2D
     }
     public int ActiveMonsterCount => _activeMonsterCount;
 
+    public Arena2D()
+    {
+        for (int i = 0; i < MaxProjectiles; i++)
+        {
+            _projectilePendingHits[i] = new List<PendingDamageEntry>(4);
+        }
+    }
+
     public override void _Ready()
     {
         // Pre-initialize monster tokens to avoid allocations during combat
         for (int i = 0; i < MaxMonsters; i++)
         {
             _monsters[i] = new MonsterVisualToken();
+        }
+
+        for (int i = 0; i < MaxProjectiles; i++)
+        {
+            _projectilePendingHits[i] ??= new List<PendingDamageEntry>(4);
         }
 
         // Initialize default mock monsters in 2D top-down arrangement
@@ -396,7 +425,16 @@ public partial class Arena2D : Node2D
             if (p.Progress >= 1.0f)
             {
                 p.IsActive = false;
-                TriggerProjectileImpact(p.TargetPosition, p.DamageType);
+                TriggerProjectileImpact(p.TargetPosition, p.DamageType, p.AoeRadius, p.IsCrit);
+
+                var hits = _projectilePendingHits[i];
+                for (int h = 0; h < hits.Count; h++)
+                {
+                    var entry = hits[h];
+                    UpdateMonsterLife(entry.MonsterId, entry.NewLife);
+                    FloatingText?.SpawnDamageText(entry.Damage, entry.Position, p.DamageType, entry.IsCrit);
+                }
+                hits.Clear();
             }
         }
 
@@ -1364,8 +1402,19 @@ public partial class Arena2D : Node2D
             DrawLine(tailPos, p.CurrentPosition, p.GlowColor, 4.0f, antialiased: true);
             // Inner core bright streak
             DrawLine(tailPos + dir * 2f, p.CurrentPosition, p.BaseColor, 2.0f, antialiased: true);
-            // Projectile head tip
-            DrawCircle(p.CurrentPosition, 2.2f, Colors.White);
+
+            // Projectile head tip / Fireball orb
+            if (p.DamageType == DamageType.Fire && p.AoeRadius > 0f)
+            {
+                // Fireball: Outer fiery orange aura + inner flame core + white hot center
+                DrawCircle(p.CurrentPosition, 5.0f, p.GlowColor);
+                DrawCircle(p.CurrentPosition, 3.2f, p.BaseColor);
+                DrawCircle(p.CurrentPosition, 1.8f, Colors.White);
+            }
+            else
+            {
+                DrawCircle(p.CurrentPosition, 2.2f, Colors.White);
+            }
         }
     }
 
@@ -1483,7 +1532,14 @@ public partial class Arena2D : Node2D
     /// Spawns an in-flight projectile from start to target in 2D space.
     /// Clamps visual rendering to MaxProjectiles to protect frame rate and avoid visual clutter.
     /// </summary>
-    public bool SpawnProjectile(Vector2 start, Vector2 target, DamageType type, float speed = 520f)
+    public bool SpawnProjectile(
+        Vector2 start,
+        Vector2 target,
+        DamageType type,
+        float speed = 520f,
+        float aoeRadius = 0f,
+        bool isCrit = false,
+        long targetMonsterId = -1)
     {
         // Find available slot in object pool
         int freeIndex = -1;
@@ -1502,6 +1558,8 @@ public partial class Arena2D : Node2D
             return false;
         }
 
+        _projectilePendingHits[freeIndex].Clear();
+
         (Color baseColor, Color glowColor) = GetDamageTypeColors(type);
 
         _projectiles[freeIndex] = new ProjectileData
@@ -1515,7 +1573,10 @@ public partial class Arena2D : Node2D
             DamageType = type,
             StreakLength = 16f,
             BaseColor = baseColor,
-            GlowColor = glowColor
+            GlowColor = glowColor,
+            AoeRadius = aoeRadius,
+            IsCrit = isCrit,
+            TargetMonsterId = targetMonsterId
         };
 
         return true;
@@ -1634,12 +1695,20 @@ public partial class Arena2D : Node2D
         return closest;
     }
 
-    private void TriggerProjectileImpact(Vector2 targetPos, DamageType type)
+    public void TriggerProjectileImpact(Vector2 targetPos, DamageType type, float aoeRadius = 0f, bool isCrit = false)
     {
-        // Trigger hit flash on monsters near the target in 2D Euclidean distance
+        // 1. If this projectile has an AoE explosion (e.g. Fireball), trigger the explosion ring at impact!
+        if (aoeRadius > 0f)
+        {
+            TriggerMeleeStrikeIndicator(targetPos, 0f, aoeRadius, type, isCrit, Mathf.Tau);
+            ScreenShake(isCrit ? 1.4f : 0.8f, 0.12f);
+        }
+
+        // 2. Trigger hit flash on monsters near the target in 2D Euclidean distance
+        float flashRadius = aoeRadius > 0f ? aoeRadius : 28f;
         for (int i = 0; i < _activeMonsterCount; i++)
         {
-            if (_monsters[i].IsAlive && _monsters[i].Position.DistanceTo(targetPos) < 28f)
+            if (_monsters[i].IsAlive && _monsters[i].Position.DistanceTo(targetPos) <= flashRadius)
             {
                 _monsters[i].HitFlashTimer = 0.12f;
             }
@@ -1857,27 +1926,41 @@ public partial class Arena2D : Node2D
         }
 
         // 5. Visual Effects (VFX) Dispatch based on GeometryType & IsMelee
-        if (!args.IsMelee && (args.GeometryType == SkillGeometryType.ProjectileSpread || args.GeometryType == SkillGeometryType.SingleTarget || (args.Projectiles != null && args.Projectiles.Count > 0)))
+        if (!args.IsMelee)
         {
             Vector2 launchOrigin = isExileAttacker ? GetWeaponTipPosition() : attackerScreen;
+            float aoeRadius = args.GeometryType == SkillGeometryType.RadialAoE ? Mathf.Max(30f, args.Range) : 0f;
+            long targetMonsterId = args.Target?.Id ?? -1;
+
             if (args.Projectiles != null && args.Projectiles.Count > 0)
             {
-                foreach (var p in args.Projectiles)
+                if (args.Projectiles.Count == 1)
                 {
-                    Vector2 pTarget = launchOrigin + new Vector2(p.Direction.X, p.Direction.Y) * 220f;
-                    float speed = (float)p.Velocity.Length;
-                    SpawnProjectile(launchOrigin, pTarget, args.DamageType, speed > 0f ? speed : 520f);
+                    // Single projectile directed at targetScreen
+                    float speed = (float)args.Projectiles[0].Velocity.Length;
+                    SpawnProjectile(launchOrigin, targetScreen, args.DamageType, speed > 0f ? speed : 520f, aoeRadius, args.IsCrit, targetMonsterId);
+                }
+                else
+                {
+                    // Multi-vector projectile spread
+                    foreach (var p in args.Projectiles)
+                    {
+                        Vector2 pTarget = launchOrigin + new Vector2(p.Direction.X, p.Direction.Y) * 220f;
+                        float speed = (float)p.Velocity.Length;
+                        SpawnProjectile(launchOrigin, pTarget, args.DamageType, speed > 0f ? speed : 520f, aoeRadius, args.IsCrit, targetMonsterId);
+                    }
                 }
             }
             else
             {
-                SpawnProjectile(launchOrigin, targetScreen, args.DamageType);
+                SpawnProjectile(launchOrigin, targetScreen, args.DamageType, aoeRadius: aoeRadius, isCrit: args.IsCrit, targetMonsterId: targetMonsterId);
             }
         }
         else if (args.GeometryType == SkillGeometryType.RadialAoE)
         {
+            // Point-blank melee radial nova/slam centered on attacker
             float radius = Mathf.Max(30f, args.Range);
-            TriggerMeleeStrikeIndicator(targetScreen, 0f, radius, args.DamageType, args.IsCrit, Mathf.Tau);
+            TriggerMeleeStrikeIndicator(attackerScreen, 0f, radius, args.DamageType, args.IsCrit, Mathf.Tau);
         }
         else // Melee strike, Cone slash sweep, or close-quarters Strike
         {
@@ -1998,6 +2081,44 @@ public partial class Arena2D : Node2D
                 token.EncounterType = LeagueEncounterType.None;
             }
         }
+    }
+
+    /// <summary>
+    /// Handles monster damage presentation. If there is an active in-flight projectile
+    /// targeting this monster (or within AoE blast radius), the visual damage and life bar
+    /// drop are queued to detonate at the exact moment of projectile impact.
+    /// Otherwise (melee, DoT, or instant effects), damage and floating text appear immediately.
+    /// </summary>
+    public void HandleMonsterDamageDealt(long monsterId, float damage, float newLife, Vector2 pos, DamageType type, bool isCrit, bool isDoT)
+    {
+        if (!isDoT)
+        {
+            for (int i = 0; i < MaxProjectiles; i++)
+            {
+                if (_projectiles[i].IsActive && _projectiles[i].Progress < 0.95f)
+                {
+                    bool isTargetMatch = _projectiles[i].TargetMonsterId == monsterId;
+                    bool isAoEMatch = _projectiles[i].AoeRadius > 0f && _projectiles[i].TargetPosition.DistanceTo(pos) <= (_projectiles[i].AoeRadius + 15f);
+
+                    if (isTargetMatch || isAoEMatch)
+                    {
+                        _projectilePendingHits[i].Add(new PendingDamageEntry
+                        {
+                            MonsterId = monsterId,
+                            Damage = damage,
+                            NewLife = newLife,
+                            IsCrit = isCrit,
+                            Position = pos
+                        });
+                        return; // Queued to pop on impact!
+                    }
+                }
+            }
+        }
+
+        // Fallback for melee, DoT, or untracked projectile: immediate visual feedback
+        UpdateMonsterLife(monsterId, newLife);
+        FloatingText?.SpawnDamageText(damage, pos, type, isCrit);
     }
 
     /// <summary>

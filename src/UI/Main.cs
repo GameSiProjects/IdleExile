@@ -243,9 +243,16 @@ public partial class Main : Control
         {
             if (_battleViewport?.Arena != null)
             {
-                _battleViewport.UpdateArenaMonsterLife(args.Target.InstanceId, args.Target.CurrentLife);
                 var pos = _battleViewport.Arena.GetMonsterPosition(args.Target.InstanceId);
-                _battleViewport.SpawnFloatingDamage(args.TotalDamageDealt, pos, args.Target.PrimaryDamageType, args.IsCrit);
+                _battleViewport.HandleMonsterDamageDealt(
+                    args.Target.InstanceId,
+                    args.TotalDamageDealt,
+                    args.Target.CurrentLife,
+                    pos,
+                    args.Target.PrimaryDamageType,
+                    args.IsCrit,
+                    args.IsDoT
+                );
             }
         };
 
@@ -396,6 +403,17 @@ public partial class Main : Control
         Engine.OnAttackExecuted += args =>
         {
             _battleViewport?.ExecuteAttackVisual(args);
+        };
+
+        Engine.OnProjectileImpacted += args =>
+        {
+            if (_battleViewport?.Arena != null)
+            {
+                var screenPos = _battleViewport.Arena.Camera.WorldToScreen(
+                    new Vector2(args.ImpactPoint.X, args.ImpactPoint.Y),
+                    Arena2D.CenterPosition);
+                _battleViewport.TriggerProjectileImpact(screenPos, args.DamageType, args.AoeRadius, args.IsCrit);
+            }
         };
 
         Engine.StartMap(config);

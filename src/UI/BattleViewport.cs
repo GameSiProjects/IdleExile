@@ -342,6 +342,12 @@ public partial class BattleViewport : Control
         Arena?.SpawnProjectile(start, target, type, speed) ?? false;
 
     /// <summary>
+    /// Triggers projectile impact VFX (AoE explosion ring, screen shake, hit flashes).
+    /// </summary>
+    public void TriggerProjectileImpact(Vector2 targetPos, DamageType type, float aoeRadius = 0f, bool isCrit = false) =>
+        Arena?.TriggerProjectileImpact(targetPos, type, aoeRadius, isCrit);
+
+    /// <summary>
     /// Rotates the Exile to face directly toward the target position in the arena.
     /// </summary>
     public void FaceTarget(Vector2 targetPos) => Arena?.FaceTarget(targetPos);
@@ -393,6 +399,12 @@ public partial class BattleViewport : Control
     /// Updates monster remaining life in the 2D arena.
     /// </summary>
     public void UpdateArenaMonsterLife(long instanceId, float currentLife) => Arena?.UpdateMonsterLife(instanceId, currentLife);
+
+    /// <summary>
+    /// Handles monster damage presentation (queues onto in-flight projectile or applies immediately for melee/DoT).
+    /// </summary>
+    public void HandleMonsterDamageDealt(long monsterId, float damage, float newLife, Vector2 pos, DamageType type, bool isCrit, bool isDoT) =>
+        Arena?.HandleMonsterDamageDealt(monsterId, damage, newLife, pos, type, isCrit, isDoT);
 
     /// <summary>
     /// Attempts to find the 2D visual screen position for the specified monster instance.

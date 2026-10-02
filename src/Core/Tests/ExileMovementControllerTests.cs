@@ -220,6 +220,21 @@ public static class ExileMovementControllerTests
         );
         loadout.PrimarySkill.SetActiveGem(rangedGem);
         AssertEqual(165.0f, controller.GetOptimalEngagementRange(), 0.1f, "Ranged projectile skill optimal range should be ~165px");
+
+        // 3. Fireball Projectile AoE Skill (must maintain 165px ranged distance, not walk into melee 28px)
+        var fireballGem = new GemDefinition(
+            Id: "fireball",
+            Name: "Fireball",
+            Category: "Active",
+            Color: "Blue",
+            Tags: new[] { "spell", "projectile", "fire", "aoe" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object> { ["aoeRadius"] = 32f, ["projectileSpeed"] = 540f, ["damageType"] = "Fire" },
+            Modifiers: null,
+            Description: "Fireball"
+        );
+        loadout.PrimarySkill.SetActiveGem(fireballGem);
+        AssertEqual(165.0f, controller.GetOptimalEngagementRange(), 0.1f, "Fireball projectile AoE skill optimal range must be 165px");
     }
 
     // ─────────────────────────────────────────────

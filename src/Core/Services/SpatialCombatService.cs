@@ -292,6 +292,89 @@ public static class SpatialCombatService
         return bestTarget;
     }
 
+    /// <summary>
+    /// Continuous Collision Detection (CCD) for in-flight projectiles:
+    /// Evaluates whether the line segment from P0 to P1 intersects a circular entity hitbox (center C, radius R).
+    /// If true, outputs hitT in [0, 1] representing the earliest point of entry along the segment,
+    /// and the exact impact point P_impact = P0 + hitT * (P1 - P0).
+    /// Prevents projectile tunneling at any flight velocity or frame rate.
+    /// </summary>
+    /// <param name="p0">Segment starting position (previous tick position).</param>
+    /// <param name="p1">Segment ending position (current tick position).</param>
+    /// <param name="circleCenter">Center coordinates of candidate entity hitbox.</param>
+    /// <param name="combinedRadius">Combined collision radius (Entity Radius + Projectile Radius).</param>
+    /// <param name="hitT">Output normalized progress [0, 1] along segment at earliest contact.</param>
+    /// <param name="impactPoint">Output coordinates of impact in 2D space.</param>
+    /// <returns>True if segment enters or starts inside the circle; false otherwise.</returns>
+    public static bool SegmentIntersectsCircle(
+        Vector2D p0,
+        Vector2D p1,
+        Vector2D circleCenter,
+        float combinedRadius,
+        out float hitT,
+        out Vector2D impactPoint)
+    {
+        hitT = 1f;
+        impactPoint = p1;
+
+        if (combinedRadius <= 0f)
+            return false;
+
+        float rSq = combinedRadius * combinedRadius;
+        Vector2D toCenter = circleCenter - p0;
+        float distSqStart = toCenter.LengthSquared;
+
+        // Case 1: Start point P0 is already inside the circle
+        if (distSqStart <= rSq)
+        {
+            hitT = 0f;
+            impactPoint = p0;
+            return true;
+        }
+
+        Vector2D seg = p1 - p0;
+        float segLenSq = seg.LengthSquared;
+
+        // Case 2: Stationary / zero-length step
+        if (segLenSq < 1e-6f)
+        {
+            return false;
+        }
+
+        // Project circle center onto segment ray: t_proj = (toCenter . seg) / |seg|^2
+        float proj = toCenter.Dot(seg);
+
+        // If projection is negative or zero, circle center is behind P0 and P0 is outside -> no collision
+        if (proj <= 0f)
+        {
+            return false;
+        }
+
+        // Quadratic intersection: a*t^2 - 2*b'*t + c = 0
+        // a = segLenSq, b' = proj, c = distSqStart - rSq
+        float c = distSqStart - rSq;
+        float discriminantQuarter = (proj * proj) - (segLenSq * c);
+
+        if (discriminantQuarter < 0f)
+        {
+            // Ray does not intersect the circle
+            return false;
+        }
+
+        float sqrtDisc = MathF.Sqrt(discriminantQuarter);
+        float tEntry = (proj - sqrtDisc) / segLenSq;
+
+        if (tEntry >= 0f && tEntry <= 1.0f)
+        {
+            hitT = tEntry;
+            impactPoint = p0 + seg * tEntry;
+            return true;
+        }
+
+        // If tEntry > 1.0, the segment didn't reach the circle yet this step
+        return false;
+    }
+
     // ─────────────────────────────────────────────
     //  4.3. Autonomous AI Target Selection & Threat Scoring
     // ─────────────────────────────────────────────

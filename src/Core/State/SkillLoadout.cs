@@ -62,13 +62,21 @@ public sealed class SkillSocketSetup
     /// <summary>
     /// Sockets or replaces the Active Gem for this skill slot.
     /// </summary>
-    public bool SetActiveGem(GemDefinition gem)
+    public bool SetActiveGem(GemDefinition? gem)
     {
-        if (gem.Category != "Active")
+        if (gem != null && gem.Category != "Active")
             return false;
 
         ActiveGem = gem;
         return true;
+    }
+
+    /// <summary>
+    /// Removes the current active gem from this socket setup.
+    /// </summary>
+    public void ClearActiveGem()
+    {
+        ActiveGem = null;
     }
 
     /// <summary>
@@ -427,6 +435,27 @@ public sealed class SkillSocketSetup
             }
         }
         return chains;
+    }
+
+    /// <summary>
+    /// Gets number of pierces supported by active gem and linked support gems.
+    /// </summary>
+    public int GetPierceCount()
+    {
+        int pierce = 0;
+        if (ActiveGem?.BaseStats != null)
+        {
+            pierce = (int)GetFloat(ActiveGem.BaseStats, "pierceCount", 0f);
+        }
+
+        foreach (var support in ValidLinkedSupports)
+        {
+            if (support.Modifiers != null)
+            {
+                pierce += (int)GetFloat(support.Modifiers, "extraPierce", 0f);
+            }
+        }
+        return Math.Max(0, pierce);
     }
 
     /// <summary>

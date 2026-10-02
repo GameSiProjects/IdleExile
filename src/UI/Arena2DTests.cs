@@ -36,6 +36,7 @@ public static class Arena2DTests
         TestEquippedWeaponVisuals();
         TestExileAutoFacingAndTargetTracking();
         TestUnifiedAttackVisualPipeline();
+        TestFireballProjectileAndDamageOnImpact();
 
         GD.Print("[Tests] All Arena2DTests PASSED successfully!");
     }
@@ -462,6 +463,71 @@ public static class Arena2DTests
 
         arena.ExecuteAttackVisual(projectileAttackArgs);
         Assert(arena.ActiveProjectileCount > projBefore, "Ranged attack must spawn projectile through the same pipeline");
+
+        arena.QueueFree();
+    }
+
+    private static void TestFireballProjectileAndDamageOnImpact()
+    {
+        var arena = new Arena2D();
+        arena._Ready();
+
+        var player = new PlayerState();
+        var monster = new MonsterInstance(
+            instanceId: 201,
+            name: "Fire Target",
+            rarity: MonsterRarity.Normal,
+            monsterLevel: 1,
+            maxLife: 100.0f,
+            primaryDamageType: DamageType.Physical,
+            damageMin: 2f,
+            damageMax: 4f,
+            attacksPerSecond: 1.0f,
+            critChance: 5f,
+            critMultiplier: 150f,
+            accuracy: 100f,
+            baseExperience: 10f,
+            itemQuantityMultiplier: 1f,
+            itemRarityMultiplier: 1f,
+            initialPosition: new Vector2D(300f, 104f)
+        );
+
+        arena.SetMonsters(new[] { monster });
+
+        int projBefore = arena.ActiveProjectileCount;
+        int meleeIndicatorsBefore = arena.ActiveMeleeIndicatorCount;
+
+        var fireballArgs = new CombatAttackEventArgs(
+            Attacker: player,
+            Target: monster,
+            Origin: new Vector2D(40f, 104f),
+            TargetPosition: new Vector2D(300f, 104f),
+            GeometryType: SkillGeometryType.RadialAoE,
+            DamageType: DamageType.Fire,
+            Range: 32f,
+            IsMelee: false,
+            IsCrit: false,
+            Projectiles: new[] { new ProjectileVector(0, 0f, new Vector2D(540f, 0f), new Vector2D(1f, 0f)) }
+        );
+
+        arena.ExecuteAttackVisual(fireballArgs);
+        Assert(arena.ActiveProjectileCount == 1, $"Fireball must spawn an in-flight projectile, got {arena.ActiveProjectileCount}");
+        Assert(arena.ActiveMeleeIndicatorCount == meleeIndicatorsBefore, "Fireball must NOT detonate melee/radial strike indicator at cast time");
+
+        // Queue damage while fireball is in-flight:
+        arena.HandleMonsterDamageDealt(monster.InstanceId, 40f, 60f, new Vector2(300f, 104f), DamageType.Fire, false, false);
+
+        for (int step = 0; step < 10; step++)
+        {
+            arena._Process(0.05);
+            if (arena.ActiveMeleeIndicatorCount > meleeIndicatorsBefore)
+            {
+                break;
+            }
+        }
+
+        Assert(arena.ActiveMeleeIndicatorCount > meleeIndicatorsBefore, "Fireball impact must detonate AoE radial indicator");
+        Assert(arena.ActiveProjectileCount == 0, "Fireball projectile should deactivate after reaching target");
 
         arena.QueueFree();
     }

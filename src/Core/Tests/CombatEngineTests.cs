@@ -43,6 +43,11 @@ public static class CombatEngineTests
         TestPhase5MonsterKillExpFlaskChargesAndLoot();
         TestFullEndToEndCombatLoop();
         TestContinuousCombatSustainWithoutFreezing();
+        TestFireballProducesProjectilesAndAoETargets();
+        TestPhysicalProjectileContinuousMovementAndFlightTime();
+        TestPhysicalProjectileAoEExplosionHitsSurroundingCluster();
+        TestFrontlineMonsterBlocksBacklineMonster();
+        TestNonShotgunningRuleInVolley();
 
         Console.WriteLine("[Tests] All CombatEngineTests PASSED successfully!");
     }
@@ -672,5 +677,368 @@ public static class CombatEngineTests
         AssertTrue(attacksInSecond5s > 0, $"Player must NOT stop attacking between 5s-10s (got {attacksInSecond5s} attacks)");
         AssertTrue(attacksInThird5s > 0, $"Player must NOT stop attacking between 10s-15s (got {attacksInThird5s} attacks)");
         AssertTrue(player.CurrentMana > 0f, "Player mana must regenerate and not remain at 0 permanently");
+    }
+
+    /// <summary>
+    /// Verifies that casting Fireball in CombatEngine emits CombatAttackEventArgs
+    /// with an in-flight ProjectileVector (not null) and selects AoE targets.
+    /// </summary>
+    private static void TestFireballProducesProjectilesAndAoETargets()
+    {
+        var player = new PlayerState();
+        player.BootstrapFromArchetype(StarterArchetypeCatalog.Elementalist);
+
+        var loadout = new SkillLoadout();
+        var fireballGem = new GemDefinition(
+            Id: "fireball",
+            Name: "Fireball",
+            Category: "Active",
+            Color: "Blue",
+            Tags: new[] { "spell", "projectile", "fire", "aoe" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object>
+            {
+                ["baseDamageMin"] = 25f,
+                ["baseDamageMax"] = 38f,
+                ["damageType"] = "Fire",
+                ["manaCost"] = 8f,
+                ["projectileSpeed"] = 540f,
+                ["aoeRadius"] = 32f,
+                ["castTime"] = 0.75f
+            },
+            Modifiers: null,
+            Description: "Fireball"
+        );
+        loadout.PrimarySkill.SetActiveGem(fireballGem);
+
+        var monsters = new List<MonsterInstance>();
+        for (int m = 0; m < 3; m++)
+        {
+            monsters.Add(new MonsterInstance(
+                instanceId: 300 + m,
+                name: "Cluster Mob",
+                rarity: MonsterRarity.Normal,
+                monsterLevel: 1,
+                maxLife: 200f,
+                primaryDamageType: DamageType.Physical,
+                damageMin: 1f,
+                damageMax: 2f,
+                attacksPerSecond: 0.5f,
+                critChance: 0f,
+                critMultiplier: 100f,
+                accuracy: 100f,
+                baseExperience: 10f,
+                itemQuantityMultiplier: 1f,
+                itemRarityMultiplier: 1f,
+                initialPosition: new Vector2D(80f + m * 5f, 104f)
+            ));
+        }
+
+        var spawner = new WaveSpawner(new Random(42));
+        var engine = new CombatEngine(player, loadout, spawner);
+        var mapDef = new MapDefinition("strand", "Strand Map", 1, 1, false, 10, 100, "Tidal Behemoth", "");
+        engine.StartMap(new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>()));
+        engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = monsters });
+
+        CombatAttackEventArgs? executedArgs = null;
+        engine.OnAttackExecuted += args =>
+        {
+            if (executedArgs == null && args.Attacker is PlayerState)
+            {
+                executedArgs = args;
+            }
+        };
+
+        // Run ticks until player attacks
+        for (int i = 0; i < 30 && executedArgs == null; i++)
+        {
+            engine.ProcessTick(1f / 30f);
+        }
+
+        AssertTrue(executedArgs != null, "Player must execute an attack with Fireball");
+        AssertTrue(executedArgs!.Projectiles != null && executedArgs.Projectiles.Count > 0, "Fireball attack MUST have in-flight projectiles");
+        AssertEqual(540f, (float)executedArgs.Projectiles![0].Velocity.Length, 1.0f, "Fireball projectile speed must be 540px/s");
+        AssertTrue(!executedArgs.IsMelee, "Fireball must be marked as ranged (!IsMelee)");
+        AssertTrue(executedArgs.GeometryType == SkillGeometryType.RadialAoE, "Fireball geometry must be RadialAoE");
+    }
+
+    /// <summary>
+    /// Verifies that physical projectiles advance along continuous vectors in flight across multiple ticks,
+    /// dealing ZERO damage until physical swept-circle collision occurs with the monster hitbox.
+    /// </summary>
+    private static void TestPhysicalProjectileContinuousMovementAndFlightTime()
+    {
+        var player = new PlayerState();
+        player.BootstrapFromArchetype(StarterArchetypeCatalog.Elementalist);
+
+        var loadout = new SkillLoadout();
+        var fireballGem = new GemDefinition(
+            Id: "fireball",
+            Name: "Fireball",
+            Category: "Active",
+            Color: "Blue",
+            Tags: new[] { "spell", "projectile", "fire", "aoe" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object>
+            {
+                ["baseDamageMin"] = 50f,
+                ["baseDamageMax"] = 50f,
+                ["damageType"] = "Fire",
+                ["manaCost"] = 0f,
+                ["projectileSpeed"] = 540f,
+                ["aoeRadius"] = 32f,
+                ["castTime"] = 0.033f
+            },
+            Modifiers: null,
+            Description: "Fireball"
+        );
+        loadout.PrimarySkill.SetActiveGem(fireballGem);
+
+        player.Position = new Vector2D(20f, 104f);
+
+        // Monster placed at (140, 104) -> distance = 120px.
+        // Monster Radius = 12px, Projectile Radius = 8px -> Combined Radius = 20px.
+        // Collision threshold: 120 - 20 = 100px.
+        // At 540px/s (18px per 30Hz tick), collision occurs around tick 5-6.
+        var monster = new MonsterInstance(
+            instanceId: 601,
+            name: "Training Dummy",
+            rarity: MonsterRarity.Normal,
+            monsterLevel: 1,
+            maxLife: 200f,
+            primaryDamageType: DamageType.Physical,
+            damageMin: 0f,
+            damageMax: 0f,
+            attacksPerSecond: 0.1f,
+            critChance: 0f,
+            critMultiplier: 100f,
+            accuracy: 100f,
+            baseExperience: 10f,
+            itemQuantityMultiplier: 1f,
+            itemRarityMultiplier: 1f,
+            initialPosition: new Vector2D(140f, 104f)
+        );
+
+        var engine = new CombatEngine(player, loadout);
+        var mapDef = new MapDefinition("strand", "Strand Map", 1, 1, false, 10, 100, "Boss", "");
+        engine.StartMap(new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>()));
+        engine.ExilePosition = new Vector2D(20f, 104f);
+        engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = new[] { monster } });
+
+        // Ticks 1 to 3: In-flight. Monster MUST take 0 damage!
+        for (int i = 0; i < 3; i++)
+        {
+            engine.ProcessTick(1f / 30f);
+            AssertEqual(200f, monster.CurrentLife, 0.01f, $"Monster must NOT take damage during flight on tick {i + 1}");
+            AssertTrue(engine.ActiveProjectiles.Count > 0, "Projectile must still be in flight");
+        }
+
+        // Advance further ticks until impact occurs
+        bool damageLanded = false;
+        for (int i = 0; i < 8; i++)
+        {
+            engine.ProcessTick(1f / 30f);
+            if (monster.CurrentLife < 200f)
+            {
+                damageLanded = true;
+                break;
+            }
+        }
+
+        AssertTrue(damageLanded, "Projectile must physically collide and apply damage on impact");
+        AssertTrue(monster.CurrentLife < 200f, "Monster must take Fire damage upon projectile impact");
+    }
+
+    /// <summary>
+    /// Verifies that explosive projectiles (Fireball) detonate on impact,
+    /// dealing AoE damage to all surrounding enemies within the explosion radius (32px),
+    /// while enemies outside the radius take zero damage.
+    /// </summary>
+    private static void TestPhysicalProjectileAoEExplosionHitsSurroundingCluster()
+    {
+        var player = new PlayerState();
+        player.BootstrapFromArchetype(StarterArchetypeCatalog.Elementalist);
+
+        var loadout = new SkillLoadout();
+        var fireballGem = new GemDefinition(
+            Id: "fireball",
+            Name: "Fireball",
+            Category: "Active",
+            Color: "Blue",
+            Tags: new[] { "spell", "projectile", "fire", "aoe" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object>
+            {
+                ["baseDamageMin"] = 40f,
+                ["baseDamageMax"] = 40f,
+                ["damageType"] = "Fire",
+                ["manaCost"] = 0f,
+                ["projectileSpeed"] = 600f,
+                ["aoeRadius"] = 32f,
+                ["castTime"] = 0.033f
+            },
+            Modifiers: null,
+            Description: "Fireball"
+        );
+        loadout.PrimarySkill.SetActiveGem(fireballGem);
+
+        player.Position = new Vector2D(20f, 104f);
+
+        // Mob 1: direct target at (80, 104)
+        var mob1 = new MonsterInstance(701, "Target Mob", MonsterRarity.Normal, 1, 200f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(80f, 104f));
+        // Mob 2: cluster mob at (88, 110) -> distance ~10px, within 32px blast radius
+        var mob2 = new MonsterInstance(702, "Cluster Mob", MonsterRarity.Normal, 1, 200f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(88f, 110f));
+        // Mob 3: far mob at (180, 104) -> distance 100px, way outside 32px blast radius
+        var mob3 = new MonsterInstance(703, "Far Mob", MonsterRarity.Normal, 1, 200f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(180f, 104f));
+
+        var engine = new CombatEngine(player, loadout);
+        var mapDef = new MapDefinition("strand", "Strand Map", 1, 1, false, 10, 100, "Boss", "");
+        engine.StartMap(new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>()));
+        engine.ExilePosition = new Vector2D(20f, 104f);
+        engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = new[] { mob1, mob2, mob3 } });
+
+        // Tick until impact
+        for (int i = 0; i < 10; i++)
+        {
+            engine.ProcessTick(1f / 30f);
+            if (mob1.CurrentLife < 200f) break;
+        }
+
+        AssertTrue(mob1.CurrentLife < 200f, "Direct target Mob 1 must take Fireball impact damage");
+        AssertTrue(mob2.CurrentLife < 200f, "Cluster Mob 2 inside 32px AoE blast must take explosion damage");
+        AssertEqual(200f, mob3.CurrentLife, 0.01f, "Far Mob 3 outside 32px blast radius must take ZERO damage");
+    }
+
+    /// <summary>
+    /// Verifies that frontline monsters physically intercept and block non-piercing projectiles,
+    /// protecting backline monsters behind them.
+    /// </summary>
+    private static void TestFrontlineMonsterBlocksBacklineMonster()
+    {
+        var player = new PlayerState();
+        player.BootstrapFromArchetype(StarterArchetypeCatalog.Deadeye);
+
+        var loadout = new SkillLoadout();
+        // Single target arrow attack (pierce = 0, aoeRadius = 0)
+        var arrowGem = new GemDefinition(
+            Id: "snipe",
+            Name: "Snipe",
+            Category: "Active",
+            Color: "Green",
+            Tags: new[] { "attack", "projectile", "physical" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object>
+            {
+                ["baseDamageMin"] = 50f,
+                ["baseDamageMax"] = 50f,
+                ["damageType"] = "Physical",
+                ["manaCost"] = 0f,
+                ["projectileCount"] = 1,
+                ["projectileSpeed"] = 600f,
+                ["pierceCount"] = 0,
+                ["castTime"] = 0.033f
+            },
+            Modifiers: null,
+            Description: "A single piercing-disabled arrow."
+        );
+        loadout.PrimarySkill.SetActiveGem(arrowGem);
+
+        player.Position = new Vector2D(20f, 104f);
+
+        // Frontline mob at (60, 104) directly between player and backline
+        var frontlineMob = new MonsterInstance(801, "Frontline Shield", MonsterRarity.Normal, 1, 200f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(60f, 104f));
+        // Backline mob at (120, 104) behind the frontline mob
+        var backlineMob = new MonsterInstance(802, "Backline Caster", MonsterRarity.Normal, 1, 200f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(120f, 104f));
+
+        var engine = new CombatEngine(player, loadout);
+        var mapDef = new MapDefinition("strand", "Strand Map", 1, 1, false, 10, 100, "Boss", "");
+        engine.StartMap(new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>()));
+        engine.ExilePosition = new Vector2D(20f, 104f);
+        engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = new[] { frontlineMob, backlineMob } });
+
+        // Tick simulation until collision
+        for (int i = 0; i < 10; i++)
+        {
+            engine.ProcessTick(1f / 30f);
+            if (frontlineMob.CurrentLife < 200f) break;
+        }
+
+        AssertTrue(frontlineMob.CurrentLife < 200f, "Frontline mob must intercept and absorb the projectile");
+        AssertEqual(200f, backlineMob.CurrentLife, 0.01f, "Backline mob shielded behind frontline must take ZERO damage");
+    }
+
+    /// <summary>
+    /// Verifies Path of Exile's strict Non-Shotgunning rule:
+    /// Multiple projectiles fired from the same volley cannot hit the same target entity.
+    /// </summary>
+    private static void TestNonShotgunningRuleInVolley()
+    {
+        var player = new PlayerState();
+        player.BootstrapFromArchetype(StarterArchetypeCatalog.Deadeye);
+
+        var loadout = new SkillLoadout();
+        // Split arrow firing 4 projectiles in a 15-degree tight cone
+        var splitArrowGem = new GemDefinition(
+            Id: "split_arrow",
+            Name: "Split Arrow",
+            Category: "Active",
+            Color: "Green",
+            Tags: new[] { "attack", "bow", "projectile", "physical" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object>
+            {
+                ["baseDamageMin"] = 30f,
+                ["baseDamageMax"] = 30f,
+                ["damageType"] = "Physical",
+                ["manaCost"] = 0f,
+                ["projectileCount"] = 4,
+                ["spreadAngle"] = 15f,
+                ["projectileSpeed"] = 600f,
+                ["castTime"] = 0.033f
+            },
+            Modifiers: null,
+            Description: "Fires 4 arrows."
+        );
+        loadout.PrimarySkill.SetActiveGem(splitArrowGem);
+
+        player.Position = new Vector2D(20f, 104f);
+
+        // Huge boss at distance 120px so all 4 arrows can be verified in flight before impact
+        var boss = new MonsterInstance(901, "Colossus", MonsterRarity.Boss, 1, 1000f, DamageType.Physical, 0, 0, 0.1f, 0, 100, 100, 10, 1, 1, initialPosition: new Vector2D(140f, 104f));
+
+        var engine = new CombatEngine(player, loadout);
+        var mapDef = new MapDefinition("strand", "Strand Map", 1, 1, false, 10, 100, "Colossus", "");
+        engine.StartMap(new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>()));
+        engine.ExilePosition = new Vector2D(20f, 104f);
+        engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = new[] { boss }, IsBossWave = true });
+
+        int volleysFired = 0;
+        int damageDealtEventCount = 0;
+        engine.OnAttackExecuted += args =>
+        {
+            volleysFired++;
+        };
+        engine.OnDamageDealt += args =>
+        {
+            if (args.Target.InstanceId == boss.InstanceId) damageDealtEventCount++;
+        };
+
+        // Advance 1 tick to fire the volley (spawns 4 physical arrows)
+        engine.ProcessTick(1f / 30f);
+        AssertEqual(1, volleysFired, 0.01f, "Must fire 1 volley on tick 1");
+        AssertEqual(4, engine.ActiveProjectiles.Count, 0.01f, "Split arrow must spawn 4 physical in-flight projectiles");
+
+        // Clear active gem so subsequent ticks do not fire additional volleys
+        loadout.PrimarySkill.ClearActiveGem();
+
+        // Advance 10 ticks to let all 4 in-flight arrows pass through/hit the boss
+        for (int i = 0; i < 10; i++)
+        {
+            engine.ProcessTick(1f / 30f);
+        }
+
+        // Path of Exile Non-Shotgunning rule:
+        // All 4 arrows originate from the same volley; boss must only take exactly 1 hit from this volley!
+        AssertEqual(1, damageDealtEventCount, 0.01f, "Boss must only be hit ONCE per volley due to Non-Shotgunning rule");
     }
 }

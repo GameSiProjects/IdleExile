@@ -322,6 +322,12 @@ public sealed class ExileMovementController
                 return SpatialCombatService.MeleeRange; // 35px
             }
 
+            // Projectile skills (Fireball, Spark, Split Arrow) maintain ranged spacing
+            if (primary.IsProjectile)
+            {
+                return 165.0f;
+            }
+
             return geometry switch
             {
                 SkillGeometryType.Cone => MathF.Min(primary.GetBaseRadiusOrRange() * 0.8f, 65.0f),

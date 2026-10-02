@@ -40,6 +40,9 @@ public sealed class CombatEngine
     private BossSlamTelegraphEventArgs? _pendingBossSlam = null;
     private float _bossSlamCooldown = 3.5f;
 
+    private readonly ProjectileSimulation _projectileSimulation = new();
+    private int _nextVolleyId = 1;
+
     // ─────────────────────────────────────────────
     //  Subsystems & State
     // ─────────────────────────────────────────────
@@ -180,6 +183,18 @@ public sealed class CombatEngine
     /// <summary>Unified event emitted whenever any combatant (Player, Monster, Minion, Boss) attacks or casts a skill.</summary>
     public event Action<CombatAttackEventArgs>? OnAttackExecuted;
 
+    /// <summary>Fired when a new physical projectile is spawned into the simulation.</summary>
+    public event Action<SimulatedProjectile>? OnProjectileSpawned;
+
+    /// <summary>Fired when a physical projectile collides with an entity, detonates, or reaches terminal destination.</summary>
+    public event Action<ProjectileImpactEventArgs>? OnProjectileImpacted;
+
+    /// <summary>Physical continuous projectile simulation service.</summary>
+    public ProjectileSimulation Projectiles => _projectileSimulation;
+
+    /// <summary>ReadOnly view of all active in-flight physical projectiles.</summary>
+    public IReadOnlyList<SimulatedProjectile> ActiveProjectiles => _projectileSimulation.ActiveProjectiles;
+
     /// <summary>Fired when the player attacks or casts an active skill with 2D spatial trajectory metadata.</summary>
     public event Action<PlayerSkillFiredEventArgs>? OnPlayerSkillFired;
 
@@ -268,6 +283,9 @@ public sealed class CombatEngine
             Movement.SetAlive();
             OnPlayerRespawned?.Invoke();
         };
+
+        _projectileSimulation.OnProjectileSpawned += p => OnProjectileSpawned?.Invoke(p);
+        _projectileSimulation.OnProjectileImpacted += args => OnProjectileImpacted?.Invoke(args);
     }
 
     // ─────────────────────────────────────────────
@@ -296,6 +314,7 @@ public sealed class CombatEngine
         _monsterAilments.Clear();
         _processedDeadMonsters.Clear();
         PlayerAilments.Clear();
+        _projectileSimulation.Clear();
 
         _pendingBossSlam = null;
         _activeBossSlamWindUpTimer = 0f;
@@ -332,6 +351,7 @@ public sealed class CombatEngine
             return false;
 
         Movement.Stop();
+        _projectileSimulation.Clear();
         bool escaped = Death.TryTriggerEmergencyPortal(Player);
         if (escaped)
         {
@@ -413,6 +433,11 @@ public sealed class CombatEngine
         //  Phase 3: Player Action Phase
         // ═════════════════════════════════════════════
         ExecutePhase3_PlayerAction(deltaTime, defenses);
+
+        // ═════════════════════════════════════════════
+        //  Phase 3.5: In-Flight Physical Projectiles (CCD)
+        // ═════════════════════════════════════════════
+        ExecutePhase_Projectiles(deltaTime, defenses);
 
         // ═════════════════════════════════════════════
         //  Phase 4: Monster Action Phase
@@ -693,6 +718,19 @@ public sealed class CombatEngine
             IReadOnlyList<MonsterInstance> targets;
             IReadOnlyList<ProjectileVector>? projectileVectors = null;
 
+            bool isProjectileAttack = (!isDefaultAttack && Loadout.PrimarySkill.IsProjectile)
+                || (isDefaultAttack && (Player.MainHand?.BaseDefinition.WeaponClass == WeaponClass.Bow || Player.MainHand?.BaseDefinition.WeaponClass == WeaponClass.Wand));
+
+            if (isProjectileAttack)
+            {
+                Vector2D toTarget = targetEntity.Position - ExilePosition;
+                float aimAngle = toTarget.LengthSquared > 0.001f ? toTarget.Angle() : 0f;
+                float spreadStepRad = (spreadAngle / Math.Max(1, projCount - 1)) * (MathF.PI / 180.0f);
+                if (projCount <= 1) spreadStepRad = 0f;
+
+                projectileVectors = SpatialCombatService.CalculateSpread(aimAngle, projCount, spreadStepRad, projSpeed);
+            }
+
             if (geometry == SkillGeometryType.Cone)
             {
                 targets = Targeting.SelectSpatialAoETargets(
@@ -707,12 +745,6 @@ public sealed class CombatEngine
             }
             else if (geometry == SkillGeometryType.ProjectileSpread)
             {
-                Vector2D toTarget = targetEntity.Position - ExilePosition;
-                float aimAngle = toTarget.LengthSquared > 0.001f ? toTarget.Angle() : 0f;
-                float spreadStepRad = (spreadAngle / Math.Max(1, projCount - 1)) * (MathF.PI / 180.0f);
-                if (projCount == 1) spreadStepRad = 0f;
-
-                projectileVectors = SpatialCombatService.CalculateSpread(aimAngle, projCount, spreadStepRad, projSpeed);
                 targets = Targeting.SelectAoETargets(CurrentWave!.Alive, targetEntity, Math.Min(projCount, 8));
             }
             else
@@ -752,130 +784,247 @@ public sealed class CombatEngine
                 playerAttack.IsMelee
             ));
 
-            // 6. Execute Hit on each selected target via Unified Pipeline
-            foreach (var target in targets)
+            if (isProjectileAttack)
             {
-                if (!target.IsAlive) continue;
+                // Physical in-flight projectile simulation (Continuous Collision Detection, zero instant fake hits)
+                int volleyId = _nextVolleyId++;
+                float aoeRadius = geometry == SkillGeometryType.RadialAoE ? baseRadiusOrRange : 0f;
+                int pierce = isDefaultAttack ? 0 : Loadout.PrimarySkill.GetPierceCount();
 
-                var result = CombatAttackService.ExecuteHit(Player, target, playerAttack, target.Defenses, _random);
-
-                // If using fallback Default Attack, gain mana on hit to assist recovery
-                if (isDefaultAttack)
+                if (projectileVectors != null && projectileVectors.Count > 0)
                 {
-                    Player.RestoreManaOnHit(2.0f);
+                    foreach (var pVec in projectileVectors)
+                    {
+                        _projectileSimulation.SpawnProjectile(
+                            source: Player,
+                            primaryTarget: targetEntity,
+                            payload: playerAttack,
+                            origin: ExilePosition,
+                            direction: pVec.Direction,
+                            speed: projSpeed,
+                            maxRange: SpatialCombatService.ScreenProjectileRange,
+                            radius: aoeRadius > 0f ? 8.0f : 5.0f,
+                            aoeRadius: aoeRadius,
+                            targetDestination: targetEntity.Position,
+                            pierce: pierce,
+                            chain: chainCount,
+                            canShotgun: false,
+                            isDefaultAttack: isDefaultAttack,
+                            volleyId: volleyId
+                        );
+                    }
+                }
+                else
+                {
+                    Vector2D toTarget = (targetEntity.Position - ExilePosition).Normalized();
+                    _projectileSimulation.SpawnProjectile(
+                        source: Player,
+                        primaryTarget: targetEntity,
+                        payload: playerAttack,
+                        origin: ExilePosition,
+                        direction: toTarget,
+                        speed: projSpeed,
+                        maxRange: SpatialCombatService.ScreenProjectileRange,
+                        radius: aoeRadius > 0f ? 8.0f : 5.0f,
+                        aoeRadius: aoeRadius,
+                        targetDestination: targetEntity.Position,
+                        pierce: pierce,
+                        chain: chainCount,
+                        canShotgun: false,
+                        isDefaultAttack: isDefaultAttack,
+                        volleyId: volleyId
+                    );
+                }
+            }
+            else
+            {
+                // 6. Melee Attack: Execute Hit on each selected target via Unified Pipeline
+                foreach (var target in targets)
+                {
+                    if (!target.IsAlive) continue;
+                    ApplyHitToMonster(Player, target, playerAttack, isDefaultAttack, defenses);
                 }
 
-                OnDamageDealt?.Invoke(new DamageDealtEventArgs(
-                    Target: target,
-                    Hit: result.Hit,
-                    TotalDamageDealt: result.DamageDealt,
-                    IsCrit: result.Hit.IsCrit,
-                    InflictedAilments: result.Hit.InflictedAilments,
-                    IsDoT: false
-                ));
-
-                // 7. Damage Reflect Pipeline Hook
-                if (MapModifiers != null && Player.IsAlive)
+                // 7. Multi-Vector Chain Bounces (for melee chaining if applicable)
+                if (chainCount > 0 && targets.Count > 0 && CurrentWave != null)
                 {
-                    var reflect = MapModifiers.CalculateReflectedDamage(result.Hit.Damage);
-                    if (reflect.HasReflectedDamage)
+                    var hitIds = new HashSet<long>(targets.Select(t => t.InstanceId));
+                    foreach (var primaryHitTarget in targets)
                     {
-                        var reflectBreakdown = new HitDamageBreakdown(
-                            reflect.ReflectedPhysical,
-                            reflect.ReflectedFire,
-                            reflect.ReflectedCold,
-                            reflect.ReflectedLightning,
-                            0f
-                        );
+                        var currentChainOrigin = primaryHitTarget.Position;
+                        long lastTargetId = primaryHitTarget.InstanceId;
 
-                        // Absorb through Guard skill if active
-                        if (Loadout.GuardSkill.IsActive)
+                        for (int c = 0; c < chainCount; c++)
                         {
-                            float unabsorbed = Loadout.GuardSkill.AbsorbDamage(reflectBreakdown.Total);
-                            if (reflectBreakdown.Total > 0f)
+                            var chainTarget = SpatialCombatService.FindChainTarget(
+                                currentChainOrigin,
+                                lastTargetId,
+                                CurrentWave.Alive,
+                                SpatialCombatService.ChainSearchRadius,
+                                hitIds);
+
+                            if (chainTarget == null || !chainTarget.IsAlive)
+                                break;
+
+                            hitIds.Add(chainTarget.InstanceId);
+                            currentChainOrigin = chainTarget.Position;
+                            lastTargetId = chainTarget.InstanceId;
+
+                            // Chain hit deals -30% less damage per bounce
+                            float chainFactor = MathF.Pow(0.70f, c + 1);
+                            var chainAttack = new AttackPayload(Player, basePool.Multiply(chainFactor), playerAttack.Context)
                             {
-                                reflectBreakdown = reflectBreakdown.Multiply(unabsorbed / reflectBreakdown.Total);
-                            }
-                        }
+                                IsAttack = playerAttack.IsAttack,
+                                IsSpell = playerAttack.IsSpell,
+                                IsMelee = playerAttack.IsMelee,
+                                Accuracy = playerAttack.Accuracy,
+                                Geometry = SkillGeometryType.SingleTarget,
+                                PrimaryDamageType = playerAttack.PrimaryDamageType
+                            };
 
-                        var defense = DefensiveLayers.ProcessHit(
-                            reflectBreakdown,
-                            isAttack: false,
-                            isSpell: false,
-                            Player,
-                            defenses,
-                            _random
-                        );
-
-                        OnPlayerDamaged?.Invoke(new PlayerDamagedEventArgs(
-                            Attacker: null,
-                            DefenseResult: defense,
-                            DamageApplied: defense.TotalDamageApplied,
-                            MitigatedBreakdown: defense.MitigatedBreakdown,
-                            Evaded: defense.Evaded,
-                            Blocked: defense.Blocked,
-                            Suppressed: defense.Suppressed,
-                            IsReflect: true,
-                            IsDoT: false
-                        ));
-
-                        if (defense.PlayerDied || !Player.IsAlive)
-                        {
-                            Death.HandleDeath(Player, "Reflected Damage");
-                            break;
+                            ApplyHitToMonster(Player, chainTarget, chainAttack, false, defenses);
                         }
                     }
                 }
             }
+        }
+    }
 
-            // 8. Multi-Vector Chain Bounces (Docs 4.2.3: R_chain <= 60px)
-            if (chainCount > 0 && targets.Count > 0 && CurrentWave != null)
+    /// <summary>
+    /// Executes Phase 3.5: Physical In-Flight Projectile Simulation and Continuous Collision Detection.
+    /// Advances all active projectiles, checks swept-circle collisions against living monsters,
+    /// and detonates explosive AoE payloads upon impact or target destination.
+    /// </summary>
+    private void ExecutePhase_Projectiles(float deltaTime, DefensiveStats defenses)
+    {
+        if (CurrentWave == null || !IsInCombat || !Player.IsAlive)
+        {
+            return;
+        }
+
+        _projectileSimulation.Tick(
+            deltaTime,
+            CurrentWave.Monsters,
+            Player,
+            (proj, target, impactPoint, isAoE) =>
             {
-                var hitIds = new HashSet<long>(targets.Select(t => t.InstanceId));
-                foreach (var primaryHitTarget in targets)
+                ApplyHitToMonster(proj.Source, target, proj.Payload, proj.IsDefaultAttack, defenses);
+            },
+            (proj, player, impactPoint) =>
+            {
+                var hit = DamageCalculator.RollHit(
+                    proj.Payload.BaseDamage,
+                    proj.Payload.Context,
+                    player.MaxLife,
+                    _random
+                );
+
+                var defense = DefensiveLayers.ProcessHit(
+                    hit.Damage,
+                    isAttack: proj.Payload.IsAttack,
+                    isSpell: proj.Payload.IsSpell,
+                    player,
+                    defenses,
+                    _random
+                );
+
+                OnPlayerDamaged?.Invoke(new PlayerDamagedEventArgs(
+                    Attacker: proj.Source as MonsterInstance,
+                    DefenseResult: defense,
+                    DamageApplied: defense.TotalDamageApplied,
+                    MitigatedBreakdown: defense.MitigatedBreakdown,
+                    Evaded: defense.Evaded,
+                    Blocked: defense.Blocked,
+                    Suppressed: defense.Suppressed,
+                    IsReflect: false,
+                    IsDoT: false
+                ));
+
+                if (defense.PlayerDied || !player.IsAlive)
                 {
-                    var currentChainOrigin = primaryHitTarget.Position;
-                    long lastTargetId = primaryHitTarget.InstanceId;
+                    Death.HandleDeath(player, proj.Source.Name);
+                }
+            }
+        );
+    }
 
-                    for (int c = 0; c < chainCount; c++)
+    /// <summary>
+    /// Applies a calculated combat hit to a monster target, invoking events and reflect calculations.
+    /// </summary>
+    private void ApplyHitToMonster(
+        ICombatEntity attacker,
+        MonsterInstance target,
+        AttackPayload payload,
+        bool isDefaultAttack,
+        DefensiveStats defenses)
+    {
+        if (!target.IsAlive) return;
+
+        var result = CombatAttackService.ExecuteHit(attacker, target, payload, target.Defenses, _random);
+
+        // If using fallback Default Attack, gain mana on hit to assist recovery
+        if (isDefaultAttack && attacker is PlayerState)
+        {
+            Player.RestoreManaOnHit(2.0f);
+        }
+
+        OnDamageDealt?.Invoke(new DamageDealtEventArgs(
+            Target: target,
+            Hit: result.Hit,
+            TotalDamageDealt: result.DamageDealt,
+            IsCrit: result.Hit.IsCrit,
+            InflictedAilments: result.Hit.InflictedAilments,
+            IsDoT: false
+        ));
+
+        // Damage Reflect Pipeline Hook
+        if (MapModifiers != null && Player.IsAlive)
+        {
+            var reflect = MapModifiers.CalculateReflectedDamage(result.Hit.Damage);
+            if (reflect.HasReflectedDamage)
+            {
+                var reflectBreakdown = new HitDamageBreakdown(
+                    reflect.ReflectedPhysical,
+                    reflect.ReflectedFire,
+                    reflect.ReflectedCold,
+                    reflect.ReflectedLightning,
+                    0f
+                );
+
+                // Absorb through Guard skill if active
+                if (Loadout.GuardSkill.IsActive)
+                {
+                    float unabsorbed = Loadout.GuardSkill.AbsorbDamage(reflectBreakdown.Total);
+                    if (reflectBreakdown.Total > 0f)
                     {
-                        var chainTarget = SpatialCombatService.FindChainTarget(
-                            currentChainOrigin,
-                            lastTargetId,
-                            CurrentWave.Alive,
-                            SpatialCombatService.ChainSearchRadius,
-                            hitIds);
-
-                        if (chainTarget == null || !chainTarget.IsAlive)
-                            break;
-
-                        hitIds.Add(chainTarget.InstanceId);
-                        currentChainOrigin = chainTarget.Position;
-                        lastTargetId = chainTarget.InstanceId;
-
-                        // Chain hit deals -30% less damage per bounce
-                        float chainFactor = MathF.Pow(0.70f, c + 1);
-                        var chainAttack = new AttackPayload(Player, basePool.Multiply(chainFactor), playerAttack.Context)
-                        {
-                            IsAttack = playerAttack.IsAttack,
-                            IsSpell = playerAttack.IsSpell,
-                            IsMelee = playerAttack.IsMelee,
-                            Accuracy = playerAttack.Accuracy,
-                            Geometry = SkillGeometryType.SingleTarget,
-                            PrimaryDamageType = playerAttack.PrimaryDamageType
-                        };
-
-                        var chainResult = CombatAttackService.ExecuteHit(Player, chainTarget, chainAttack, chainTarget.Defenses, _random);
-
-                        OnDamageDealt?.Invoke(new DamageDealtEventArgs(
-                            Target: chainTarget,
-                            Hit: chainResult.Hit,
-                            TotalDamageDealt: chainResult.DamageDealt,
-                            IsCrit: chainResult.Hit.IsCrit,
-                            InflictedAilments: chainResult.Hit.InflictedAilments,
-                            IsDoT: false
-                        ));
+                        reflectBreakdown = reflectBreakdown.Multiply(unabsorbed / reflectBreakdown.Total);
                     }
+                }
+
+                var defense = DefensiveLayers.ProcessHit(
+                    reflectBreakdown,
+                    isAttack: false,
+                    isSpell: false,
+                    Player,
+                    defenses,
+                    _random
+                );
+
+                OnPlayerDamaged?.Invoke(new PlayerDamagedEventArgs(
+                    Attacker: null,
+                    DefenseResult: defense,
+                    DamageApplied: defense.TotalDamageApplied,
+                    MitigatedBreakdown: defense.MitigatedBreakdown,
+                    Evaded: defense.Evaded,
+                    Blocked: defense.Blocked,
+                    Suppressed: defense.Suppressed,
+                    IsReflect: true,
+                    IsDoT: false
+                ));
+
+                if (defense.PlayerDied || !Player.IsAlive)
+                {
+                    Death.HandleDeath(Player, "Reflected Damage");
                 }
             }
         }
