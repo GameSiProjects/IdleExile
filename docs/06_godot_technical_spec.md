@@ -187,33 +187,44 @@ public float CalculateFinalDamage(
 
 ---
 
-## 5. Tối Ưu Cửa Sổ Mini (Companion Window Controller)
+## 5. Tối Ưu Cửa Sổ Mini & Kiến Trúc Cửa Sổ Động (Dynamic Desktop Companion Architecture)
 
-C# Script điều khiển cửa sổ mini (`WindowController.cs`):
+Nhằm đáp ứng linh hoạt giữa **chế độ treo máy rảnh tay (Zero-APM Hands-off Mapping)** và **chế độ nghiên cứu đồ đạc chuyên sâu (Deep Theorycrafting)**, hệ thống cửa sổ của **Idle Exile** được xây dựng theo kiến trúc **Dynamic Resizable Desktop Companion** (tham chiếu từ [reference/windows](file:///e:/Projects/Antigravity/IdleExile/reference/windows/)):
 
-```csharp
-using Godot;
+### 5.1. Các Chế Độ Kích Thước Cửa Sổ (Window Resolution Modes)
+1. **Compact Mode (`440 x 380` px) — Treo Máy Tinh Gọn:**
+   * Chiều cao chỉ 380px, chiếm một góc nhỏ unobtrusive trên desktop (ngay trên thanh Windows Taskbar).
+   * Tập trung hiển thị: Header siêu gọn, thanh tiến trình Map, sàn đấu 2D Top-Down (Arena), thanh máu/mana kép (Vitometer), và nút Emergency Portal.
+2. **Expanded Mode (`440 x 780` px) — Soi Đồ & Theorycrafting:**
+   * Chiều cao 780px dọc chuẩn.
+   * Mở rộng upward hiển thị toàn diện các Sub-Tabs: Bảng trang bị 10 ô (Gear View), Smart Tooltip Delta so sánh chỉ số, Quản lý Gem liên kết (PoE 2 model), Cây nội tại (Passive Tree), Rương đồ (Stash).
+3. **Wide Dual-Column Mode (`800 x 780` px) — Màn Hình Rộng Đa Cột:**
+   * Dành cho màn hình 2K/4K: Cột trái hiển thị Combat Viewport & Map Device, cột phải hiển thị Trang bị & Cây Passive song song.
+4. **Freeform Resizing (Kéo Dãn Tự Do):**
+   * Cho phép người chơi tự do kéo góc cạnh với `MinSize = Vector2I(400, 340)`. Bố cục UI thích ứng tự động qua hệ thống Anchor và Containers của Godot.
 
-public partial class WindowController : Node
-{
-    [Export] public bool DefaultAlwaysOnTop = true;
+### 5.2. Thuật Toán Giữ Cố Định Chân Cửa Sổ (`keepBottom = true`)
+Khi người chơi chuyển đổi giữa chế độ Compact và Expanded (hoặc khi click mở bảng Gear):
+$$\Delta Y = \text{NewHeight} - \text{CurrentHeight}$$
+$$\text{NewWindowY} = \text{CurrentWindowY} - \Delta Y$$
+* **Nguyên tắc then chốt:** Cửa sổ **nở lên phía trên** và **thu lại xuống phía dưới**. Cạnh đáy của cửa sổ luôn nằm bất biến ngay sát mép thanh Taskbar, không bao giờ bị trượt mất nút bấm hay tụt xuống dưới màn hình!
 
-    public override void _Ready()
-    {
-        // 1. Đặt cửa sổ ở chế độ Always on Top
-        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, DefaultAlwaysOnTop);
+### 5.3. Cầu Nối Nền Tảng Windows & DisplayServer (`DesktopWindow.cs`)
+* Tích hợp Win32 API (`user32.dll`, `shell32.dll`) kết hợp Godot `DisplayServer`:
+  * `SHAppBarMessage(ABM_GETTASKBARPOS)`: Xác định tọa độ và kích thước thanh Windows Taskbar (dưới đáy, bên trái, phải hay đỉnh).
+  * `PositionAboveTaskbar(screen, dock)`: Tự động neo cửa sổ vào góc dưới bên phải (hoặc giữa) phía trên thanh Taskbar.
+  * `MoveToNextScreen()`: Chuyển cửa sổ tuần tự qua các màn hình phụ khi dùng đa màn hình (Multi-Monitor setups).
+  * `AlwaysOnTop`: Ghim cửa sổ nổi trên các ứng dụng khác (`HWND_TOPMOST` / `DisplayServer.WindowFlags.AlwaysOnTop`).
+  * `LowProcessorUsageMode = true`: Đảm bảo khi chạy nền companion, game ăn **< 1% CPU** và RAM dưới 150MB.
 
-        // 2. Kích hoạt Low Processor Mode để ăn cực ít CPU lúc treo máy
-        OS.LowProcessorUsageMode = true;
-        OS.LowProcessorUsageModeSleepUsec = 6900;
-    }
-
-    public void ToggleAlwaysOnTop(bool isEnabled)
-    {
-        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, isEnabled);
-    }
-}
-```
+### 5.4. Thành Phần Điều Khiển (`WindowController.cs`)
+Node C# gắn vào Scene Tree cung cấp các Signals và API trực quan:
+* `ToggleExpand(bool keepBottom = true)`
+* `SetResolutionMode(WindowResolutionMode mode, bool keepBottom = true)`
+* `CycleResolution(bool keepBottom = true)`
+* `PositionAboveTaskbar()`
+* `MoveToNextScreen()`
+* Hỗ trợ kéo thả cửa sổ tự do không viền (`HandleInput`).
 
 ---
 

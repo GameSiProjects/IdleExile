@@ -7,7 +7,7 @@ Tài liệu này đặc tả chi tiết giao diện chiến đấu (**Combat UI 
 > 1. **Bản Đồ Kéo Dài Đơn Hướng (Directional Linear Corridor):** Bản đồ mở rộng theo một hướng trong không gian thế giới thực ($X_{\text{world}}, Y_{\text{world}}$), tái hiện cảm giác dọn map kinh điển (*Strand, Canyon, Promenade*) với chuỗi cụm quái tuần tự và kết thúc bằng Phòng Boss (End-of-Map Boss Room).
 > 2. **Tuyệt Đối Không Áp Dụng Cuộn Sàn (No Fake Parallax/Floor Scrolling):** Mặt sàn, chướng ngại vật, quái vật và đồ rơi đều nằm tại tọa độ thế giới thực. Nhân vật (Exile) **thực sự di chuyển tịnh tiến** trong thế giới game (`Position` thay đổi liên tục).
 > 3. **Camera2D Bám Theo Nhân Vật (Camera Tracking):** Camera2D di chuyển mượt mà bám theo vị trí thực của Exile, duy trì góc quan sát tối ưu (kèm khoảng nhìn trước Look-ahead) để người chơi luôn thấy bầy quái đang chờ phía trước.
-> 4. **Giữ Vững Giá Trị Không Gian 360°:** Dù bản đồ có hướng đi chính (Macro Direction), hành lang vẫn có độ rộng 2D ($W \approx 280 - 440\text{px}$) cho phép bầy quái bao vây, quái cơ động bọc hậu, và phát huy 100% sức mạnh của các kỹ năng 360° (Righteous Fire, Nova, GMP, Cleave).
+> 4. **Giữ Vững Giá Trị Không Gian 360°:** Dù bản đồ có hướng đi chính (Macro Direction), hành lang vẫn có độ rộng 2D ($W \approx 280 - 440\text{px}$) cho phép bầy quái bao vây, quái cơ động bọc hậu, và phát huy 100% sức mạnh của các kỹ năng 360° (Righteous Fire, Nova, GMP, Cleave).```
 
 ---
 
@@ -22,48 +22,65 @@ Tài liệu này đặc tả chi tiết giao diện chiến đấu (**Combat UI 
   * **Dopamine Drop Beams:** Cột sáng rực rỡ chiếu thẳng từ trên trời xuống đúng tọa độ quái vừa ngã gục trong thế giới kèm âm thanh "Ting!" đanh thép khi rớt đồ hiếm qua Loot Filter (Divine, Exalted, 6-Link).
 * **Low Resource Footprint (Tối ưu tài nguyên cực hạn):**
   * Tận dụng `gl_compatibility` và `LowProcessorUsageMode` của Godot 4.
-  * Tách biệt hoàn toàn giữa `CombatEngine` (tính toán ngầm 30Hz) và Render Viewport (vẽ 2D qua CanvasItem/TileMap nhẹ, hỗ trợ giảm FPS khi minimize).
+  * Tách biệt hoàn toàn giữa `CombatEngine` (tính toán ngầm 30Hz) và Render Viewport (vẽ 2D qua CanvasItem/TileMap nhẹ, hỗ trợ giảm FPS khi minimize).```
 
 ---
 
-## 2. Bố Cục Không Gian & Phân Tầng Pixel (Wireframe: 440 x 780 px)
+## 2. Bố Cục Không Gian & Phân Tầng Pixel Động (Dynamic Adaptive Layout)
 
-Khu vực Combat Viewport chiếm **300 px chiều cao** cố định ở nửa trên màn hình (từ `Y: 48` đến `Y: 348`), trong đó **2D Top-Down Viewport chiếm 208 px** (từ `Y: 92` đến `Y: 300`) là khung nhìn trực tiếp theo chân nhân vật, không bao giờ bị che khuất khi chuyển đổi các tab bên dưới:
+Ứng dụng hỗ trợ chuyển đổi linh hoạt giữa **Chế độ Treo Máy Mini (Compact Mode: 440 x 380 px)** và **Chế độ Nghiên Cứu Đầy Đủ (Expanded Mode: 440 x 780 px)** với thuật toán neo đáy Taskbar (keepBottom = true):
+
+### 2.1. Wireframe Chế Độ Thu Nhỏ: Compact Mode (440 x 380 px)
+Dành cho người chơi vừa làm việc/chơi game khác vừa treo map:
 
 ```text
 ┌─────────────────────────────────────────────────────────┐  Y: 0
-│ [IE] IDLE EXILE       T14 Strand Map     [Pin] [_] [X]  │  Header: 48px
-├─────────────────────────────────────────────────────────┤  Y: 48
-│ [MAP BANNER]  T14 Strand • Rare (4 Mods)    [IIQ +68%]  │
-│ [PROGRESS]    ████████████████░░░░░░░░  68% [BOSS SPAWN]│  Map Meta: 42px
-├─────────────────────────────────────────────────────────┤  Y: 90
+│ [IE] IDLE EXILE       [Pin] [⤢ Expand] [🖥 Screen] [X]  │  Header: 40px
+├─────────────────────────────────────────────────────────┤  Y: 40
+│ [MAP] T14 Strand Map • Rare (+68% IIQ)   [████░░ 68%] ☠ │  Map Meta: 34px
+├─────────────────────────────────────────────────────────┤  Y: 74
 │                                                         │
 │        [ 2D TOP-DOWN VIEWPORT (Camera2D Following) ]    │
 │   ┌─────────────────────────────────────────────────┐   │
-│   │  [Mob: Skel] ↖  ▲ (Hướng đi)    ↑ [Mob: Archer] │   │
-│   │                  *CRIT* 12.4k                   │   │
-│   │         ══►           ▲                         │   │
-│   │  [Mob] ──►     [ EXILE ]  (360° AURA) ◄── [Mob] │   │  Top-Down Viewport:
-│   │             (World Pos: X, Y)                   │   │  208px
-│   │         *SLAM TELEGRAPH* ⚠️                     │   │  (Khung nhìn Camera2D
-│   │         (⭕ Red Shrinking Ring 1.4s)             │   │   bám theo Exile)
-│   │  [Mob: Brute] ↙             ↓ [Rare Goliath]    │   │
-│   │   HP: ████░░░░               [Golden Aura]      │   │
+│   │  [Mob: Skel] ↖           ▲ (Hướng)    [Archer]  │   │  Top-Down Viewport:
+│   │                  *CRIT* 12.4k                   │   │  208px
+│   │         ══►           ▲                         │   │  (Sàn đá, đạn 360°,
+│   │  [Mob] ──►     [ EXILE ]  (360° AURA) ◄── [Mob] │   │   quái vật, Boss Slam
+│   │         (⭕ Red Shrinking Ring 1.4s)             │   │   AoE Telegraph)
 │   └─────────────────────────────────────────────────┘   │
 │   [LOOT TOAST]: ★ Exalted Orb dropped! [Ting!]          │
-├─────────────────────────────────────────────────────────┤  Y: 300
+├─────────────────────────────────────────────────────────┤  Y: 282
 │ [LIFE / ES]                    [GUARD / FLASKS]  [MANA] │
 │ 3,450 / 3,450 HP               [1][2][3][4][5]   82/820 │  Vitometer: 50px
-│ [ES: 1,200] [Fortify: 20]      [Molten Shell]    (90% R)│
-├─────────────────────────────────────────────────────────┤  Y: 350
-│ [MAP DEVICE] | [GEAR & GEMS] | [PASSIVE TREE] | [STASH] │  Sub-Tabs Bar: 36px
-├─────────────────────────────────────────────────────────┤  Y: 386
+├─────────────────────────────────────────────────────────┤  Y: 332
+│ [🌀 EMERGENCY PORTAL (Space)]     DPS: 142.5K | [🛡 Gear]│  Quick Footer: 48px
+└─────────────────────────────────────────────────────────┘  Y: 380
+```
+
+### 2.2. Wireframe Chế Độ Phóng To: Expanded Mode (440 x 780 px)
+Khi bấm [⤢ Expand] hoặc [🛡 Gear], cửa sổ **tự động nở lên phía trên** (cạnh đáy giữ nguyên sát thanh Taskbar) mở ra toàn bộ khay tương tác:
+
+```text
+┌─────────────────────────────────────────────────────────┐  Y: 0
+│ [IE] IDLE EXILE       [Pin] [⤡ Min] [🖥 Screen] [X]     │  Header: 40px
+├─────────────────────────────────────────────────────────┤  Y: 40
+│ [MAP] T14 Strand Map • Rare (+68% IIQ)   [████░░ 68%] ☠ │  Map Meta: 34px
+├─────────────────────────────────────────────────────────┤  Y: 74
+│        [ 2D TOP-DOWN VIEWPORT (Camera2D Following) ]    │  Top-Down Arena:
+│        (Xem trực tiếp hiệu quả thay đồ trong combat)    │  208px
+├─────────────────────────────────────────────────────────┤  Y: 282
+│ [LIFE / ES]                    [GUARD / FLASKS]  [MANA] │  Vitometer: 50px
+├─────────────────────────────────────────────────────────┤  Y: 332
+│ [ 🛡 GEAR ]  |  [ 💎 GEMS ]  |  [ 🗺 ATLAS ]  |  [ 🌳 ]  │  Sub-Tabs Bar: 36px
+├─────────────────────────────────────────────────────────┤  Y: 368
 │                                                         │
 │                  TAB CONTENT AREA                       │
-│    (Xem đồ, cắm Support Gems, nâng điểm Passive)         │  Tab Body: 364px
+│    - Bảng trang bị 10 ô (Doll)                          │
+│    - Smart Tooltip hiển thị Delta (▲ EHP / ▲ DPS)       │  Tab Body: 372px
+│    - Rương đồ (Stash) / Bàn ép hóa thạch (Anvil)        │
 │                                                         │
-├─────────────────────────────────────────────────────────┤  Y: 750
-│ [EMERGENCY PORTAL (Space)]          DPS: 142.5K | 10 T/s│  Footer: 30px
+├─────────────────────────────────────────────────────────┤  Y: 740
+│ [🌀 EMERGENCY PORTAL (Space)]          DPS: 142.5K      │  Footer: 40px
 └─────────────────────────────────────────────────────────┘  Y: 780
 ```
 
@@ -82,7 +99,7 @@ Khu vực Combat Viewport chiếm **300 px chiều cao** cố định ở nửa 
   * Hover chuột để xem danh sách chi tiết toàn bộ Mod của Map kèm `+% IIQ / IIR / Pack Size`.
 * **Thanh Tiến Trình Tuyến Tính (Map Progress Bar):**
   * Phản ánh trung thực tỉ lệ quãng đường thực tế mà Exile đã vượt qua: $\text{Progress} = \text{Clamp01}(Y_E / L_{\text{boss\_gate}})$.
-  * Đánh dấu vị trí các mốc **League Encounter** trên hành lang và biểu tượng **Cổng Boss (Boss Gate)** ở mốc cuối thanh.
+  * Đánh dấu vị trí các mốc **League Encounter** trên hành lang và biểu tượng **Cổng Boss (Boss Gate)** ở mốc cuối thanh.```
 
 ---
 
@@ -152,7 +169,7 @@ Quái vật không rớt từ trên trời xuống ngẫu nhiên, mà được b
     * **Tín hiệu khẩn cấp:** Người chơi có thể phản xạ bấm **Emergency Portal (Phím `Space`)** tháo chạy nếu build không đủ EHP chịu đòn.
 * **Kết Thúc & Bùng Nổ Phần Thưởng (Loot Explosion):**
   * Khi Boss gục ngã, toàn bộ đồ rơi giá trị cao bật nảy kèm cột sáng (Drop Beams) và âm thanh "Ting!".
-  * Cổng Portal hoàn thành xuất hiện, hệ thống tự động chuẩn bị sang map tiếp theo theo cơ chế Auto-Mapping.
+  * Cổng Portal hoàn thành xuất hiện, hệ thống tự động chuẩn bị sang map tiếp theo theo cơ chế Auto-Mapping.```
 
 ---
 
@@ -167,7 +184,7 @@ Quái vật không rớt từ trên trời xuống ngẫu nhiên, mà được b
 * **Quick Flask Rack (Dàn 5 Bình Thuốc):**
   * 5 vị trí bình thuốc: `[Life] [Quicksilver] [Granite] [Diamond] [Quartz]`.
   * Hiển thị vạch tích lũy Charges tự nạp khi hạ quái.
-  * Hiệu ứng viền phát sáng khi bình tự kích hoạt (Auto-Instill).
+  * Hiệu ứng viền phát sáng khi bình tự kích hoạt (Auto-Instill).```
 
 ---
 
@@ -183,7 +200,7 @@ Quái vật không rớt từ trên trời xuống ngẫu nhiên, mà được b
   * Khi rơi vật phẩm giá trị cao qua Loot Filter (Tier 1 Currency: Divine/Exalted, Unique hiếm, 6-Link Base):
     * Một thanh biểu ngữ (Toast Banner) viền đỏ/vàng trượt xuống từ mép trên Arena.
     * Cột sáng (**Drop Beam**) chiếu thẳng từ đỉnh trần xuống đúng tọa độ 2D của quái vừa ngã xuống.
-    * Phát âm thanh xúc giác kinh điển: **"TING!"**.
+    * Phát âm thanh xúc giác kinh điển: **"TING!"**.```
 
 ---
 
@@ -192,7 +209,7 @@ Quái vật không rớt từ trên trời xuống ngẫu nhiên, mà được b
   * Nút bấm biểu tượng cổng dịch chuyển màu xanh lam phát sáng ở thanh công cụ đáy.
   * Giúp người chơi tẩu thoát ngay về Hideout khi sắp chết ở Red Map nhằm tránh hình phạt mất 10% EXP.
 * **Combat Telemetry Drawer (`[?]` Inspector):**
-  * Nút nhỏ mở popup phân tích nhanh: *Effective DPS, Tỉ lệ né đòn thực tế (Entropy Rate), Nguyên nhân tử vong (Death Recap)*.
+  * Nút nhỏ mở popup phân tích nhanh: *Effective DPS, Tỉ lệ né đòn thực tế (Entropy Rate), Nguyên nhân tử vong (Death Recap)*.```
 
 ---
 
@@ -211,7 +228,7 @@ Quái vật không rớt từ trên trời xuống ngẫu nhiên, mà được b
 | `ManaReserved`| `#0D47A1` | Màu vùng Mana bị khóa bởi Aura |
 | `ExpBar` | `#76FF03` | Thanh kinh nghiệm EXP |
 | `LootTier1` | `#FF1744` | Tia sáng và biểu ngữ đồ Thần thánh (Divine / Mirror / Tier 0 Unique) |
-| `LootTier2` | `#FFC107` | Tia sáng rơi đồ Chaos Orb / Exalted / 6-Link |
+| `LootTier2` | `#FFC107` | Tia sáng rơi đồ Chaos Orb / Exalted / 6-Link |```
 
 ---
 

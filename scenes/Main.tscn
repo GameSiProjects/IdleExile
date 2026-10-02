@@ -75,6 +75,18 @@ layout_mode = 2
 tooltip_text = "Keep window on top of other applications"
 text = "Pin"
 
+[node name="ResizeModeButton" type="Button" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Chuyển đổi kích thước: Thu nhỏ Compact (440x380) / Phóng to (440x780)"
+text = "⤡ Min"
+
+[node name="ScreenCycleButton" type="Button" parent="MainLayout/HeaderPanel/HeaderMargin/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Chuyển sang màn hình kế tiếp (Multi-Monitor)"
+text = "🖥"
+
 [node name="ContentMargin" type="MarginContainer" parent="MainLayout"]
 layout_mode = 2
 size_flags_vertical = 3

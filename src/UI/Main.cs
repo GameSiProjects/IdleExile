@@ -18,6 +18,9 @@ public partial class Main : Control
     private MapDeviceBar? _mapDeviceBar;
     private EquipmentView? _equipmentView;
     private Button? _gearNavButton;
+    private Button? _resizeModeButton;
+    private Button? _screenCycleButton;
+    private readonly WindowController _windowController = new();
 
     public DatabaseLoader Db { get; } = new();
     public PlayerState Player { get; } = new();
@@ -31,14 +34,17 @@ public partial class Main : Control
         // 1. Set window title
         DisplayServer.WindowSetTitle("Idle Exile - Actless ARPG");
 
-        // 2. Mini-window configuration: default Always On Top
-        bool defaultAlwaysOnTop = true;
-        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, defaultAlwaysOnTop);
+        // 2. Setup dynamic WindowController (from reference/windows)
+        AddChild(_windowController);
+        _windowController.Setup(GetWindow());
+        _windowController.WindowResized += OnWindowResized;
 
         // 3. UI Node binding
         _statusLabel = GetNodeOrNull<Label>("%StatusLabel");
         _statsLabel = GetNodeOrNull<Label>("%StatsLabel");
         _alwaysOnTopCheckBox = GetNodeOrNull<CheckBox>("%AlwaysOnTopCheck");
+        _resizeModeButton = GetNodeOrNull<Button>("%ResizeModeButton");
+        _screenCycleButton = GetNodeOrNull<Button>("%ScreenCycleButton");
         _battleViewport = GetNodeOrNull<BattleViewport>("%BattleViewport");
         _mapDeviceBar = GetNodeOrNull<MapDeviceBar>("%MapDeviceBar");
         _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
@@ -46,8 +52,19 @@ public partial class Main : Control
 
         if (_alwaysOnTopCheckBox != null)
         {
-            _alwaysOnTopCheckBox.ButtonPressed = defaultAlwaysOnTop;
+            _alwaysOnTopCheckBox.ButtonPressed = _windowController.DefaultAlwaysOnTop;
             _alwaysOnTopCheckBox.Toggled += OnAlwaysOnTopToggled;
+        }
+
+        if (_resizeModeButton != null)
+        {
+            _resizeModeButton.Pressed += OnResizeButtonPressed;
+            UpdateResizeButtonText(_windowController.IsExpanded);
+        }
+
+        if (_screenCycleButton != null)
+        {
+            _screenCycleButton.Pressed += OnScreenCyclePressed;
         }
 
         if (_gearNavButton != null)
@@ -473,8 +490,48 @@ public partial class Main : Control
 
         if (willShow)
         {
+            // If window is currently in compact mode, auto-expand upward to full height!
+            if (!_windowController.IsExpanded)
+            {
+                _windowController.ExpandWindow(keepBottom: true);
+            }
             _equipmentView.SetPlayer(Player);
             _equipmentView.RefreshView();
+        }
+    }
+
+    private void OnResizeButtonPressed()
+    {
+        _windowController.ToggleExpand(keepBottom: true);
+    }
+
+    private void OnScreenCyclePressed()
+    {
+        _windowController.MoveToNextScreen();
+    }
+
+    private void OnWindowResized(Vector2I newSize, bool isExpanded)
+    {
+        UpdateResizeButtonText(isExpanded);
+
+        // When shrunk to compact mode, if EquipmentView is open, close it to restore combat viewport
+        if (!isExpanded && _equipmentView != null && _equipmentView.Visible)
+        {
+            _equipmentView.Visible = false;
+            if (_battleViewport != null) _battleViewport.Visible = true;
+        }
+
+        GD.Print($"[Main] Window resized: {newSize.X}x{newSize.Y} (Expanded: {isExpanded})");
+    }
+
+    private void UpdateResizeButtonText(bool isExpanded)
+    {
+        if (_resizeModeButton != null)
+        {
+            _resizeModeButton.Text = isExpanded ? "⤡ Min" : "⤢ Expand";
+            _resizeModeButton.TooltipText = isExpanded
+                ? "Thu nhỏ Compact (440x380) - Neo đáy thanh Taskbar"
+                : "Phóng to Expanded (440x780) - Mở rộng Theorycrafting";
         }
     }
 
@@ -486,7 +543,7 @@ public partial class Main : Control
 
     private void OnAlwaysOnTopToggled(bool isToggled)
     {
-        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, isToggled);
+        _windowController.ToggleAlwaysOnTop(isToggled);
         GD.Print($"[Main] AlwaysOnTop: {isToggled}");
     }
 

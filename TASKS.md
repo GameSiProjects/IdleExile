@@ -1,6 +1,6 @@
 # TASKS.md — Kế Hoạch Triển Khai Idle Exile (Task Execution Tracker)
 
-Tài liệu này theo dõi tiến độ thực hiện các tính năng của **Idle Exile**, đặc biệt tập trung vào việc hiện thực hóa **Combat Engine (C# Core)** và **Giao Diện Chiến Đấu (Battle Viewport UI)** theo thiết kế tại [07_combat_ui_and_viewport.md](file:///e:/Projects/Antigravity/IdleExile/docs/07_combat_ui_and_viewport.md).
+Tài liệu này theo dõi tiến độ thực hiện các tính năng của **Idle Exile**, đặc biệt tập trung vào việc hiện thực hóa **Combat Engine (C# Core)**, **Giao Diện Chiến Đấu (Battle Viewport UI)** theo thiết kế tại [07_combat_ui_and_viewport.md](file:///e:/Projects/Antigravity/IdleExile/docs/07_combat_ui_and_viewport.md) và kế hoạch nâng cấp giao diện tại [UI_OVERHAUL_IMPLEMENTATION_PLAN.md](file:///e:/Projects/Antigravity/IdleExile/docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md).
 
 ---
 
@@ -157,6 +157,14 @@ Tài liệu này theo dõi tiến độ thực hiện các tính năng của **I
   - [ ] Nút "Emergency Portal" màu xanh cổng dịch chuyển và phím tắt `Space`.
   - [ ] Nút Inspector `[?]` hiển thị popup tổng kết combat / Death Recap khi nhân vật ngã xuống.
   - [ ] *Vị trí:* `src/UI/Components/MacroControlsBar.cs`
+
+- [x] **Task 2.8: Kiến Trúc Cửa Sổ Động & Điều Khiển Màn Hình (Dynamic Window Controller)**
+  - [x] Tích hợp `DesktopWindow.cs` & `WindowController.cs` (tham chiếu từ `reference/windows/`).
+  - [x] Chế độ Compact Mode (`440 x 380` px) treo máy tinh gọn và Expanded Mode (`440 x 780` px) theorycrafting.
+  - [x] Thuật toán neo đáy Taskbar `keepBottom = true` (cửa sổ nở lên phía trên, giữ nguyên chân đế).
+  - [x] Tích hợp Win32 `SHAppBarMessage` tự động căn chỉnh trên Taskbar và `MoveToNextScreen()` đa màn hình.
+  - [x] Tích hợp các nút điều khiển trên Header (`ResizeModeButton` `[⤡ Min]`/`[⤢ Expand]`, `ScreenCycleButton` `[🖥]`).
+  - [x] *Vị trí:* `src/UI/DesktopWindow.cs`, `src/UI/WindowController.cs`, `scenes/Main.tscn`, `src/UI/Main.cs`
 
 ---
 

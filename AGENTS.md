@@ -8,7 +8,7 @@ Welcome, Agent! This file outlines the architectural principles, tech stack, con
 
 * **Project Name:** Idle Exile
 * **Genre:** Minimalist 2D Idle/Incremental ARPG inspired by *Path of Exile (PoE)*.
-* **Form Factor:** Mini-Window Desktop Companion (`440 x 780` px viewport), runs unobtrusively in a corner while the user works or games.
+* **Form Factor:** Dynamic Resizable Desktop Companion (`440 x 380` px Compact Idle to `440 x 780` px Expanded Theorycrafting), docked flush above the taskbar with upward bottom-invariant expansion (`keepBottom = true`).
 * **Core Philosophy:** *"Zero APM, 100% Theorycrafting"* — Player does not micro-manage combat; all depth lies in build construction, socketed support gems, passive tree pathing, and gear crafting.
 
 ### Non-Negotiable Game Design Rules
@@ -160,6 +160,7 @@ dotnet build
 | **Item Generator & Affix Roller** | Planned | `src/Core/Services/ItemGenerator.cs` |
 | **Loot Filter System** | Planned | `src/Core/Services/LootFilterService.cs` |
 | **Mini-Window 2D Battle Viewport UI** | Complete (Tasks 2.1 - 2.8) | `scenes/BattleViewport.tscn`, `src/UI/BattleViewport.cs`, `src/UI/Components/` |
+| **Dynamic Window Controller (reference/windows)** | Complete | `src/UI/DesktopWindow.cs`, `src/UI/WindowController.cs` |
 | **Boss Room Chamber & Arena Lock (Task 2.8)** | Complete | `src/UI/Components/ArenaCamera.cs`, `src/UI/Components/Arena2D.cs` |
 | **Passive Skill Tree Graph** | Planned | `data/passive_tree.json`, `src/Core/Models/` |
 

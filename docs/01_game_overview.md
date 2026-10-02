@@ -27,8 +27,9 @@ Trò chơi chắt lọc tinh hoa lớn nhất của *Path of Exile*: **chiều s
 * **Kinh tế Currency thuần túy**: Không có vàng (Gold). Mọi giao dịch và nâng cấp đồ đều dùng các loại ngọc ma thuật (Transmutation, Alteration, Chaos, Exalted, Divine...).
 * **Phân biệt công thức toán học nghiêm ngặt**: *Increased/Reduced* (cộng dồn) vs *More/Less* (nhân hệ số mũ).
 
-### Pillar 4: "Mini-Window & Low-Friction Companion"
-* Giao diện tối giản 2D, kích thước nhỏ gọn (chuẩn đề xuất: `440 x 780` px hoặc `480 x 820` px), có tùy chọn ghim nổi lên trên (`Always on Top`).
+### Pillar 4: "Dynamic Resizable Companion & Low-Friction"
+* Giao diện tối giản 2D, kích thước thích ứng linh hoạt theo cơ chế **Dynamic Resizable Desktop Companion** (chế độ treo máy Compact `440 x 380` px đến chế độ soi đồ Expanded `440 x 780` px hoặc Widescreen `800 x 780` px).
+* Thuật toán neo đáy Taskbar (`keepBottom = true`): khi phóng to/thu nhỏ, đáy cửa sổ luôn giữ nguyên trên mép thanh Taskbar; tùy chọn ghim nổi (`Always on Top`) và chuyển đa màn hình (`MoveToNextScreen`).
 * Tối ưu hóa cực nhẹ cho Godot 4: tiêu thụ <1% CPU và <150MB RAM ở chế độ treo nền, không làm ảnh hưởng khi người chơi làm việc, lướt web hoặc chơi game khác.
 * Âm thanh phản hồi xúc giác (Dopamine audio drops): Tiếng "ting" rền vang của loot filter khi rớt đồ xịn.
 

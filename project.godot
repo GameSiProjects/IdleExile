@@ -23,6 +23,7 @@ run/low_processor_usage_mode_sleep_usec=6900
 
 window/size/viewport_width=440
 window/size/viewport_height=780
+window/size/resizable=true
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

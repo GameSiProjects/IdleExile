@@ -33,7 +33,7 @@ Tài liệu này là **Bản đồ chỉ dẫn thực thi chiến lược (Strat
 | **Hạ tầng C# & Data JSON** | ✅ Hoàn thành | `data/`, `src/Core/Models/` | Load JSON qua `System.Text.Json` |
 | **Toán học Sát thương & Phòng thủ** | ✅ Hoàn thành | `src/Core/Services/` | Increased vs More, 5 lớp phòng ngự |
 | **Hợp nhất Combat (`ICombatEntity`)** | ✅ Hoàn thành | `src/Core/Models/`, `Services/` | `CombatAttackService`, 30Hz loop |
-| **Giao diện Chiến đấu Cơ bản (UI)** | ✅ Hoàn thành | `scenes/BattleViewport.tscn` | Header, Vitometer, Floating Text |
+| **Giao diện Chiến đấu & Tái Cấu Trúc UI** | 🔄 Đang triển khai | `scenes/`, `src/UI/` | Kế hoạch: [UI_OVERHAUL_IMPLEMENTATION_PLAN.md](file:///e:/Projects/Antigravity/IdleExile/docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md) |
 | **Hệ thống 10 Ô Đồ & Thuộc Tính Mềm**| ✅ Hoàn thành | `src/Core/State/`, `src/UI/` | `EquippedGearState`, Smart Tooltip |
 | **Map Hành Lang Tuyến Tính & Camera** | 🔄 Đang triển khai | `docs/02`, `docs/03`, `docs/07` | Chuẩn bị tích hợp vào Simulation & UI |
 | **Bộ Sinh Đồ & Bộ Lọc Loot Filter** | ⏳ Chưa làm | `src/Core/Services/` | `ItemGenerator`, `LootFilterService` |
