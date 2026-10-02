@@ -120,11 +120,20 @@ public static class CorridorMonsterLayoutTests
         AssertTrue(p6.FormationType == CorridorPackFormationType.BossChamber, $"Pack 6 must be BossChamber, got {p6.FormationType}");
         AssertTrue(p6.CenterPosition.X >= 2150f && p6.CenterPosition.X <= 2300f, $"Pack 6 X ({p6.CenterPosition.X}) must be ~2232px");
 
-        // Strict X monotonicity
+        // Strict X monotonicity for pack centers
         for (int i = 0; i < layout.Packs.Count - 1; i++)
         {
             AssertTrue(layout.Packs[i].CenterPosition.X < layout.Packs[i + 1].CenterPosition.X,
                 $"Packs must strictly advance along corridor: Pack {i + 1} X ({layout.Packs[i].CenterPosition.X}) < Pack {i + 2} X ({layout.Packs[i + 1].CenterPosition.X})");
+        }
+
+        // Bug Fix Verification: ALL monsters within Pack 3 must spawn along forward map direction (+X, ~1344px), NEVER on the left (< 1000px)
+        foreach (var mob in p3.Monsters)
+        {
+            AssertTrue(mob.Position.X >= 1200f && mob.Position.X <= 1500f,
+                $"Pack 3 monster '{mob.Name}' X ({mob.Position.X:F1}) must spawn along forward map progression (~1344px), never on the left (< 1000px)");
+            AssertTrue(mob.Position.Y >= 32f && mob.Position.Y <= 176f,
+                $"Pack 3 monster '{mob.Name}' Y ({mob.Position.Y:F1}) must remain within corridor vertical bounds (32-176)");
         }
     }
 
@@ -278,6 +287,13 @@ public static class CorridorMonsterLayoutTests
 
         var essencePack = spawnerEssence.CurrentLayout.Packs.First(p => p.IsEncounterPack);
         AssertTrue(essencePack.IsDormant, "Essence pack must start dormant/frozen");
+        foreach (var m in essencePack.Monsters)
+        {
+            AssertTrue(m.Position.X >= 1200f && m.Position.X <= 1500f,
+                $"Essence monster '{m.Name}' X ({m.Position.X:F1}) must be near ~1344px, never on the left");
+            AssertTrue(m.Position.Y >= 32f && m.Position.Y <= 176f,
+                $"Essence monster '{m.Name}' Y ({m.Position.Y:F1}) must be within corridor lane (32-176)");
+        }
 
         // 2. Breach Crevice
         var spawnerBreach = new WaveSpawner(new Random(602));
@@ -286,12 +302,27 @@ public static class CorridorMonsterLayoutTests
         AssertTrue(encBreach != null && encBreach.Type == LeagueEncounterType.BreachCrevice, "Breach encounter must exist");
         var breachPack = spawnerBreach.CurrentLayout.Packs.First(p => p.IsEncounterPack);
         AssertTrue(breachPack.Monsters.Any(m => m.Name.Contains("Breachling") || m.Name.Contains("Vanguard")), "Breach pack must contain Breachlings");
+        foreach (var m in breachPack.Monsters)
+        {
+            AssertTrue(m.Position.X >= 1200f && m.Position.X <= 1500f,
+                $"Breach monster '{m.Name}' X ({m.Position.X:F1}) must be near ~1344px, never on the left");
+            AssertTrue(m.Position.Y >= 32f && m.Position.Y <= 176f,
+                $"Breach monster '{m.Name}' Y ({m.Position.Y:F1}) must be within corridor lane (32-176)");
+        }
 
         // 3. Sulphite Vein
         var spawnerSulphite = new WaveSpawner(new Random(603));
         spawnerSulphite.BeginMap(config, mapLength: 2400f, forceEncounter: LeagueEncounterType.SulphiteVein);
         var encSulphite = spawnerSulphite.CurrentLayout!.Encounter;
         AssertTrue(encSulphite != null && encSulphite.Type == LeagueEncounterType.SulphiteVein, "Sulphite encounter must exist");
+        var sulphitePack = spawnerSulphite.CurrentLayout.Packs.First(p => p.IsEncounterPack);
+        foreach (var m in sulphitePack.Monsters)
+        {
+            AssertTrue(m.Position.X >= 1200f && m.Position.X <= 1500f,
+                $"Sulphite beast '{m.Name}' X ({m.Position.X:F1}) must be near ~1344px, never on the left");
+            AssertTrue(m.Position.Y >= 32f && m.Position.Y <= 176f,
+                $"Sulphite beast '{m.Name}' Y ({m.Position.Y:F1}) must be within corridor lane (32-176)");
+        }
     }
 
     // ─────────────────────────────────────────────

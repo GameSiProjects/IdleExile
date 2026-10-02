@@ -186,7 +186,8 @@ public sealed class CorridorMonsterLayout
             progressRatio: EncounterRatio,
             packSizeFactor,
             createMonster,
-            rng
+            rng,
+            mapLength
         );
 
         packs.Add(encounterPack);
@@ -403,7 +404,7 @@ public sealed class CorridorMonsterLayout
         for (int i = 0; i < topFlank.Count; i++)
         {
             float x = center.X - 25f + i * topStepX;
-            topFlank[i].Position = new Vector2D(x, topWallY + (i % 2) * 8f);
+            topFlank[i].Position = new Vector2D(x, Math.Clamp(topWallY + (i % 2) * 8f, MinPlayableY, MaxPlayableY));
         }
 
         // Bottom flank hugs bottom wall
@@ -412,7 +413,7 @@ public sealed class CorridorMonsterLayout
         for (int i = 0; i < bottomFlank.Count; i++)
         {
             float x = center.X - 25f + i * bottomStepX;
-            bottomFlank[i].Position = new Vector2D(x, bottomWallY - (i % 2) * 8f);
+            bottomFlank[i].Position = new Vector2D(x, Math.Clamp(bottomWallY - (i % 2) * 8f, MinPlayableY, MaxPlayableY));
         }
     }
 
@@ -487,7 +488,8 @@ public sealed class CorridorMonsterLayout
         float progressRatio,
         float packSizeFactor,
         Func<MonsterRarity, string?, MonsterInstance> createMonster,
-        Random rng)
+        Random rng,
+        float mapLength = ExileMovementController.DefaultMapLength)
     {
         switch (type)
         {
@@ -523,8 +525,8 @@ public sealed class CorridorMonsterLayout
                     var minion = createMonster(MonsterRarity.Normal, "Crystalline Husk");
                     float angle = (i * MathF.Tau / addCount) + 0.3f;
                     minion.Position = new Vector2D(
-                        Math.Clamp(position.X + MathF.Cos(angle) * 32f, MinPlayableX, MaxPlayableX),
-                        position.Y + MathF.Sin(angle) * 28f
+                        Math.Clamp(position.X + MathF.Cos(angle) * 32f, 40f, mapLength - 40f),
+                        Math.Clamp(position.Y + MathF.Sin(angle) * 28f, MinPlayableY, MaxPlayableY)
                     );
                     mobs.Add(minion);
                 }
@@ -566,8 +568,8 @@ public sealed class CorridorMonsterLayout
                     float angle = (i * MathF.Tau / breachCount) + 0.2f;
                     float r = 28f + (i % 2) * 14f;
                     breachling.Position = new Vector2D(
-                        Math.Clamp(position.X + MathF.Cos(angle) * r, MinPlayableX, MaxPlayableX),
-                        position.Y + MathF.Sin(angle) * r
+                        Math.Clamp(position.X + MathF.Cos(angle) * r, 40f, mapLength - 40f),
+                        Math.Clamp(position.Y + MathF.Sin(angle) * r, MinPlayableY, MaxPlayableY)
                     );
                     mobs.Add(breachling);
                 }
@@ -603,8 +605,8 @@ public sealed class CorridorMonsterLayout
                     var beast = createMonster(i == 0 ? MonsterRarity.Magic : MonsterRarity.Normal, "Subterranean Burrower");
                     float angle = (i * MathF.Tau / beastCount) + 0.4f;
                     beast.Position = new Vector2D(
-                        Math.Clamp(position.X + MathF.Cos(angle) * 35f, MinPlayableX, MaxPlayableX),
-                        position.Y + MathF.Sin(angle) * 28f
+                        Math.Clamp(position.X + MathF.Cos(angle) * 35f, 40f, mapLength - 40f),
+                        Math.Clamp(position.Y + MathF.Sin(angle) * 28f, MinPlayableY, MaxPlayableY)
                     );
                     mobs.Add(beast);
                 }
