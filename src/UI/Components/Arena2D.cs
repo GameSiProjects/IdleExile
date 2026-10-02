@@ -39,6 +39,8 @@ public struct ProjectileData
     public float AoeRadius;
     public bool IsCrit;
     public long TargetMonsterId;
+    public int PierceRemaining;
+    public bool IsPlayerProjectile;
 }
 
 /// <summary>
@@ -419,10 +421,93 @@ public partial class Arena2D : Node2D
                 continue;
             }
 
+            Vector2 prevPos = p.CurrentPosition;
             p.Progress += (p.Speed * dt) / dist;
             p.CurrentPosition = p.StartPosition.Lerp(p.TargetPosition, Mathf.Clamp(p.Progress, 0f, 1f));
 
-            if (p.Progress >= 1.0f)
+            bool collided = false;
+            Vector2 seg = p.CurrentPosition - prevPos;
+            float segLenSq = seg.LengthSquared();
+
+            if (p.IsPlayerProjectile)
+            {
+                float bestT = float.MaxValue;
+                int hitMonsterIndex = -1;
+                Vector2 bestImpactPoint = Vector2.Zero;
+
+                for (int m = 0; m < _activeMonsterCount; m++)
+                {
+                    var monster = _monsters[m];
+                    if (!monster.IsAlive) continue;
+
+                    float hitRadius = Mathf.Max(10f, 8.5f * monster.Scale) + 4f;
+                    float t = segLenSq > 0.0001f ? Mathf.Clamp((monster.Position - prevPos).Dot(seg) / segLenSq, 0f, 1f) : 0f;
+                    Vector2 closestPoint = prevPos + seg * t;
+
+                    if (closestPoint.DistanceSquaredTo(monster.Position) <= hitRadius * hitRadius)
+                    {
+                        if (t < bestT)
+                        {
+                            bestT = t;
+                            hitMonsterIndex = m;
+                            bestImpactPoint = closestPoint;
+                        }
+                    }
+                }
+
+                if (hitMonsterIndex >= 0)
+                {
+                    var monster = _monsters[hitMonsterIndex];
+                    if (p.PierceRemaining > 0)
+                    {
+                        p.PierceRemaining--;
+                        monster.HitFlashTimer = 0.12f;
+                    }
+                    else
+                    {
+                        collided = true;
+                        p.CurrentPosition = bestImpactPoint;
+                        p.IsActive = false;
+
+                        TriggerProjectileImpact(bestImpactPoint, p.DamageType, p.AoeRadius, p.IsCrit);
+
+                        var hits = _projectilePendingHits[i];
+                        for (int h = 0; h < hits.Count; h++)
+                        {
+                            var entry = hits[h];
+                            UpdateMonsterLife(entry.MonsterId, entry.NewLife);
+                            FloatingText?.SpawnDamageText(entry.Damage, entry.Position, p.DamageType, entry.IsCrit);
+                        }
+                        hits.Clear();
+                    }
+                }
+            }
+            else
+            {
+                // Monster projectile targeting Exile
+                float hitRadius = 16f;
+                float t = segLenSq > 0.0001f ? Mathf.Clamp((ExilePosition - prevPos).Dot(seg) / segLenSq, 0f, 1f) : 0f;
+                Vector2 closestPoint = prevPos + seg * t;
+
+                if (closestPoint.DistanceSquaredTo(ExilePosition) <= hitRadius * hitRadius)
+                {
+                    collided = true;
+                    p.CurrentPosition = closestPoint;
+                    p.IsActive = false;
+
+                    TriggerProjectileImpact(closestPoint, p.DamageType, p.AoeRadius, p.IsCrit);
+
+                    var hits = _projectilePendingHits[i];
+                    for (int h = 0; h < hits.Count; h++)
+                    {
+                        var entry = hits[h];
+                        FloatingText?.SpawnDamageText(entry.Damage, entry.Position, p.DamageType, entry.IsCrit);
+                    }
+                    hits.Clear();
+                }
+            }
+
+            if (!collided && p.Progress >= 1.0f)
             {
                 p.IsActive = false;
                 TriggerProjectileImpact(p.TargetPosition, p.DamageType, p.AoeRadius, p.IsCrit);
@@ -1539,7 +1624,9 @@ public partial class Arena2D : Node2D
         float speed = 520f,
         float aoeRadius = 0f,
         bool isCrit = false,
-        long targetMonsterId = -1)
+        long targetMonsterId = -1,
+        int pierceCount = 0,
+        bool isPlayerProjectile = true)
     {
         // Find available slot in object pool
         int freeIndex = -1;
@@ -1576,7 +1663,9 @@ public partial class Arena2D : Node2D
             GlowColor = glowColor,
             AoeRadius = aoeRadius,
             IsCrit = isCrit,
-            TargetMonsterId = targetMonsterId
+            TargetMonsterId = targetMonsterId,
+            PierceRemaining = pierceCount,
+            IsPlayerProjectile = isPlayerProjectile
         };
 
         return true;
@@ -1697,6 +1786,31 @@ public partial class Arena2D : Node2D
 
     public void TriggerProjectileImpact(Vector2 targetPos, DamageType type, float aoeRadius = 0f, bool isCrit = false)
     {
+        // Absorb any in-flight projectile near targetPos that reached this impact point
+        for (int i = 0; i < MaxProjectiles; i++)
+        {
+            if (_projectiles[i].IsActive && _projectiles[i].CurrentPosition.DistanceTo(targetPos) <= 32f)
+            {
+                if (_projectiles[i].PierceRemaining > 0)
+                {
+                    _projectiles[i].PierceRemaining--;
+                }
+                else
+                {
+                    _projectiles[i].IsActive = false;
+                    var hits = _projectilePendingHits[i];
+                    for (int h = 0; h < hits.Count; h++)
+                    {
+                        var entry = hits[h];
+                        UpdateMonsterLife(entry.MonsterId, entry.NewLife);
+                        FloatingText?.SpawnDamageText(entry.Damage, entry.Position, _projectiles[i].DamageType, entry.IsCrit);
+                    }
+                    hits.Clear();
+                    break;
+                }
+            }
+        }
+
         // 1. If this projectile has an AoE explosion (e.g. Fireball), trigger the explosion ring at impact!
         if (aoeRadius > 0f)
         {
@@ -1938,7 +2052,7 @@ public partial class Arena2D : Node2D
                 {
                     // Single projectile directed at targetScreen
                     float speed = (float)args.Projectiles[0].Velocity.Length;
-                    SpawnProjectile(launchOrigin, targetScreen, args.DamageType, speed > 0f ? speed : 520f, aoeRadius, args.IsCrit, targetMonsterId);
+                    SpawnProjectile(launchOrigin, targetScreen, args.DamageType, speed > 0f ? speed : 520f, aoeRadius, args.IsCrit, targetMonsterId, args.PierceCount, isExileAttacker);
                 }
                 else
                 {
@@ -1947,13 +2061,13 @@ public partial class Arena2D : Node2D
                     {
                         Vector2 pTarget = launchOrigin + new Vector2(p.Direction.X, p.Direction.Y) * 220f;
                         float speed = (float)p.Velocity.Length;
-                        SpawnProjectile(launchOrigin, pTarget, args.DamageType, speed > 0f ? speed : 520f, aoeRadius, args.IsCrit, targetMonsterId);
+                        SpawnProjectile(launchOrigin, pTarget, args.DamageType, speed > 0f ? speed : 520f, aoeRadius, args.IsCrit, targetMonsterId, args.PierceCount, isExileAttacker);
                     }
                 }
             }
             else
             {
-                SpawnProjectile(launchOrigin, targetScreen, args.DamageType, aoeRadius: aoeRadius, isCrit: args.IsCrit, targetMonsterId: targetMonsterId);
+                SpawnProjectile(launchOrigin, targetScreen, args.DamageType, aoeRadius: aoeRadius, isCrit: args.IsCrit, targetMonsterId: targetMonsterId, pierceCount: args.PierceCount, isPlayerProjectile: isExileAttacker);
             }
         }
         else if (args.GeometryType == SkillGeometryType.RadialAoE)

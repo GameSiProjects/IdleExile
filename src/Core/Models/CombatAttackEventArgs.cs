@@ -41,5 +41,8 @@ public sealed record CombatAttackEventArgs(
     float ConeAngle = 0f,
 
     /// <summary>Optional pre-computed projectile trajectory vectors for projectile skills.</summary>
-    IReadOnlyList<ProjectileVector>? Projectiles = null
+    IReadOnlyList<ProjectileVector>? Projectiles = null,
+
+    /// <summary>Number of pierces allowed for projectiles launched by this attack.</summary>
+    int PierceCount = 0
 );

@@ -164,14 +164,6 @@ public sealed class ProjectileSimulation
                     // Check pierce exclusion (already hit by this projectile)
                     if (p.HitEntityIds.Contains(monster.InstanceId)) continue;
 
-                    // Check PoE Non-Shotgunning exclusion (already hit by this volley)
-                    if (!p.CanShotgun && p.VolleyId != 0 &&
-                        _volleyHits.TryGetValue(p.VolleyId, out var volleyHitSet) &&
-                        volleyHitSet.Contains(monster.InstanceId))
-                    {
-                        continue;
-                    }
-
                     float combinedRadius = monster.Radius + p.Radius;
                     if (SpatialCombatService.SegmentIntersectsCircle(
                         p.PreviousPosition,
@@ -206,12 +198,19 @@ public sealed class ProjectileSimulation
 
                             if (SpatialCombatService.IsInRadialAoE(impactPoint, target.Position, p.AoeRadius, target.Radius))
                             {
-                                hitEntities.Add(target);
-                                if (!p.CanShotgun && p.VolleyId != 0 && _volleyHits.TryGetValue(p.VolleyId, out var vSet))
+                                bool canDealDamage = p.CanShotgun || p.VolleyId == 0 ||
+                                    !_volleyHits.TryGetValue(p.VolleyId, out var vSet) ||
+                                    !vSet.Contains(target.InstanceId);
+
+                                if (canDealDamage)
                                 {
-                                    vSet.Add(target.InstanceId);
+                                    if (!p.CanShotgun && p.VolleyId != 0 && _volleyHits.TryGetValue(p.VolleyId, out var volleySet))
+                                    {
+                                        volleySet.Add(target.InstanceId);
+                                    }
+                                    hitEntities.Add(target);
+                                    onMonsterHit(p, target, impactPoint, true);
                                 }
-                                onMonsterHit(p, target, impactPoint, true);
                             }
                         }
 
@@ -231,12 +230,21 @@ public sealed class ProjectileSimulation
                         // ═══ Single Target Projectile Hit (e.g. Split Arrow, Default Attack) ═══
                         var target = earliest.Monster;
                         p.HitEntityIds.Add(target.InstanceId);
-                        if (!p.CanShotgun && p.VolleyId != 0 && _volleyHits.TryGetValue(p.VolleyId, out var vSet))
+
+                        bool alreadyHitByVolley = !p.CanShotgun && p.VolleyId != 0 &&
+                            _volleyHits.TryGetValue(p.VolleyId, out var vSet) &&
+                            vSet.Contains(target.InstanceId);
+
+                        if (!alreadyHitByVolley)
                         {
-                            vSet.Add(target.InstanceId);
+                            if (!p.CanShotgun && p.VolleyId != 0 && _volleyHits.TryGetValue(p.VolleyId, out var volleySet))
+                            {
+                                volleySet.Add(target.InstanceId);
+                            }
+
+                            onMonsterHit(p, target, impactPoint, false);
                         }
 
-                        onMonsterHit(p, target, impactPoint, false);
                         impactedThisTick = true;
 
                         OnProjectileImpacted?.Invoke(new ProjectileImpactEventArgs(
@@ -247,7 +255,7 @@ public sealed class ProjectileSimulation
                             p.DamageType,
                             0f,
                             false,
-                            new[] { target }
+                            alreadyHitByVolley ? Array.Empty<ICombatEntity>() : new[] { target }
                         ));
 
                         // Pierce Evaluation
@@ -257,7 +265,7 @@ public sealed class ProjectileSimulation
                             // Projectile continues flying forward
                         }
                         // Chain Evaluation
-                        else if (p.ChainRemaining > 0)
+                        else if (p.ChainRemaining > 0 && !alreadyHitByVolley)
                         {
                             p.ChainRemaining--;
                             var chainTarget = SpatialCombatService.FindChainTarget(
@@ -343,12 +351,19 @@ public sealed class ProjectileSimulation
 
                         if (SpatialCombatService.IsInRadialAoE(detonatePoint, target.Position, p.AoeRadius, target.Radius))
                         {
-                            hitEntities.Add(target);
-                            if (!p.CanShotgun && p.VolleyId != 0 && _volleyHits.TryGetValue(p.VolleyId, out var vSet))
+                            bool canDealDamage = p.CanShotgun || p.VolleyId == 0 ||
+                                !_volleyHits.TryGetValue(p.VolleyId, out var vSet) ||
+                                !vSet.Contains(target.InstanceId);
+
+                            if (canDealDamage)
                             {
-                                vSet.Add(target.InstanceId);
+                                if (!p.CanShotgun && p.VolleyId != 0 && _volleyHits.TryGetValue(p.VolleyId, out var volleySet))
+                                {
+                                    volleySet.Add(target.InstanceId);
+                                }
+                                hitEntities.Add(target);
+                                onMonsterHit(p, target, detonatePoint, true);
                             }
-                            onMonsterHit(p, target, detonatePoint, true);
                         }
                     }
 

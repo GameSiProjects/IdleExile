@@ -37,6 +37,7 @@ public static class Arena2DTests
         TestExileAutoFacingAndTargetTracking();
         TestUnifiedAttackVisualPipeline();
         TestFireballProjectileAndDamageOnImpact();
+        TestProjectileAbsorbedOnMonsterHitWithoutGoingThrough();
 
         GD.Print("[Tests] All Arena2DTests PASSED successfully!");
     }
@@ -528,6 +529,64 @@ public static class Arena2DTests
 
         Assert(arena.ActiveMeleeIndicatorCount > meleeIndicatorsBefore, "Fireball impact must detonate AoE radial indicator");
         Assert(arena.ActiveProjectileCount == 0, "Fireball projectile should deactivate after reaching target");
+
+        arena.QueueFree();
+    }
+
+    private static void TestProjectileAbsorbedOnMonsterHitWithoutGoingThrough()
+    {
+        var arena = new Arena2D();
+        arena._Ready();
+
+        var monster = new MonsterInstance(
+            instanceId: 501,
+            name: "Absorb Target",
+            rarity: MonsterRarity.Normal,
+            monsterLevel: 1,
+            maxLife: 100.0f,
+            primaryDamageType: DamageType.Physical,
+            damageMin: 2f,
+            damageMax: 4f,
+            attacksPerSecond: 1.0f,
+            critChance: 5f,
+            critMultiplier: 150f,
+            accuracy: 100f,
+            baseExperience: 10f,
+            itemQuantityMultiplier: 1f,
+            itemRarityMultiplier: 1f,
+            initialPosition: new Vector2D(150f, 104f)
+        );
+
+        arena.SetMonsters(new[] { monster });
+
+        // Spawn projectile aimed towards (300, 104) which is way past the monster at (150, 104)
+        Vector2 start = new(20f, 104f);
+        Vector2 target = new(300f, 104f);
+        arena.SpawnProjectile(start, target, DamageType.Physical, speed: 600f, pierceCount: 0);
+
+        Assert(arena.ActiveProjectileCount == 1, "Projectile should be active in flight initially");
+
+        // Advance frames until the projectile reaches the monster (130px at 600px/s = ~0.22s)
+        for (int i = 0; i < 6; i++)
+        {
+            arena._Process(0.05); // 0.3s total
+            if (arena.ActiveProjectileCount == 0) break;
+        }
+
+        Assert(arena.ActiveProjectileCount == 0, "Projectile must be absorbed on hitting the monster and NOT continue to target (300, 104)");
+
+        // Now test pierce: a projectile with PierceRemaining = 1 should NOT be absorbed by the first monster
+        arena.SpawnProjectile(start, target, DamageType.Physical, speed: 600f, pierceCount: 1);
+        Assert(arena.ActiveProjectileCount == 1, "Piercing projectile should be active");
+
+        // Advance 0.25s (enough to reach monster at 150px)
+        arena._Process(0.25);
+        // It pierced the monster and is still in flight towards 300px
+        Assert(arena.ActiveProjectileCount == 1, "Piercing projectile should pierce through the monster and remain in flight");
+
+        // Advance another 0.4s to let it reach 300px and complete
+        arena._Process(0.4);
+        Assert(arena.ActiveProjectileCount == 0, "Piercing projectile completes after reaching max distance");
 
         arena.QueueFree();
     }

@@ -48,6 +48,7 @@ public static class CombatEngineTests
         TestPhysicalProjectileAoEExplosionHitsSurroundingCluster();
         TestFrontlineMonsterBlocksBacklineMonster();
         TestNonShotgunningRuleInVolley();
+        TestSplitArrowProjectilesAbsorbedOnHitWithoutPiercingBehindEnemy();
 
         Console.WriteLine("[Tests] All CombatEngineTests PASSED successfully!");
     }
@@ -1031,7 +1032,7 @@ public static class CombatEngineTests
         // Clear active gem so subsequent ticks do not fire additional volleys
         loadout.PrimarySkill.ClearActiveGem();
 
-        // Advance 10 ticks to let all 4 in-flight arrows pass through/hit the boss
+        // Advance 10 ticks to let all 4 in-flight arrows hit the boss and be absorbed
         for (int i = 0; i < 10; i++)
         {
             engine.ProcessTick(1f / 30f);
@@ -1040,5 +1041,85 @@ public static class CombatEngineTests
         // Path of Exile Non-Shotgunning rule:
         // All 4 arrows originate from the same volley; boss must only take exactly 1 hit from this volley!
         AssertEqual(1, damageDealtEventCount, 0.01f, "Boss must only be hit ONCE per volley due to Non-Shotgunning rule");
+        AssertEqual(0, engine.ActiveProjectiles.Count, 0.01f, "All 4 arrows must be absorbed on hitting the boss, not going through");
+    }
+
+    /// <summary>
+    /// Verifies that Split Arrow projectiles are absorbed on hitting an enemy without pierce,
+    /// and do NOT go through to damage enemies standing directly behind the first target.
+    /// </summary>
+    private static void TestSplitArrowProjectilesAbsorbedOnHitWithoutPiercingBehindEnemy()
+    {
+        var player = new PlayerState();
+        player.BootstrapFromArchetype(StarterArchetypeCatalog.Deadeye);
+
+        var loadout = new SkillLoadout();
+        var splitArrowGem = new GemDefinition(
+            Id: "split_arrow",
+            Name: "Split Arrow",
+            Category: "Active",
+            Color: "Green",
+            Tags: new[] { "attack", "bow", "projectile", "physical" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object>
+            {
+                ["baseDamageMin"] = 25f,
+                ["baseDamageMax"] = 25f,
+                ["damageType"] = "Physical",
+                ["manaCost"] = 0f,
+                ["projectileCount"] = 4,
+                ["spreadAngle"] = 10f, // Tight spread directly at front target
+                ["projectileSpeed"] = 600f,
+                ["castTime"] = 0.033f
+            },
+            Modifiers: null,
+            Description: "Fires 4 arrows."
+        );
+        loadout.PrimarySkill.SetActiveGem(splitArrowGem);
+
+        player.Position = new Vector2D(20f, 104f);
+
+        // Frontline monster (shields the backline)
+        var frontline = new MonsterInstance(1001, "Shield Zombie", MonsterRarity.Normal, 1, 500f, DamageType.Physical, 0, 0, 0.1f, 0, 10, 10, 10, 1, 1, initialPosition: new Vector2D(120f, 104f));
+        // Backline monster (standing directly behind frontline)
+        var backline = new MonsterInstance(1002, "Protected Peon", MonsterRarity.Normal, 1, 100f, DamageType.Physical, 0, 0, 0.1f, 0, 10, 10, 10, 1, 1, initialPosition: new Vector2D(220f, 104f));
+
+        var engine = new CombatEngine(player, loadout);
+        var mapDef = new MapDefinition("strand", "Strand Map", 1, 1, false, 10, 100, "Boss", "");
+        engine.StartMap(new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>()));
+        engine.ExilePosition = new Vector2D(20f, 104f);
+        engine.SetCurrentWave(new MonsterWave { WaveNumber = 1, Monsters = new[] { frontline, backline } });
+
+        int frontlineHits = 0;
+        int backlineHits = 0;
+
+        engine.OnDamageDealt += args =>
+        {
+            if (args.Target.InstanceId == frontline.InstanceId) frontlineHits++;
+            if (args.Target.InstanceId == backline.InstanceId) backlineHits++;
+        };
+
+        // Advance 1 tick to fire the volley (spawns 4 physical arrows)
+        engine.ProcessTick(1f / 30f);
+        AssertEqual(4, engine.ActiveProjectiles.Count, 0.01f, "Split arrow must spawn 4 physical in-flight projectiles");
+
+        // Clear active gem so no additional volleys are fired
+        loadout.PrimarySkill.ClearActiveGem();
+
+        // Advance 12 ticks to let all arrows reach the frontline monster
+        for (int i = 0; i < 12; i++)
+        {
+            engine.ProcessTick(1f / 30f);
+        }
+
+        // Frontline monster must be hit (1 damage hit due to non-shotgunning) and absorb arrows
+        AssertEqual(1, frontlineHits, 0.01f, "Frontline monster must be hit once by the volley");
+        AssertTrue(frontline.CurrentLife < 500f, "Frontline monster must have taken damage");
+
+        // Backline monster MUST NOT be hit, because Split Arrow projectiles are absorbed on hit and do not go through
+        AssertEqual(0, backlineHits, 0.01f, "Backline monster must take 0 hits because arrows are absorbed on frontline impact");
+        AssertEqual(100f, backline.CurrentLife, 0.01f, "Backline monster must remain at 100% life");
+        AssertEqual(0, engine.ActiveProjectiles.Count, 0.01f, "All projectiles must be completely absorbed on frontline impact");
     }
 }
+

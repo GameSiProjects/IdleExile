@@ -770,7 +770,8 @@ public sealed class CombatEngine
                 IsMelee: playerAttack.IsMelee,
                 IsCrit: false,
                 ConeAngle: coneAngle,
-                Projectiles: projectileVectors
+                Projectiles: projectileVectors,
+                PierceCount: isDefaultAttack ? 0 : Loadout.PrimarySkill.GetPierceCount()
             ));
 
             OnPlayerSkillFired?.Invoke(new PlayerSkillFiredEventArgs(
