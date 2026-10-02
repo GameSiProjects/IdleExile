@@ -13,6 +13,7 @@ public partial class Main : Control
 {
     private Label? _statusLabel;
     private Label? _statsLabel;
+    private Label? _charInfoLabel;
     private CheckBox? _alwaysOnTopCheckBox;
     private BattleViewport? _battleViewport;
     private MapDeviceBar? _mapDeviceBar;
@@ -20,7 +21,27 @@ public partial class Main : Control
     private Button? _gearNavButton;
     private Button? _resizeModeButton;
     private Button? _screenCycleButton;
+    private Button? _emergencyPortalButton;
+    private Button? _tabGearBtn;
+    private Button? _tabSkillsBtn;
+    private Button? _tabAtlasBtn;
+    private Button? _tabPassivesBtn;
+    private Button? _tabStashBtn;
+    private Control? _subTabBarContainer;
+    private Control? _tabWorkspaceContainer;
+    private Control? _mapDeviceMargin;
     private readonly WindowController _windowController = new();
+
+    public enum WorkspaceTab
+    {
+        Gear,
+        Skills,
+        Atlas,
+        Passives,
+        Stash
+    }
+
+    private WorkspaceTab _activeTab = WorkspaceTab.Gear;
 
     public DatabaseLoader Db { get; } = new();
     public PlayerState Player { get; } = new();
@@ -39,16 +60,33 @@ public partial class Main : Control
         _windowController.Setup(GetWindow());
         _windowController.WindowResized += OnWindowResized;
 
-        // 3. UI Node binding
+        // 3. UI Node binding conforming to 5-tier layout
         _statusLabel = GetNodeOrNull<Label>("%StatusLabel");
         _statsLabel = GetNodeOrNull<Label>("%StatsLabel");
+        _charInfoLabel = GetNodeOrNull<Label>("%CharInfoLabel");
         _alwaysOnTopCheckBox = GetNodeOrNull<CheckBox>("%AlwaysOnTopCheck");
         _resizeModeButton = GetNodeOrNull<Button>("%ResizeModeButton");
         _screenCycleButton = GetNodeOrNull<Button>("%ScreenCycleButton");
         _battleViewport = GetNodeOrNull<BattleViewport>("%BattleViewport");
         _mapDeviceBar = GetNodeOrNull<MapDeviceBar>("%MapDeviceBar");
         _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
-        _gearNavButton = GetNodeOrNull<Button>("%GearNavButton");
+        _emergencyPortalButton = GetNodeOrNull<Button>("%EmergencyPortalButton");
+        _subTabBarContainer = GetNodeOrNull<Control>("%SubTabBarContainer");
+        _tabWorkspaceContainer = GetNodeOrNull<Control>("%TabWorkspaceContainer");
+        _mapDeviceMargin = GetNodeOrNull<Control>("%MapDeviceMargin");
+
+        _tabGearBtn = GetNodeOrNull<Button>("%TabGearBtn");
+        _tabSkillsBtn = GetNodeOrNull<Button>("%TabSkillsBtn");
+        _tabAtlasBtn = GetNodeOrNull<Button>("%TabAtlasBtn");
+        _tabPassivesBtn = GetNodeOrNull<Button>("%TabPassivesBtn");
+        _tabStashBtn = GetNodeOrNull<Button>("%TabStashBtn");
+        _gearNavButton = _tabGearBtn ?? GetNodeOrNull<Button>("%GearNavButton");
+
+        if (_charInfoLabel != null)
+        {
+            string charName = Player.Archetype?.DisplayName ?? "Exile";
+            _charInfoLabel.Text = $"Lv.{Player.Level} {charName}";
+        }
 
         if (_alwaysOnTopCheckBox != null)
         {
@@ -67,7 +105,19 @@ public partial class Main : Control
             _screenCycleButton.Pressed += OnScreenCyclePressed;
         }
 
-        if (_gearNavButton != null)
+        if (_emergencyPortalButton != null)
+        {
+            _emergencyPortalButton.Pressed += OnEmergencyPortalTriggered;
+        }
+
+        // Wire Tab Navigation
+        if (_tabGearBtn != null) _tabGearBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Gear);
+        if (_tabSkillsBtn != null) _tabSkillsBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Skills);
+        if (_tabAtlasBtn != null) _tabAtlasBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Atlas);
+        if (_tabPassivesBtn != null) _tabPassivesBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Passives);
+        if (_tabStashBtn != null) _tabStashBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Stash);
+
+        if (_gearNavButton != null && _gearNavButton != _tabGearBtn)
         {
             _gearNavButton.Pressed += OnGearNavPressed;
         }
@@ -97,7 +147,7 @@ public partial class Main : Control
         // 6. Run Core Unit Tests only if explicitly requested via CLI argument ('--run-core-tests')
         if (OS.GetCmdlineArgs().Contains("--run-core-tests") || OS.GetCmdlineUserArgs().Contains("--run-core-tests"))
         {
-            RunCoreUnitTests();
+            RunCoreUnitTests(this);
         }
 
         if (_statusLabel != null)
@@ -141,6 +191,11 @@ public partial class Main : Control
         }
 
         // 3. Update Status and Telemetry
+        if (_charInfoLabel != null)
+        {
+            _charInfoLabel.Text = $"Lv.{Player.Level} {archetype.DisplayName}";
+        }
+
         if (_statusLabel != null)
         {
             _statusLabel.Text = $"Exile Awakened: {archetype.DisplayName} • Step 1: Click [ACTIVATE MAP]";
@@ -449,6 +504,11 @@ public partial class Main : Control
     {
         if (_battleViewport == null) return;
 
+        if (_charInfoLabel != null)
+        {
+            _charInfoLabel.Text = "Lv.72 Juggernaut";
+        }
+
         _battleViewport.UpdateEquippedWeapons(Player.MainHand?.BaseDefinition, Player.Gear.OffHand);
 
         Db.Maps.TryGetValue("ruined_courtyard", out var mapDef);
@@ -480,24 +540,58 @@ public partial class Main : Control
         _mapDeviceBar?.SetPortalActive(true);
     }
 
+    /// <summary>
+    /// Switches the active view inside TabWorkspaceContainer.
+    /// In accordance with Core Objective #1, BattleViewport is persistent and NEVER hidden.
+    /// </summary>
+    public void SwitchWorkspaceTab(WorkspaceTab tab)
+    {
+        _activeTab = tab;
+
+        // If window is currently in compact mode, auto-expand upward to full height!
+        if (!_windowController.IsExpanded)
+        {
+            _windowController.ExpandWindow(keepBottom: true);
+        }
+
+        // Update segmented tab button states
+        if (_tabGearBtn != null) _tabGearBtn.ButtonPressed = (tab == WorkspaceTab.Gear);
+        if (_tabSkillsBtn != null) _tabSkillsBtn.ButtonPressed = (tab == WorkspaceTab.Skills);
+        if (_tabAtlasBtn != null) _tabAtlasBtn.ButtonPressed = (tab == WorkspaceTab.Atlas);
+        if (_tabPassivesBtn != null) _tabPassivesBtn.ButtonPressed = (tab == WorkspaceTab.Passives);
+        if (_tabStashBtn != null) _tabStashBtn.ButtonPressed = (tab == WorkspaceTab.Stash);
+
+        // Switch workspace views
+        if (_equipmentView != null)
+        {
+            _equipmentView.Visible = (tab == WorkspaceTab.Gear);
+            if (tab == WorkspaceTab.Gear)
+            {
+                _equipmentView.SetPlayer(Player);
+                _equipmentView.RefreshView();
+            }
+        }
+
+        if (_mapDeviceMargin != null)
+        {
+            _mapDeviceMargin.Visible = (tab == WorkspaceTab.Atlas);
+        }
+
+        // Persistent Combat Viewport: NEVER hide BattleViewport!
+        if (_battleViewport != null)
+        {
+            _battleViewport.Visible = true;
+        }
+
+        if (tab != WorkspaceTab.Gear && tab != WorkspaceTab.Atlas && _statusLabel != null)
+        {
+            _statusLabel.Text = $"{tab} Tab coming in upcoming phase!";
+        }
+    }
+
     private void OnGearNavPressed()
     {
-        if (_equipmentView == null || _battleViewport == null) return;
-
-        bool willShow = !_equipmentView.Visible;
-        _equipmentView.Visible = willShow;
-        _battleViewport.Visible = !willShow;
-
-        if (willShow)
-        {
-            // If window is currently in compact mode, auto-expand upward to full height!
-            if (!_windowController.IsExpanded)
-            {
-                _windowController.ExpandWindow(keepBottom: true);
-            }
-            _equipmentView.SetPlayer(Player);
-            _equipmentView.RefreshView();
-        }
+        SwitchWorkspaceTab(WorkspaceTab.Gear);
     }
 
     private void OnResizeButtonPressed()
@@ -514,11 +608,20 @@ public partial class Main : Control
     {
         UpdateResizeButtonText(isExpanded);
 
-        // When shrunk to compact mode, if EquipmentView is open, close it to restore combat viewport
-        if (!isExpanded && _equipmentView != null && _equipmentView.Visible)
+        // Compact Mode: hide sub tab bar and workspace
+        // Expanded Mode: show sub tab bar and workspace, restoring active tab view
+        if (_subTabBarContainer != null) _subTabBarContainer.Visible = isExpanded;
+        if (_tabWorkspaceContainer != null) _tabWorkspaceContainer.Visible = isExpanded;
+
+        // Persistent Combat Viewport is NEVER hidden!
+        if (_battleViewport != null)
         {
-            _equipmentView.Visible = false;
-            if (_battleViewport != null) _battleViewport.Visible = true;
+            _battleViewport.Visible = true;
+        }
+
+        if (isExpanded)
+        {
+            SwitchWorkspaceTab(_activeTab);
         }
 
         GD.Print($"[Main] Window resized: {newSize.X}x{newSize.Y} (Expanded: {isExpanded})");
@@ -538,7 +641,20 @@ public partial class Main : Control
     private void OnEquipmentClosed()
     {
         if (_equipmentView != null) _equipmentView.Visible = false;
+        if (_tabGearBtn != null) _tabGearBtn.ButtonPressed = false;
         if (_battleViewport != null) _battleViewport.Visible = true;
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
+        {
+            if (keyEvent.Keycode == Key.Space)
+            {
+                OnEmergencyPortalTriggered();
+                GetViewport().SetInputAsHandled();
+            }
+        }
     }
 
     private void OnAlwaysOnTopToggled(bool isToggled)
@@ -551,7 +667,7 @@ public partial class Main : Control
     /// Explicit runner for pure C# Core simulation & math unit tests.
     /// Only executed if '--run-core-tests' is passed via command line.
     /// </summary>
-    public static void RunCoreUnitTests()
+    public static void RunCoreUnitTests(Main? mainInstance = null)
     {
         GD.Print("[Tests] Running pure C# Core Unit Tests...");
         IdleExile.Core.Tests.DamageCalculatorTests.RunAll();
@@ -565,6 +681,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.ExileMovementControllerTests.RunAll();
         IdleExile.Core.Tests.CorridorMonsterLayoutTests.RunAll();
         IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
+        IdleExile.UI.MainLayoutTests.RunAll(mainInstance);
         GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }
 }

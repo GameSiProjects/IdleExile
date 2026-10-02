@@ -71,7 +71,7 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 ### 🟡 Phase 1: Tái Cấu Trúc Khung Khung Gốc (`Main.tscn` & Scene Shell)
 > **Mục tiêu:** Xây dựng khung xương UI 5 tầng cố định, loại bỏ debug card rườm rà, tích hợp mượt mà với `WindowController`.
 
-- [ ] **Task 1.1: Tái cấu trúc VBox chính trong `scenes/Main.tscn`**
+- [x] **Task 1.1: Tái cấu trúc VBox chính trong `scenes/Main.tscn`**
   - Chuyển `MainLayout` thành 5 khu vực phân tầng:
     1. `TopHeaderBar` (36px): Title, Level/Class, Nút AlwaysOnTop Pin, Nút Resize `[⤡ Min]/[⤢ Expand]`, Nút Multi-Monitor `[🖥]`.
     2. `CombatViewportContainer` (260px): Cố định luôn hiển thị, bọc `BattleViewport`.
