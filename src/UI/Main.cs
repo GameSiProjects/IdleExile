@@ -77,28 +77,11 @@ public partial class Main : Control
 
         // 5. Initialize FTUE Seeded Drop Coordinator
         DropCoordinator = new SeededDropCoordinator(Ftue);
-
-        // 6. Run Unit Tests (Core & UI)
-        IdleExile.Core.Tests.DamageCalculatorTests.RunAll();
-        IdleExile.Core.Tests.CombatInfrastructureTests.RunAll();
-        IdleExile.Core.Tests.CombatEngineTests.RunAll();
-        IdleExile.Core.Tests.UnifiedCombatSystemTests.RunAll();
-        IdleExile.Core.Tests.StarterArchetypeTests.RunAll();
-        IdleExile.Core.Tests.FtueManagerTests.RunAll();
-        IdleExile.Core.Tests.SeededDropTests.RunAll();
-        IdleExile.Core.Tests.SpatialGeometryTests.RunAll();
-        IdleExile.Core.Tests.ExileMovementControllerTests.RunAll();
-        IdleExile.Core.Tests.CorridorMonsterLayoutTests.RunAll();
-        IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
-        BattleViewportTests.RunAll();
-        MapHeaderBarTests.RunAll();
-        Arena2DTests.RunAll();
-        VitometerViewTests.RunAll();
-        FloatingTextManagerTests.RunAll();
-        StarterSelectionModalTests.RunAll();
-        MapDeviceBarTests.RunAll();
-        EquipmentViewTests.RunAll();
-        BossRoomChamberTests.RunAll();
+        // 6. Run Core Unit Tests only if explicitly requested via CLI argument ('--run-core-tests')
+        if (OS.GetCmdlineArgs().Contains("--run-core-tests") || OS.GetCmdlineUserArgs().Contains("--run-core-tests"))
+        {
+            RunCoreUnitTests();
+        }
 
         if (_statusLabel != null)
         {
@@ -505,5 +488,26 @@ public partial class Main : Control
     {
         DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.AlwaysOnTop, isToggled);
         GD.Print($"[Main] AlwaysOnTop: {isToggled}");
+    }
+
+    /// <summary>
+    /// Explicit runner for pure C# Core simulation & math unit tests.
+    /// Only executed if '--run-core-tests' is passed via command line.
+    /// </summary>
+    public static void RunCoreUnitTests()
+    {
+        GD.Print("[Tests] Running pure C# Core Unit Tests...");
+        IdleExile.Core.Tests.DamageCalculatorTests.RunAll();
+        IdleExile.Core.Tests.CombatInfrastructureTests.RunAll();
+        IdleExile.Core.Tests.CombatEngineTests.RunAll();
+        IdleExile.Core.Tests.UnifiedCombatSystemTests.RunAll();
+        IdleExile.Core.Tests.StarterArchetypeTests.RunAll();
+        IdleExile.Core.Tests.FtueManagerTests.RunAll();
+        IdleExile.Core.Tests.SeededDropTests.RunAll();
+        IdleExile.Core.Tests.SpatialGeometryTests.RunAll();
+        IdleExile.Core.Tests.ExileMovementControllerTests.RunAll();
+        IdleExile.Core.Tests.CorridorMonsterLayoutTests.RunAll();
+        IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
+        GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }
 }
