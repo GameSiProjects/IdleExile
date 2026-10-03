@@ -92,7 +92,7 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 ### 🟢 Phase 2: Bố Cục Lại Bảng Trang Bị 10 Ô Vừa Vặn 410px (`EquipmentView.tscn`)
 > **Mục tiêu:** Thu gọn `EquipmentView` từ chiều cao 680px xuống tối đa 410px để vừa khít trong không gian tab mà không bị cuộn trang khó chịu.
 
-- [ ] **Task 2.1: Tối ưu kích thước Doll Người Giấy (10 Slots)**
+- [x] **Task 2.1: Tối ưu kích thước Doll Người Giấy (10 Slots)**
   - Thu gọn độ cao cụm Doll từ 230px xuống **170px**:
     - Hàng 1 (Nón): 52x30px
     - Hàng 2 (Vũ khí 1 - Thân áo - Vũ khí 2): 52x30px

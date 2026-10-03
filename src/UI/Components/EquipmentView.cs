@@ -338,8 +338,8 @@ public partial class EquipmentView : Control
                 GearSlot.Gloves => item != null ? "🧤 GLOVE" : "GLOVE",
                 GearSlot.Boots => item != null ? "🥾 BOOT" : "BOOT",
                 GearSlot.Amulet => item != null ? "📿 AMU" : "AMU",
-                GearSlot.Ring1 => item != null ? "💍 RING" : "RING 1",
-                GearSlot.Ring2 => item != null ? "💍 RING" : "RING 2",
+                GearSlot.Ring1 => item != null ? "💍 R1" : "R1",
+                GearSlot.Ring2 => item != null ? "💍 R2" : "R2",
                 GearSlot.Belt => item != null ? "🎗️ BELT" : "BELT",
                 _ => btn.Text
             };

@@ -27,6 +27,10 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot_btn"]
+content_margin_left = 2.0
+content_margin_top = 1.0
+content_margin_right = 2.0
+content_margin_bottom = 1.0
 bg_color = Color(0.09, 0.095, 0.13, 0.95)
 border_width_left = 1
 border_width_top = 1
@@ -87,7 +91,7 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [node name="EquipmentView" type="Control"]
-custom_minimum_size = Vector2(440, 680)
+custom_minimum_size = Vector2(0, 0)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -107,14 +111,14 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
 
 [node name="RootMargin" type="MarginContainer" parent="MainPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
 
 [node name="MainVBox" type="VBoxContainer" parent="MainPanel/RootMargin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="HeaderHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox"]
 layout_mode = 2
@@ -150,25 +154,26 @@ theme_override_colors/font_color = Color(0.85, 0.4, 0.4, 1)
 text = "✕"
 
 [node name="TopSectionHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox"]
+custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="DollCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox"]
-custom_minimum_size = Vector2(215, 230)
+custom_minimum_size = Vector2(210, 170)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="DollMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard"]
 layout_mode = 2
-theme_override_constants/margin_left = 4
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 4
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_left = 3
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 3
+theme_override_constants/margin_bottom = 2
 
 [node name="DollVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin"]
 layout_mode = 2
 alignment = 1
-theme_override_constants/separation = 4
+theme_override_constants/separation = 2
 
 [node name="HelmetRow" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox"]
 layout_mode = 2
@@ -180,22 +185,23 @@ theme_override_constants/separation = 1
 
 [node name="SlotHelmet" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/HelmetRow/SlotHelmetContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 34)
+custom_minimum_size = Vector2(52, 30)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "HELM"
 
 [node name="SlotHelmetBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/HelmetRow/SlotHelmetContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 2)
+custom_minimum_size = Vector2(52, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
 [node name="SlotHelmetLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/HelmetRow/SlotHelmetContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 12)
+custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
@@ -211,22 +217,23 @@ theme_override_constants/separation = 1
 
 [node name="SlotMainHand" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotMainHandContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 34)
+custom_minimum_size = Vector2(52, 30)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "MAIN"
 
 [node name="SlotMainHandBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotMainHandContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 2)
+custom_minimum_size = Vector2(52, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
 [node name="SlotMainHandLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotMainHandContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 12)
+custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
@@ -237,22 +244,23 @@ theme_override_constants/separation = 1
 
 [node name="SlotBodyArmour" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotBodyContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 34)
+custom_minimum_size = Vector2(52, 30)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "BODY"
 
 [node name="SlotBodyArmourBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotBodyContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 2)
+custom_minimum_size = Vector2(52, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
 [node name="SlotBodyArmourLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotBodyContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 12)
+custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
@@ -263,22 +271,23 @@ theme_override_constants/separation = 1
 
 [node name="SlotOffHand" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotOffHandContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 34)
+custom_minimum_size = Vector2(52, 30)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "OFF"
 
 [node name="SlotOffHandBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotOffHandContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 2)
+custom_minimum_size = Vector2(52, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
 [node name="SlotOffHandLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/TorsoRow/SlotOffHandContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 12)
+custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
@@ -286,7 +295,7 @@ clip_text = true
 [node name="LimbsRow" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox"]
 layout_mode = 2
 alignment = 1
-theme_override_constants/separation = 12
+theme_override_constants/separation = 24
 
 [node name="SlotGlovesContainer" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/LimbsRow"]
 layout_mode = 2
@@ -294,22 +303,23 @@ theme_override_constants/separation = 1
 
 [node name="SlotGloves" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/LimbsRow/SlotGlovesContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 30)
+custom_minimum_size = Vector2(52, 28)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "GLOVE"
 
 [node name="SlotGlovesBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/LimbsRow/SlotGlovesContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 2)
+custom_minimum_size = Vector2(52, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
 [node name="SlotGlovesLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/LimbsRow/SlotGlovesContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 12)
+custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
@@ -320,175 +330,178 @@ theme_override_constants/separation = 1
 
 [node name="SlotBoots" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/LimbsRow/SlotBootsContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 30)
+custom_minimum_size = Vector2(52, 28)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "BOOT"
 
 [node name="SlotBootsBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/LimbsRow/SlotBootsContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 2)
+custom_minimum_size = Vector2(52, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
 [node name="SlotBootsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/LimbsRow/SlotBootsContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(62, 12)
+custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="JewelleryRow" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox"]
+[node name="AccessoriesRow" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox"]
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 4
 
-[node name="SlotAmuletContainer" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow"]
+[node name="SlotAmuletContainer" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow"]
 layout_mode = 2
 theme_override_constants/separation = 1
 
-[node name="SlotAmulet" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotAmuletContainer"]
+[node name="SlotAmulet" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotAmuletContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 28)
+custom_minimum_size = Vector2(46, 26)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "AMU"
 
-[node name="SlotAmuletBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotAmuletContainer"]
+[node name="SlotAmuletBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotAmuletContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 2)
+custom_minimum_size = Vector2(46, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
-[node name="SlotAmuletLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotAmuletContainer"]
+[node name="SlotAmuletLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotAmuletContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 12)
+custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="SlotRing1Container" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow"]
+[node name="SlotRing1Container" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow"]
 layout_mode = 2
 theme_override_constants/separation = 1
 
-[node name="SlotRing1" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotRing1Container"]
+[node name="SlotRing1" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotRing1Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 28)
+custom_minimum_size = Vector2(46, 26)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "R1"
 
-[node name="SlotRing1Border" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotRing1Container"]
+[node name="SlotRing1Border" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotRing1Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 2)
+custom_minimum_size = Vector2(46, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
-[node name="SlotRing1Label" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotRing1Container"]
+[node name="SlotRing1Label" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotRing1Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 12)
+custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="SlotRing2Container" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow"]
+[node name="SlotRing2Container" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow"]
 layout_mode = 2
 theme_override_constants/separation = 1
 
-[node name="SlotRing2" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotRing2Container"]
+[node name="SlotRing2" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotRing2Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 28)
+custom_minimum_size = Vector2(46, 26)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "R2"
 
-[node name="SlotRing2Border" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotRing2Container"]
+[node name="SlotRing2Border" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotRing2Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 2)
+custom_minimum_size = Vector2(46, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
-[node name="SlotRing2Label" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/JewelleryRow/SlotRing2Container"]
+[node name="SlotRing2Label" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotRing2Container"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 12)
+custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
 
-[node name="BeltRow" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox"]
-layout_mode = 2
-alignment = 1
-
-[node name="SlotBeltContainer" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/BeltRow"]
+[node name="SlotBeltContainer" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow"]
 layout_mode = 2
 theme_override_constants/separation = 1
 
-[node name="SlotBelt" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/BeltRow/SlotBeltContainer"]
+[node name="SlotBelt" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotBeltContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(74, 26)
+custom_minimum_size = Vector2(46, 26)
 layout_mode = 2
+theme_override_font_sizes/font_size = 8
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_btn")
 text = "BELT"
 
-[node name="SlotBeltBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/BeltRow/SlotBeltContainer"]
+[node name="SlotBeltBorder" type="ColorRect" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotBeltContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(74, 2)
+custom_minimum_size = Vector2(46, 2)
 layout_mode = 2
 color = Color(0.6, 0.6, 0.65, 1)
 
-[node name="SlotBeltLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/BeltRow/SlotBeltContainer"]
+[node name="SlotBeltLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox/AccessoriesRow/SlotBeltContainer"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(74, 12)
+custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 7
 text = "(Trống)"
 horizontal_alignment = 1
 clip_text = true
 
 [node name="BenchmarkCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox"]
+custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="BenchmarkMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard"]
 layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
 
 [node name="BenchmarkVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin"]
 layout_mode = 2
-theme_override_constants/separation = 3
+theme_override_constants/separation = 2
 
 [node name="SurvivalHeader" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.72, 0.25, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 9
 text = "SURVIVAL BENCHMARK"
 
 [node name="EhpBenchmarkHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 layout_mode = 2
+theme_override_constants/separation = 4
 
 [node name="EhpTitle" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/EhpBenchmarkHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "EHP:"
 
 [node name="EhpBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/EhpBenchmarkHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 11
 text = "5,240"
 
 [node name="DefensesGrid" type="GridContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
@@ -500,25 +513,25 @@ theme_override_constants/v_separation = 1
 [node name="ArmourBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/DefensesGrid"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "Armour: 8,450"
 
 [node name="EvasionBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/DefensesGrid"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "Evasion: 1,200"
 
 [node name="EsBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/DefensesGrid"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "ES: 450"
 
 [node name="ChaosResBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/DefensesGrid"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "Chaos: 32%"
 
 [node name="ResGrid" type="GridContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
@@ -530,38 +543,38 @@ theme_override_constants/v_separation = 1
 [node name="FireResBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/ResGrid"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "Fire: 75%"
 
 [node name="ColdResBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/ResGrid"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "Cold: 75%"
 
 [node name="LightResBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/ResGrid"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 8
 text = "Light: 75%"
 
 [node name="OffenseHeader" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.72, 0.25, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 9
 text = "OFFENSIVE OUTPUT"
 
 [node name="TotalDpsBenchmarkLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.75, 0.25, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "Total DPS: 14,280"
 
 [node name="AttributesHeader" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.72, 0.25, 1)
-theme_override_font_sizes/font_size = 10
+theme_override_font_sizes/font_size = 9
 text = "SOFT ATTRIBUTES"
 
 [node name="StrStatLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
@@ -570,6 +583,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.45, 0.45, 1)
 theme_override_font_sizes/font_size = 8
 text = "STR: 32 (+15 Life, +6% Armour)"
+clip_text = true
 
 [node name="DexStatLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 unique_name_in_owner = true
@@ -577,6 +591,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.85, 0.45, 1)
 theme_override_font_sizes/font_size = 8
 text = "DEX: 14 (+28 Acc, +2% Eva)"
+clip_text = true
 
 [node name="IntStatLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 unique_name_in_owner = true
@@ -584,6 +599,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.65, 0.95, 1)
 theme_override_font_sizes/font_size = 8
 text = "INT: 14 (+7 Mana, +2% ES)"
+clip_text = true
 
 [node name="TooltipCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox"]
 layout_mode = 2

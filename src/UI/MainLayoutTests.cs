@@ -21,6 +21,7 @@ public static class MainLayoutTests
             TestTabNavigation(existingMain);
             TestModeSwitching(existingMain);
             TestStatusCardEliminationAndDiagnostics(existingMain);
+            TestOptimizedEquipmentDollLayout(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -287,6 +288,109 @@ public static class MainLayoutTests
             }
         }
 #endif
+    }
+
+    /// <summary>
+    /// Verifies Task 2.1: Optimized 10-Slot Paper Doll and Side-by-Side Survival Benchmark Card.
+    /// Conforms to docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md Phase 2:
+    /// - Doll Card height collapsed to 170px (from 230px).
+    /// - Row 1 (Helmet): 52x30px
+    /// - Row 2 (MainHand, BodyArmour, OffHand): 52x30px
+    /// - Row 3 (Gloves, Boots): 52x28px
+    /// - Row 4 (Amulet, Ring 1, Ring 2, Belt): 46x26px
+    /// - DollVBox has exactly 4 rows (Belt integrated into Row 4).
+    /// - Survival Benchmark card placed side-by-side with DollCard inside TopSectionHBox (height 170px).
+    /// </summary>
+    private static void TestOptimizedEquipmentDollLayout(Main main)
+    {
+        var equipView = main.GetNodeOrNull<EquipmentView>("%EquipmentView");
+        AssertNotNull(equipView, "EquipmentView must exist in TabWorkspaceContainer");
+
+        var topSection = equipView.GetNodeOrNull<HBoxContainer>("MainPanel/RootMargin/MainVBox/TopSectionHBox");
+        AssertNotNull(topSection, "TopSectionHBox must exist");
+        AssertTrue(Mathf.IsEqualApprox(topSection.CustomMinimumSize.Y, 170f), $"TopSectionHBox height must be 170px, was {topSection.CustomMinimumSize.Y}");
+
+        var dollCard = equipView.GetNodeOrNull<Control>("MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard");
+        AssertNotNull(dollCard, "DollCard must exist in TopSectionHBox");
+        AssertTrue(Mathf.IsEqualApprox(dollCard.CustomMinimumSize.Y, 170f), $"DollCard height must be 170px, was {dollCard.CustomMinimumSize.Y}");
+        AssertTrue(Mathf.IsEqualApprox(dollCard.CustomMinimumSize.X, 210f), $"DollCard width must be 210px, was {dollCard.CustomMinimumSize.X}");
+
+        var dollVBox = equipView.GetNodeOrNull<VBoxContainer>("MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard/DollMargin/DollVBox");
+        AssertNotNull(dollVBox, "DollVBox must exist");
+        AssertTrue(dollVBox.GetChildCount() == 4, $"DollVBox must contain exactly 4 rows (Belt integrated into Row 4), had {dollVBox.GetChildCount()}");
+
+        // Row 1: Helmet 52x30
+        var helmBtn = equipView.GetNodeOrNull<Button>("%SlotHelmet");
+        AssertNotNull(helmBtn, "SlotHelmet button must exist");
+        AssertTrue(Mathf.IsEqualApprox(helmBtn.CustomMinimumSize.X, 52f) && Mathf.IsEqualApprox(helmBtn.CustomMinimumSize.Y, 30f),
+            $"Helmet button must be 52x30, was {helmBtn.CustomMinimumSize}");
+
+        // Row 2: MainHand, Body, OffHand 52x30
+        var mainHandBtn = equipView.GetNodeOrNull<Button>("%SlotMainHand");
+        AssertNotNull(mainHandBtn, "SlotMainHand button must exist");
+        AssertTrue(Mathf.IsEqualApprox(mainHandBtn.CustomMinimumSize.X, 52f) && Mathf.IsEqualApprox(mainHandBtn.CustomMinimumSize.Y, 30f),
+            $"MainHand button must be 52x30, was {mainHandBtn.CustomMinimumSize}");
+
+        var bodyBtn = equipView.GetNodeOrNull<Button>("%SlotBodyArmour");
+        AssertNotNull(bodyBtn, "SlotBodyArmour button must exist");
+        AssertTrue(Mathf.IsEqualApprox(bodyBtn.CustomMinimumSize.X, 52f) && Mathf.IsEqualApprox(bodyBtn.CustomMinimumSize.Y, 30f),
+            $"BodyArmour button must be 52x30, was {bodyBtn.CustomMinimumSize}");
+
+        var offHandBtn = equipView.GetNodeOrNull<Button>("%SlotOffHand");
+        AssertNotNull(offHandBtn, "SlotOffHand button must exist");
+        AssertTrue(Mathf.IsEqualApprox(offHandBtn.CustomMinimumSize.X, 52f) && Mathf.IsEqualApprox(offHandBtn.CustomMinimumSize.Y, 30f),
+            $"OffHand button must be 52x30, was {offHandBtn.CustomMinimumSize}");
+
+        // Row 3: Gloves, Boots 52x28
+        var glovesBtn = equipView.GetNodeOrNull<Button>("%SlotGloves");
+        AssertNotNull(glovesBtn, "SlotGloves button must exist");
+        AssertTrue(Mathf.IsEqualApprox(glovesBtn.CustomMinimumSize.X, 52f) && Mathf.IsEqualApprox(glovesBtn.CustomMinimumSize.Y, 28f),
+            $"Gloves button must be 52x28, was {glovesBtn.CustomMinimumSize}");
+
+        var bootsBtn = equipView.GetNodeOrNull<Button>("%SlotBoots");
+        AssertNotNull(bootsBtn, "SlotBoots button must exist");
+        AssertTrue(Mathf.IsEqualApprox(bootsBtn.CustomMinimumSize.X, 52f) && Mathf.IsEqualApprox(bootsBtn.CustomMinimumSize.Y, 28f),
+            $"Boots button must be 52x28, was {bootsBtn.CustomMinimumSize}");
+
+        // Row 4: Amulet, Ring 1, Ring 2, Belt 46x26
+        var amuBtn = equipView.GetNodeOrNull<Button>("%SlotAmulet");
+        AssertNotNull(amuBtn, "SlotAmulet button must exist");
+        AssertTrue(Mathf.IsEqualApprox(amuBtn.CustomMinimumSize.X, 46f) && Mathf.IsEqualApprox(amuBtn.CustomMinimumSize.Y, 26f),
+            $"Amulet button must be 46x26, was {amuBtn.CustomMinimumSize}");
+
+        var ring1Btn = equipView.GetNodeOrNull<Button>("%SlotRing1");
+        AssertNotNull(ring1Btn, "SlotRing1 button must exist");
+        AssertTrue(Mathf.IsEqualApprox(ring1Btn.CustomMinimumSize.X, 46f) && Mathf.IsEqualApprox(ring1Btn.CustomMinimumSize.Y, 26f),
+            $"Ring1 button must be 46x26, was {ring1Btn.CustomMinimumSize}");
+
+        var ring2Btn = equipView.GetNodeOrNull<Button>("%SlotRing2");
+        AssertNotNull(ring2Btn, "SlotRing2 button must exist");
+        AssertTrue(Mathf.IsEqualApprox(ring2Btn.CustomMinimumSize.X, 46f) && Mathf.IsEqualApprox(ring2Btn.CustomMinimumSize.Y, 26f),
+            $"Ring2 button must be 46x26, was {ring2Btn.CustomMinimumSize}");
+
+        var beltBtn = equipView.GetNodeOrNull<Button>("%SlotBelt");
+        AssertNotNull(beltBtn, "SlotBelt button must exist");
+        AssertTrue(Mathf.IsEqualApprox(beltBtn.CustomMinimumSize.X, 46f) && Mathf.IsEqualApprox(beltBtn.CustomMinimumSize.Y, 26f),
+            $"Belt button must be 46x26, was {beltBtn.CustomMinimumSize}");
+
+        // Verify Belt is a sibling in Row 4
+        var row4 = dollVBox.GetChild<HBoxContainer>(3);
+        AssertNotNull(row4, "Row 4 must be an HBoxContainer");
+        AssertTrue(row4.GetChildCount() == 4, $"Row 4 must contain 4 accessory slots (Amulet, Ring 1, Ring 2, Belt), had {row4.GetChildCount()}");
+
+        // Verify Survival Benchmark Card
+        var benchmarkCard = equipView.GetNodeOrNull<Control>("MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard");
+        AssertNotNull(benchmarkCard, "BenchmarkCard must exist in TopSectionHBox side-by-side with DollCard");
+        AssertTrue(Mathf.IsEqualApprox(benchmarkCard.CustomMinimumSize.Y, 170f), $"BenchmarkCard height must be 170px, was {benchmarkCard.CustomMinimumSize.Y}");
+
+        var ehpBenchmark = equipView.GetNodeOrNull<Label>("%EhpBenchmarkLabel");
+        AssertNotNull(ehpBenchmark, "EhpBenchmarkLabel must exist in BenchmarkCard");
+
+        var dpsBenchmark = equipView.GetNodeOrNull<Label>("%TotalDpsBenchmarkLabel");
+        AssertNotNull(dpsBenchmark, "TotalDpsBenchmarkLabel must exist in BenchmarkCard");
+
+        var strBenchmark = equipView.GetNodeOrNull<Label>("%StrStatLabel");
+        AssertNotNull(strBenchmark, "StrStatLabel must exist in BenchmarkCard");
     }
 
     private static void AssertNotNull([System.Diagnostics.CodeAnalysis.NotNull] object? obj, string message)
