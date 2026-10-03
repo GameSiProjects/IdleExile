@@ -677,6 +677,50 @@ public static class MainLayoutTests
         bool unsocketed = gemView.UnsocketGem(0);
         AssertTrue(unsocketed, "UnsocketGem must remove support gem at slot 0");
         AssertEqual(0, gemView.CurrentSetup.SocketedSupports.Count);
+
+        // 5. Task 3.2: Gem Tag Matching Validator Interactive Hover & Multiplier Tests
+        var meleePhys = new GemDefinition(
+            Id: "melee_phys_test",
+            Name: "Melee Phys Test",
+            Category: "Support",
+            Color: "Red",
+            Tags: null,
+            RequiredTags: new[] { "melee", "physical", "attack" },
+            BaseStats: null,
+            Modifiers: new Dictionary<string, object> { ["morePhysicalDamagePercent"] = 35f },
+            Description: "Melee Phys Test"
+        );
+
+        // Fireball is active: supportGem (projectile) is COMPATIBLE
+        gemView.SetHoveredGemForTesting(supportGem);
+        AssertTrue(gemView.IsActiveSocketHighlighted, "Active socket (Fireball) must light up when compatible Support (projectile) is hovered");
+        AssertFalse(gemView.IsActiveSocketDimmed, "Active socket must not be dimmed when compatible Support is hovered");
+
+        // Fireball is active: meleePhys (melee) is INCOMPATIBLE
+        gemView.SetHoveredGemForTesting(meleePhys);
+        AssertFalse(gemView.IsActiveSocketHighlighted, "Active socket (Fireball) must NOT light up when incompatible Support (melee) is hovered");
+        AssertTrue(gemView.IsActiveSocketDimmed, "Active socket must be dimmed when incompatible Support is hovered");
+
+        // Unhover: neutral state restored
+        gemView.SetHoveredGemForTesting(null);
+        AssertFalse(gemView.IsActiveSocketHighlighted, "Active socket highlight must clear when unhovered");
+        AssertFalse(gemView.IsActiveSocketDimmed, "Active socket dimming must clear when unhovered");
+
+        // Multi-slot highlight test: Slot 0 = Cleave, Slot 1 = Fireball
+        var cleave = new GemDefinition("cleave_test", "Cleave Test", "Active", "Red", new[] { "attack", "melee", "aoe", "physical" }, null, null, null, "Cleave");
+        main.Loadout.GetSetupAt(0).SetActiveGem(cleave);
+        main.Loadout.GetSetupAt(1).SetActiveGem(fireball);
+
+        gemView.SetHoveredGemForTesting(meleePhys);
+        AssertTrue(gemView.IsSlotButtonHighlighted(0), "Slot 0 tab (Cleave) must be highlighted when Melee Phys is hovered");
+        AssertFalse(gemView.IsSlotButtonHighlighted(1), "Slot 1 tab (Fireball) must NOT be highlighted when Melee Phys is hovered");
+
+        gemView.SetHoveredGemForTesting(null);
+
+        // Verify MetricDamageMultLabel displays compounded product ∏(1+More)
+        var metricLabel = gemView.GetNodeOrNull<Label>("%MetricDamageMultLabel");
+        AssertNotNull(metricLabel, "MetricDamageMultLabel must exist");
+        AssertTrue(metricLabel.Text.Contains("∏"), $"MetricDamageMultLabel must display product symbol ∏, was '{metricLabel.Text}'");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

@@ -128,9 +128,18 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
   - Khay Candidate Drawer (`CandidateScroll` & `CandidateHBox`): Bộ lọc `[Tất Cả]`, `[Active]`, `[Support]`, hỗ trợ 1-click Inspect, double-click Socketing, nút `[Lắp Gem]` và `[Gỡ Gem]`.
   - Tích hợp liền mạch vào `Main.tscn` và `Main.cs`: Bấm nút `[💎 Gems]` trên Sub-Tab Bar hiển thị `GemView` tức thì trong khi `BattleViewport` vẫn duy trì 100% hiển thị liên tục (Persistent Combat Viewport).
   - Vượt qua 100% bài kiểm thử tự động `GemSystemTests` và `TestGemViewIntegration` trong `MainLayoutTests`.
-- [ ] **Task 3.2: Bộ Thẩm Định Tương Thích Ngọc (Gem Tag Matching Validator)**
-  - Khi hover hoặc chọn Support Gem, tự động làm sáng các Active Gem có tag tương thích (ví dụ: *Support Melee Physical Damage* chỉ sáng khi cắm cùng *Cleave*).
-  - Hiển thị trực tiếp hệ số nhân sát thương tổng hợp: $\prod (1 + \text{More Damage})$.
+- [x] **Task 3.2: Bộ Thẩm Định Tương Thích Ngọc (Gem Tag Matching Validator)**
+  - Xây dựng Pure C# engine `GemCompatibilityValidator.cs` (`src/Core/Services/`): Độc lập hoàn toàn với Godot Node, 100% headless testable.
+  - Thẩm định thẻ kỹ năng chặt chẽ theo chuẩn PoE: Quy tắc Archetype nghiêm ngặt (Melee chỉ hỗ trợ đòn cận chiến, Projectile chỉ hỗ trợ đạn đạo, AoE chỉ hỗ trợ diện rộng).
+  - Khi hover hoặc chọn Support Gem trong khay Candidate Drawer hoặc Socket Hub:
+    - Tự động làm sáng ô Active Gem trung tâm với viền vàng kim phát sáng rực rỡ (`borderWidth: 3`, `shadowSize: 12`) và nhãn `✓ MATCH` khi tương thích (ví dụ: *Support Melee Physical Damage* làm sáng *Cleave*, làm mờ *Fireball*).
+    - Tự động làm sáng các nút Tab Kỹ Năng tương ứng trên thanh 5 Slots (`Primary`, `Secondary`, `Trigger`, `Aura I`, `Aura II`).
+    - Làm mờ các ô Active Gem / thẻ kỹ năng không tương thích (alpha 0.4, viền xám mờ).
+  - Hiển thị trực tiếp hệ số nhân sát thương tổng hợp: $\prod (1 + \text{More Damage}) \times \prod (1 - \text{Less Damage})$.
+    - Thanh Metrics: `💥 ∏: {dmgMultiplier:F2}x ({sign}{morePercent:F0}%)` kèm tooltip giải thích chi tiết từng bước nhân.
+    - Dự báo thời gian thực khi hover Support Gem: `💥 ∏: 1.25x ➔ 1.69x` (+35% More).
+    - Khay Inspector Drawer: Hiển thị đầy đủ công thức toán học $1.25 \times 1.35 = 1.69\text{x}$ và phân tích nguyên nhân tương thích/không tương thích.
+  - Vượt qua 100% bài kiểm thử tự động trong `GemSystemTests` và `MainLayoutTests`.
 
 ---
 

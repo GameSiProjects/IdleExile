@@ -43,6 +43,20 @@ public partial class GemView : Control
     public GemDefinition? SelectedCandidateGem { get; private set; }
     public string CurrentCandidateFilter { get; private set; } = "All";
 
+    private GemDefinition? _hoveredGem;
+    public GemDefinition? HoveredGem => _hoveredGem;
+
+    public GemDefinition? EffectiveFocusedGem =>
+        _hoveredGem ?? (SelectedCandidateGem ?? (SelectedSocketIndex == -1 ? CurrentSetup.ActiveGem : (SelectedSocketIndex >= 0 && SelectedSocketIndex < CurrentSetup.SocketedSupports.Count ? CurrentSetup.SocketedSupports[SelectedSocketIndex] : null)));
+
+    public bool IsActiveSocketHighlighted { get; private set; }
+    public bool IsActiveSocketDimmed { get; private set; }
+    private readonly bool[] _slotBtnHighlighted = new bool[5];
+    public bool IsSlotButtonHighlighted(int slotIndex) => slotIndex >= 0 && slotIndex < 5 && _slotBtnHighlighted[slotIndex];
+
+    public MultiplierPreviewResult? CurrentPreviewResult { get; private set; }
+    private readonly Dictionary<Button, GemDefinition> _candidateCards = new();
+
     public SkillSocketSetup CurrentSetup => Loadout?.GetSetupAt(SelectedSkillSlotIndex) ?? new SkillSocketSetup();
 
     // ─────────────────────────────────────────────
@@ -169,6 +183,20 @@ public partial class GemView : Control
         if (_activeSocketBtn != null)
         {
             _activeSocketBtn.Pressed += () => SelectSocket(-1);
+            _activeSocketBtn.MouseEntered += () =>
+            {
+                if (CurrentSetup.ActiveGem != null)
+                {
+                    SetHoveredGem(CurrentSetup.ActiveGem);
+                }
+            };
+            _activeSocketBtn.MouseExited += () =>
+            {
+                if (_hoveredGem == CurrentSetup.ActiveGem)
+                {
+                    SetHoveredGem(null);
+                }
+            };
         }
 
         for (int i = 0; i < 5; i++)
@@ -182,6 +210,20 @@ public partial class GemView : Control
             {
                 int socketIdx = i;
                 _supportSocketBtns[i].Pressed += () => SelectSocket(socketIdx);
+                _supportSocketBtns[i].MouseEntered += () =>
+                {
+                    if (socketIdx < CurrentSetup.SocketedSupports.Count)
+                    {
+                        SetHoveredGem(CurrentSetup.SocketedSupports[socketIdx]);
+                    }
+                };
+                _supportSocketBtns[i].MouseExited += () =>
+                {
+                    if (socketIdx < CurrentSetup.SocketedSupports.Count && _hoveredGem == CurrentSetup.SocketedSupports[socketIdx])
+                    {
+                        SetHoveredGem(null);
+                    }
+                };
             }
         }
 
@@ -272,6 +314,8 @@ public partial class GemView : Control
             InspectedGem = null;
         }
 
+        UpdateHighlightState();
+        UpdateMetricsPreview();
         UpdateInspectorView();
         UpdateActionButtons();
         OnGemInspected?.Invoke(InspectedGem);
@@ -281,6 +325,8 @@ public partial class GemView : Control
     {
         SelectedCandidateGem = gem;
         InspectedGem = gem;
+        UpdateHighlightState();
+        UpdateMetricsPreview();
         UpdateInspectorView();
         UpdateActionButtons();
         OnGemInspected?.Invoke(gem);
@@ -391,6 +437,10 @@ public partial class GemView : Control
 
         // 8. Update Action Buttons
         UpdateActionButtons();
+
+        // 9. Update Highlight & Validator State
+        UpdateHighlightState();
+        UpdateMetricsPreview();
     }
 
     private void LayoutSocketsInHub()
@@ -445,28 +495,53 @@ public partial class GemView : Control
             if (_activeGemNameLabel != null)
             {
                 _activeGemNameLabel.Text = gem.Name.ToUpperInvariant();
-                _activeGemNameLabel.Modulate = themeColor;
+                _activeGemNameLabel.Modulate = IsActiveSocketDimmed
+                    ? new Color(0.45f, 0.48f, 0.55f, 0.6f)
+                    : (IsActiveSocketHighlighted ? Colors.White : themeColor);
             }
             if (_activeGemTypeLabel != null) _activeGemTypeLabel.Text = "Active Skill";
             if (_activeGemElementPill != null)
             {
                 _activeGemElementPill.Visible = true;
-                _activeGemElementPill.Text = element.ToString().ToUpperInvariant();
-                _activeGemElementPill.Modulate = themeColor;
+                if (IsActiveSocketHighlighted)
+                {
+                    _activeGemElementPill.Text = "✓ MATCH";
+                    _activeGemElementPill.Modulate = ColorGold;
+                }
+                else if (IsActiveSocketDimmed)
+                {
+                    _activeGemElementPill.Text = "MISMATCH";
+                    _activeGemElementPill.Modulate = new Color(0.92f, 0.42f, 0.35f, 0.8f);
+                }
+                else
+                {
+                    _activeGemElementPill.Text = element.ToString().ToUpperInvariant();
+                    _activeGemElementPill.Modulate = themeColor;
+                }
             }
 
-            // High aesthetic socket border & glow
+            Color activeBorderColor = IsActiveSocketHighlighted
+                ? ColorGold
+                : (IsActiveSocketDimmed ? new Color(0.24f, 0.26f, 0.32f, 0.45f) : (isSelected ? Colors.White : themeColor));
+
+            int activeBorderWidth = IsActiveSocketHighlighted ? 3 : (isSelected ? 2 : 2);
+            Color activeShadowColor = IsActiveSocketHighlighted
+                ? ColorGold with { A = 0.65f }
+                : (IsActiveSocketDimmed ? Colors.Transparent : themeColor with { A = 0.35f });
+            int activeShadowSize = IsActiveSocketHighlighted ? 12 : (IsActiveSocketDimmed ? 0 : 6);
+
             var style = CreateSocketStyle(
-                bgColor: new Color(0.09f, 0.095f, 0.13f, 0.98f),
-                borderColor: isSelected ? Colors.White : themeColor,
-                borderWidth: isSelected ? 2 : 2,
+                bgColor: IsActiveSocketDimmed ? new Color(0.06f, 0.065f, 0.08f, 0.85f) : new Color(0.09f, 0.095f, 0.13f, 0.98f),
+                borderColor: activeBorderColor,
+                borderWidth: activeBorderWidth,
                 cornerRadius: 8,
-                shadowColor: themeColor with { A = 0.35f },
-                shadowSize: 6
+                shadowColor: activeShadowColor,
+                shadowSize: activeShadowSize
             );
             _activeSocketBtn.AddThemeStyleboxOverride("normal", style);
-            _activeSocketBtn.AddThemeStyleboxOverride("hover", CreateHoverSocketStyle(style, themeColor));
-            _activeSocketBtn.TooltipText = $"{gem.Name} (Active Gem)\nElement: {element}\n{gem.Description}";
+            _activeSocketBtn.AddThemeStyleboxOverride("hover", CreateHoverSocketStyle(style, activeBorderColor));
+            _activeSocketBtn.TooltipText = $"{gem.Name} (Active Gem)\nElement: {element}\n" +
+                $"{(IsActiveSocketHighlighted ? "✓ Tương thích với Support Gem đang chọn!" : (IsActiveSocketDimmed ? "⚠ Không tương thích với Support Gem đang chọn" : gem.Description))}";
         }
         else
         {
@@ -564,7 +639,8 @@ public partial class GemView : Control
         {
             float manaCost = setup.CalculateEffectiveManaCost();
             float actionSpeed = setup.CalculateBaseActionSpeed(Player?.Gear);
-            float dmgMultiplier = setup.CalculateTotalDamageMultiplier();
+            var breakdown = setup.GetDamageMultiplierBreakdown();
+            float dmgMultiplier = breakdown.TotalMultiplier;
             int projectiles = setup.GetProjectileCount();
             int validCount = setup.ValidLinkedSupports.Count();
             int totalSupports = setup.SocketedSupports.Count;
@@ -585,10 +661,13 @@ public partial class GemView : Control
 
             if (_metricDamageMultLabel != null)
             {
-                float morePercent = (dmgMultiplier - 1.0f) * 100f;
+                float morePercent = breakdown.NetMorePercent;
                 string sign = morePercent >= 0f ? "+" : "";
-                _metricDamageMultLabel.Text = $"💥 Mult: {dmgMultiplier:F2}x ({sign}{morePercent:F0}%)";
-                _metricDamageMultLabel.TooltipText = $"Compounded Damage Multiplier: prod(1 + More) * prod(1 - Less) = {dmgMultiplier:F2}x";
+                _metricDamageMultLabel.Text = $"💥 ∏: {dmgMultiplier:F2}x ({sign}{morePercent:F0}%)";
+                _metricDamageMultLabel.Modulate = Colors.White;
+                _metricDamageMultLabel.TooltipText = $"Hệ Số Sát Thương Tổng Hợp: {breakdown.MathRepresentation}\n" +
+                    $"─────────────────────────────────────────────\n" +
+                    $"Công thức: {breakdown.FormulaString}";
             }
 
             if (_metricProjectilesLabel != null)
@@ -621,7 +700,12 @@ public partial class GemView : Control
         {
             if (_metricManaLabel != null) _metricManaLabel.Text = "💧 Mana: -";
             if (_metricSpeedLabel != null) _metricSpeedLabel.Text = "⚡ Speed: -";
-            if (_metricDamageMultLabel != null) _metricDamageMultLabel.Text = "💥 Mult: 1.00x";
+            if (_metricDamageMultLabel != null)
+            {
+                _metricDamageMultLabel.Text = "💥 ∏: 1.00x";
+                _metricDamageMultLabel.Modulate = Colors.White;
+                _metricDamageMultLabel.TooltipText = "∏(1 + More Damage) = 1.00x (Baseline)";
+            }
             if (_metricProjectilesLabel != null) _metricProjectilesLabel.Text = "🏹 Proj: -";
             if (_metricLinksLabel != null)
             {
@@ -669,12 +753,17 @@ public partial class GemView : Control
             if (hasSupport && isCompatible)
             {
                 Color supportColor = GetAttributeColor(supportGem?.Color);
+                bool isFocused = supportGem == EffectiveFocusedGem;
+                float glowWidth = isFocused ? 6.5f : 4.5f;
+                float coreWidth = isFocused ? 3.0f : 2.0f;
+                Color glowColor = isFocused ? ColorGold with { A = 0.6f } : supportColor with { A = 0.35f };
+
                 // Conduit glow
-                canvas.DrawLine(startPoint, endPoint, supportColor with { A = 0.35f }, 4.5f, antialiased: true);
+                canvas.DrawLine(startPoint, endPoint, glowColor, glowWidth, antialiased: true);
                 // Core golden energy stream
-                canvas.DrawLine(startPoint, endPoint, ColorGold, 2.0f, antialiased: true);
+                canvas.DrawLine(startPoint, endPoint, ColorGold, coreWidth, antialiased: true);
                 // Junction node
-                canvas.DrawCircle(endPoint, 3.0f, ColorGold);
+                canvas.DrawCircle(endPoint, isFocused ? 4.5f : 3.0f, ColorGold);
             }
             else if (hasSupport && !isCompatible)
             {
@@ -699,11 +788,11 @@ public partial class GemView : Control
 
     private void UpdateInspectorView()
     {
-        var gem = InspectedGem;
+        var gem = _hoveredGem ?? InspectedGem;
 
         if (gem != null)
         {
-            bool isActive = gem.Category == "Active";
+            bool isActive = string.Equals(gem.Category, "Active", StringComparison.OrdinalIgnoreCase);
             DamageType element = GetGemDamageType(gem);
             Color themeColor = isActive ? GetDamageTypeColor(element) : GetAttributeColor(gem.Color);
 
@@ -741,12 +830,13 @@ public partial class GemView : Control
                 _inspectorModifiersLabel.Text = FormatGemModifiers(gem);
             }
 
-            // Compatibility status
+            // Compatibility status & Compounded More damage formula
             if (_inspectorStatusLabel != null)
             {
                 if (isActive)
                 {
-                    _inspectorStatusLabel.Text = "★ Skill Chủ Lực • Tự động liên kết các khe Support xung quanh.";
+                    var breakdown = CurrentSetup.GetDamageMultiplierBreakdown();
+                    _inspectorStatusLabel.Text = $"★ Skill Chủ Lực • {breakdown.MathRepresentation}\nCông thức: {breakdown.FormulaString}";
                     _inspectorStatusLabel.Modulate = new Color(0.45f, 0.85f, 0.55f);
                 }
                 else
@@ -754,22 +844,27 @@ public partial class GemView : Control
                     var activeGem = CurrentSetup.ActiveGem;
                     if (activeGem != null)
                     {
-                        bool isCompatible = CurrentSetup.IsSupportCompatible(gem);
-                        if (isCompatible)
+                        var compat = GemCompatibilityValidator.ValidateCompatibility(activeGem, gem);
+                        if (compat.IsCompatible)
                         {
-                            _inspectorStatusLabel.Text = $"✓ Auto-Linked: Tương thích hoàn hảo với {activeGem.Name}!";
+                            var preview = GemCompatibilityValidator.PreviewSupportImpact(CurrentSetup, gem);
+                            string deltaStr = preview.DeltaMultiplier >= 0 ? $"+{preview.DeltaMultiplier:F2}x" : $"{preview.DeltaMultiplier:F2}x";
+                            string deltaPctStr = preview.DeltaPercent >= 0 ? $"+{preview.DeltaPercent:F0}%" : $"{preview.DeltaPercent:F0}%";
+                            _inspectorStatusLabel.Text = $"{compat.Reason}\n" +
+                                $"∏(1 + More): {preview.CurrentBreakdown.TotalMultiplier:F2}x ➔ {preview.ProjectedBreakdown.TotalMultiplier:F2}x (▲ {deltaStr} | {deltaPctStr} More)";
                             _inspectorStatusLabel.Modulate = new Color(0.35f, 0.92f, 0.45f);
                         }
                         else
                         {
-                            string required = gem.RequiredTags != null ? string.Join(", ", gem.RequiredTags) : "none";
-                            _inspectorStatusLabel.Text = $"⚠ Không tương thích: Cần tag [{required}] trên Active Gem.";
+                            var currentBreakdown = CurrentSetup.GetDamageMultiplierBreakdown();
+                            _inspectorStatusLabel.Text = $"{compat.Reason}\n" +
+                                $"∏(1 + More): Giữ nguyên {currentBreakdown.TotalMultiplier:F2}x (Không kích hoạt do thiếu thẻ)";
                             _inspectorStatusLabel.Modulate = new Color(0.95f, 0.42f, 0.35f);
                         }
                     }
                     else
                     {
-                        _inspectorStatusLabel.Text = "⚠ Cần cắm Active Gem để kích hoạt hiệu ứng Support này.";
+                        _inspectorStatusLabel.Text = "⚠ Cần cắm Active Gem để kích hoạt hệ số ∏(1 + More Damage).";
                         _inspectorStatusLabel.Modulate = new Color(0.85f, 0.72f, 0.35f);
                     }
                 }
@@ -898,6 +993,7 @@ public partial class GemView : Control
     {
         if (_candidateHBox == null || Database == null) return;
 
+        _candidateCards.Clear();
         foreach (var child in _candidateHBox.GetChildren())
         {
             child.QueueFree();
@@ -910,8 +1006,11 @@ public partial class GemView : Control
         foreach (var gem in gems)
         {
             var card = CreateCandidateCard(gem);
+            _candidateCards[card] = gem;
             _candidateHBox.AddChild(card);
         }
+
+        UpdateHighlightState();
     }
 
     private Button CreateCandidateCard(GemDefinition gem)
@@ -976,6 +1075,10 @@ public partial class GemView : Control
 
         btn.AddChild(vbox);
 
+        // Hover tracking
+        btn.MouseEntered += () => OnCandidateMouseEntered(gem);
+        btn.MouseExited += () => OnCandidateMouseExited(gem);
+
         // Click to inspect, double-click to equip
         btn.Pressed += () => SelectCandidateGem(gem);
         btn.GuiInput += @ev =>
@@ -987,6 +1090,184 @@ public partial class GemView : Control
         };
 
         return btn;
+    }
+
+    private void OnCandidateMouseEntered(GemDefinition gem)
+    {
+        SetHoveredGem(gem);
+    }
+
+    private void OnCandidateMouseExited(GemDefinition gem)
+    {
+        if (_hoveredGem == gem)
+        {
+            SetHoveredGem(null);
+        }
+    }
+
+    public void SetHoveredGem(GemDefinition? gem)
+    {
+        _hoveredGem = gem;
+        UpdateHighlightState();
+        UpdateMetricsPreview();
+        UpdateInspectorView();
+    }
+
+    public void SetHoveredGemForTesting(GemDefinition? gem) => SetHoveredGem(gem);
+
+    public void UpdateHighlightState()
+    {
+        var focusGem = EffectiveFocusedGem;
+        bool isSupportFocused = focusGem != null && string.Equals(focusGem.Category, "Support", StringComparison.OrdinalIgnoreCase);
+        bool isActiveFocused = focusGem != null && string.Equals(focusGem.Category, "Active", StringComparison.OrdinalIgnoreCase);
+
+        // 1. Central Active Socket Highlight
+        if (isSupportFocused)
+        {
+            if (CurrentSetup.ActiveGem != null)
+            {
+                bool compat = GemCompatibilityValidator.IsCompatible(CurrentSetup.ActiveGem, focusGem);
+                IsActiveSocketHighlighted = compat;
+                IsActiveSocketDimmed = !compat;
+            }
+            else
+            {
+                IsActiveSocketHighlighted = false;
+                IsActiveSocketDimmed = false;
+            }
+        }
+        else if (isActiveFocused)
+        {
+            IsActiveSocketHighlighted = focusGem == CurrentSetup.ActiveGem;
+            IsActiveSocketDimmed = false;
+        }
+        else
+        {
+            IsActiveSocketHighlighted = false;
+            IsActiveSocketDimmed = false;
+        }
+
+        RenderActiveSocket(CurrentSetup.ActiveGem);
+
+        // 2. Skill Slot Switcher Tabs (Top Bar)
+        for (int i = 0; i < 5; i++)
+        {
+            var btn = _slotBtns[i];
+            if (btn == null) continue;
+
+            if (isSupportFocused)
+            {
+                var slotSetup = Loadout?.GetSetupAt(i);
+                if (slotSetup?.ActiveGem != null)
+                {
+                    bool compat = GemCompatibilityValidator.IsCompatible(slotSetup.ActiveGem, focusGem);
+                    _slotBtnHighlighted[i] = compat;
+                    btn.Modulate = compat ? new Color(1.0f, 0.92f, 0.45f, 1.0f) : new Color(0.5f, 0.52f, 0.6f, 0.45f);
+                }
+                else
+                {
+                    _slotBtnHighlighted[i] = false;
+                    btn.Modulate = new Color(0.5f, 0.52f, 0.6f, 0.45f);
+                }
+            }
+            else
+            {
+                _slotBtnHighlighted[i] = false;
+                btn.Modulate = Colors.White;
+            }
+        }
+
+        // 3. Support Sockets in Hub
+        for (int i = 0; i < 5; i++)
+        {
+            GemDefinition? support = i < CurrentSetup.SocketedSupports.Count ? CurrentSetup.SocketedSupports[i] : null;
+            bool isCompatible = support != null && CurrentSetup.IsSupportCompatible(support);
+            RenderSupportSocket(i, support, isCompatible);
+        }
+
+        // 4. Candidate Cards in Drawer
+        foreach (var (btn, gem) in _candidateCards)
+        {
+            if (btn == null || !IsInstanceValid(btn)) continue;
+
+            if (isSupportFocused)
+            {
+                if (string.Equals(gem.Category, "Active", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool compat = GemCompatibilityValidator.IsCompatible(gem, focusGem);
+                    btn.Modulate = compat ? Colors.White : new Color(0.48f, 0.5f, 0.6f, 0.4f);
+                }
+                else
+                {
+                    btn.Modulate = Colors.White;
+                }
+            }
+            else if (isActiveFocused)
+            {
+                if (string.Equals(gem.Category, "Support", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool compat = GemCompatibilityValidator.IsCompatible(focusGem, gem);
+                    btn.Modulate = compat ? Colors.White : new Color(0.48f, 0.5f, 0.6f, 0.4f);
+                }
+                else
+                {
+                    btn.Modulate = Colors.White;
+                }
+            }
+            else
+            {
+                btn.Modulate = Colors.White;
+            }
+        }
+
+        // 5. Conduit Links
+        _socketRingCanvas?.QueueRedraw();
+    }
+
+    private void UpdateMetricsPreview()
+    {
+        var setup = CurrentSetup;
+        var focusGem = EffectiveFocusedGem;
+
+        if (setup.ActiveGem != null && focusGem != null && string.Equals(focusGem.Category, "Support", StringComparison.OrdinalIgnoreCase))
+        {
+            bool isCompat = GemCompatibilityValidator.IsCompatible(setup.ActiveGem, focusGem);
+            if (isCompat)
+            {
+                var preview = GemCompatibilityValidator.PreviewSupportImpact(setup, focusGem, SelectedSocketIndex >= 0 ? SelectedSocketIndex : null);
+                CurrentPreviewResult = preview;
+
+                if (_metricDamageMultLabel != null)
+                {
+                    string sign = preview.DeltaMultiplier >= 0 ? "+" : "";
+                    string pctSign = preview.DeltaPercent >= 0 ? "+" : "";
+                    _metricDamageMultLabel.Text = $"💥 ∏: {preview.CurrentBreakdown.TotalMultiplier:F2}x ➔ {preview.ProjectedBreakdown.TotalMultiplier:F2}x";
+                    _metricDamageMultLabel.Modulate = ColorGold;
+                    _metricDamageMultLabel.TooltipText = $"DỰ BÁO HỆ SỐ SÁT THƯƠNG: ∏(1 + More Damage)\n" +
+                        $"─────────────────────────────────────────────\n" +
+                        $"Hiện tại: {preview.CurrentBreakdown.FormulaString}\n" +
+                        $"Dự phóng: {preview.ProjectedBreakdown.FormulaString}\n" +
+                        $"Thay đổi: {sign}{preview.DeltaMultiplier:F2}x ({pctSign}{preview.DeltaPercent:F0}% More Damage)";
+                }
+                return;
+            }
+            else
+            {
+                CurrentPreviewResult = null;
+                if (_metricDamageMultLabel != null)
+                {
+                    var breakdown = setup.GetDamageMultiplierBreakdown();
+                    _metricDamageMultLabel.Text = $"💥 ∏: {breakdown.TotalMultiplier:F2}x (Không đổi)";
+                    _metricDamageMultLabel.Modulate = new Color(0.95f, 0.45f, 0.35f);
+                    _metricDamageMultLabel.TooltipText = $"Support Gem không tương thích với Active Gem hiện tại!\n" +
+                        $"Hệ số ∏(1 + More) không đổi: {breakdown.FormulaString}";
+                }
+                return;
+            }
+        }
+
+        CurrentPreviewResult = null;
+        RenderMetrics(setup);
     }
 
     private void UpdateActionButtons()

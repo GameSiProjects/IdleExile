@@ -157,6 +157,8 @@ dotnet build
 | **10-Slot Equipment & Soft Attributes (Task 3.1)** | Complete | `src/Core/Models/`, `src/Core/State/EquippedGearState.cs` |
 | **Smart Tooltip Comparison Engine (Task 3.4)** | Complete | `src/Core/Services/EquipmentComparisonService.cs` |
 | **Mini-Window Equipment View (Task 3.4)** | Complete | `scenes/EquipmentView.tscn`, `src/UI/Components/EquipmentView.cs` |
+| **Decoupled Gem View (UI Task 3.1)** | Complete | `scenes/GemView.tscn`, `src/UI/Components/GemView.cs` |
+| **Gem Tag Matching Validator (UI Task 3.2)** | Complete | `src/Core/Services/GemCompatibilityValidator.cs`, `src/UI/Components/GemView.cs` |
 | **Item Generator & Affix Roller** | Planned | `src/Core/Services/ItemGenerator.cs` |
 | **Loot Filter System** | Planned | `src/Core/Services/LootFilterService.cs` |
 | **Mini-Window 2D Battle Viewport UI** | Complete (Tasks 2.1 - 2.8) | `scenes/BattleViewport.tscn`, `src/UI/BattleViewport.cs`, `src/UI/Components/` |

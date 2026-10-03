@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using IdleExile.Core.Models;
+using IdleExile.Core.Services;
 using IdleExile.Core.State;
 
 namespace IdleExile.Core.Tests;
@@ -19,7 +20,7 @@ public static class GemSystemTests
 {
     public static void RunAll()
     {
-        Console.WriteLine("[Tests] Running GemSystemTests (Task 3.1 PoE 2 Gem System)...");
+        Console.WriteLine("[Tests] Running GemSystemTests (Task 3.1 & Task 3.2 PoE 2 Gem System)...");
 
         TestDecoupledGemModelSockets();
         TestAutoLinkingAndTagCompatibility();
@@ -27,6 +28,8 @@ public static class GemSystemTests
         TestCompoundedEffectiveManaCost();
         TestMultiSlotLoadout();
         TestSocketGemAtAndReplacement();
+        TestGemCompatibilityValidatorArchetypeRules();
+        TestCompoundedDamageMultiplierFormulaBreakdown();
 
         Console.WriteLine("[Tests] All GemSystemTests PASSED successfully!");
     }
@@ -304,6 +307,122 @@ public static class GemSystemTests
         AssertTrue(replaced, "Support gem at index 0 should be replaced");
         AssertEqual("Replacement", setup.SocketedSupports[0].Name);
         AssertEqual("Support 1", setup.SocketedSupports[1].Name);
+    }
+
+    private static void TestGemCompatibilityValidatorArchetypeRules()
+    {
+        var cleave = new GemDefinition("cleave", "Cleave", "Active", "Red", new[] { "attack", "melee", "aoe", "physical" }, null, null, null, "Cleave");
+        var fireball = new GemDefinition("fireball", "Fireball", "Active", "Blue", new[] { "spell", "projectile", "fire", "aoe" }, null, null, null, "Fireball");
+        var splitArrow = new GemDefinition("split_arrow", "Split Arrow", "Active", "Green", new[] { "attack", "bow", "projectile", "physical" }, null, null, null, "Split Arrow");
+
+        var meleePhys = new GemDefinition("melee_phys", "Melee Physical Damage Support", "Support", "Red", null, new[] { "melee", "physical", "attack" }, null, new Dictionary<string, object> { ["morePhysicalDamagePercent"] = 35f }, "Melee Phys");
+        var gmp = new GemDefinition("gmp", "GMP Support", "Support", "Green", null, new[] { "projectile" }, null, new Dictionary<string, object> { ["damageMultiplier"] = -25f }, "GMP");
+        var concEffect = new GemDefinition("conc", "Concentrated Effect Support", "Support", "Blue", null, new[] { "aoe" }, null, new Dictionary<string, object> { ["moreAoeDamagePercent"] = 30f }, "Conc Effect");
+        var addedFire = new GemDefinition("added_fire", "Added Fire Support", "Support", "Red", null, new[] { "physical", "attack", "spell" }, null, new Dictionary<string, object> { ["manaMultiplier"] = 120f }, "Added Fire");
+
+        // 1. Melee Physical Damage Support: ONLY compatible with Cleave!
+        var cleaveMelee = GemCompatibilityValidator.ValidateCompatibility(cleave, meleePhys);
+        AssertTrue(cleaveMelee.IsCompatible, "Melee Physical Damage must be compatible with Cleave");
+        AssertTrue(cleaveMelee.MatchingTags.Contains("melee"), "Cleave matches melee tag");
+
+        var fireballMelee = GemCompatibilityValidator.ValidateCompatibility(fireball, meleePhys);
+        AssertFalse(fireballMelee.IsCompatible, "Melee Physical Damage must NOT be compatible with Fireball (Spell)");
+
+        var bowMelee = GemCompatibilityValidator.ValidateCompatibility(splitArrow, meleePhys);
+        AssertFalse(bowMelee.IsCompatible, "Melee Physical Damage must NOT be compatible with Split Arrow (Bow Attack lacks Melee)");
+
+        // 2. GMP: Compatible with Fireball and Split Arrow, NOT with Cleave
+        AssertTrue(GemCompatibilityValidator.IsCompatible(fireball, gmp), "GMP must be compatible with Fireball");
+        AssertTrue(GemCompatibilityValidator.IsCompatible(splitArrow, gmp), "GMP must be compatible with Split Arrow");
+        AssertFalse(GemCompatibilityValidator.IsCompatible(cleave, gmp), "GMP must NOT be compatible with Cleave (No Projectile)");
+
+        // 3. Concentrated Effect: Compatible with Fireball and Cleave (both AoE), NOT with Split Arrow
+        AssertTrue(GemCompatibilityValidator.IsCompatible(fireball, concEffect), "Conc Effect must be compatible with Fireball (AoE)");
+        AssertTrue(GemCompatibilityValidator.IsCompatible(cleave, concEffect), "Conc Effect must be compatible with Cleave (AoE)");
+        AssertFalse(GemCompatibilityValidator.IsCompatible(splitArrow, concEffect), "Conc Effect must NOT be compatible with Split Arrow (No AoE)");
+
+        // 4. Added Fire: Compatible with all three
+        AssertTrue(GemCompatibilityValidator.IsCompatible(fireball, addedFire), "Added Fire compatible with Fireball (Spell)");
+        AssertTrue(GemCompatibilityValidator.IsCompatible(cleave, addedFire), "Added Fire compatible with Cleave (Attack/Phys)");
+        AssertTrue(GemCompatibilityValidator.IsCompatible(splitArrow, addedFire), "Added Fire compatible with Split Arrow (Attack/Phys)");
+    }
+
+    private static void TestCompoundedDamageMultiplierFormulaBreakdown()
+    {
+        var cleave = new GemDefinition(
+            Id: "cleave",
+            Name: "Cleave",
+            Category: "Active",
+            Color: "Red",
+            Tags: new[] { "attack", "melee", "aoe", "physical" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object> { ["damageMultiplier"] = 125f },
+            Modifiers: null,
+            Description: "Cleave"
+        );
+
+        var meleePhys = new GemDefinition(
+            Id: "melee_phys",
+            Name: "Melee Physical Damage Support",
+            Category: "Support",
+            Color: "Red",
+            Tags: null,
+            RequiredTags: new[] { "melee", "physical", "attack" },
+            BaseStats: null,
+            Modifiers: new Dictionary<string, object> { ["morePhysicalDamagePercent"] = 35f },
+            Description: "35% More Phys"
+        );
+
+        var concEffect = new GemDefinition(
+            Id: "conc",
+            Name: "Concentrated Effect Support",
+            Category: "Support",
+            Color: "Blue",
+            Tags: null,
+            RequiredTags: new[] { "aoe" },
+            BaseStats: null,
+            Modifiers: new Dictionary<string, object> { ["moreAoeDamagePercent"] = 30f },
+            Description: "30% More AoE"
+        );
+
+        var gmp = new GemDefinition(
+            Id: "gmp",
+            Name: "GMP Support",
+            Category: "Support",
+            Color: "Green",
+            Tags: null,
+            RequiredTags: new[] { "projectile" },
+            BaseStats: null,
+            Modifiers: new Dictionary<string, object> { ["damageMultiplier"] = -25f },
+            Description: "25% Less"
+        );
+
+        // 1. Cleave + Melee Phys: 1.25 * 1.35 = 1.6875 (~1.69x, +69% More)
+        var setup = new SkillSocketSetup(cleave);
+        setup.AddSupportGem(meleePhys);
+
+        var breakdown1 = setup.GetDamageMultiplierBreakdown();
+        AssertTrue(MathF.Abs(breakdown1.TotalMultiplier - 1.6875f) < 0.001f, $"Breakdown1 multiplier expected 1.6875, was {breakdown1.TotalMultiplier}");
+        AssertTrue(breakdown1.FormulaString.Contains("1.25"), "Formula string should contain 1.25");
+        AssertTrue(breakdown1.FormulaString.Contains("1.35"), "Formula string should contain 1.35");
+        AssertTrue(breakdown1.MathRepresentation.Contains("∏(1 + More)"), "Math representation should contain ∏(1 + More)");
+
+        // 2. Add Conc Effect: 1.25 * 1.35 * 1.30 = 2.19375 (~2.19x, +119% More)
+        setup.AddSupportGem(concEffect);
+        var breakdown2 = setup.GetDamageMultiplierBreakdown();
+        AssertTrue(MathF.Abs(breakdown2.TotalMultiplier - 2.19375f) < 0.001f, $"Breakdown2 multiplier expected 2.19375, was {breakdown2.TotalMultiplier}");
+
+        // 3. Add Incompatible GMP (Cleave lacks projectile): Incompatible support MUST NOT affect multiplier!
+        setup.AddSupportGem(gmp);
+        var breakdown3 = setup.GetDamageMultiplierBreakdown();
+        AssertTrue(MathF.Abs(breakdown3.TotalMultiplier - 2.19375f) < 0.001f, "Incompatible GMP must not alter damage multiplier");
+
+        // 4. Preview support impact
+        var preview = GemCompatibilityValidator.PreviewSupportImpact(new SkillSocketSetup(cleave), meleePhys);
+        AssertTrue(MathF.Abs(preview.CurrentBreakdown.TotalMultiplier - 1.25f) < 0.001f, "Current breakdown should be 1.25");
+        AssertTrue(MathF.Abs(preview.ProjectedBreakdown.TotalMultiplier - 1.6875f) < 0.001f, "Projected breakdown should be 1.6875");
+        AssertTrue(preview.IsIncrease, "Preview should be an increase");
+        AssertTrue(MathF.Abs(preview.DeltaMultiplier - 0.4375f) < 0.001f, "Delta multiplier should be 0.4375");
     }
 
     // ─── Simple Assertion Helpers ───

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using IdleExile.Core.Models;
+using IdleExile.Core.Services;
 
 namespace IdleExile.Core.State;
 
@@ -154,21 +155,11 @@ public sealed class SkillSocketSetup
 
     /// <summary>
     /// Validates if a support gem is compatible with the current active gem based on tags.
-    /// In PoE, a support is linked if it has no required tags OR at least one required tag matches the active gem tags.
+    /// Follows PoE tag compatibility via <see cref="GemCompatibilityValidator"/>.
     /// </summary>
     public bool IsSupportCompatible(GemDefinition support)
     {
-        if (ActiveGem == null)
-            return false;
-
-        if (support.RequiredTags == null || support.RequiredTags.Length == 0)
-            return true;
-
-        if (ActiveGem.Tags == null || ActiveGem.Tags.Length == 0)
-            return false;
-
-        // Matches if any required tag is present in the active gem's tags
-        return support.RequiredTags.Any(req => ActiveGem.Tags.Contains(req, StringComparer.OrdinalIgnoreCase));
+        return GemCompatibilityValidator.IsCompatible(ActiveGem, support);
     }
 
     /// <summary>
@@ -237,52 +228,19 @@ public sealed class SkillSocketSetup
 
     /// <summary>
     /// Calculates the compounded damage multiplier for all valid linked supports:
-    /// prod(1 + more/100) * prod(1 - less/100).
+    /// prod(ActiveBaseMultiplier) * prod(1 + more/100) * prod(1 - less/100).
     /// </summary>
     public float CalculateTotalDamageMultiplier()
     {
-        float multiplier = 1f;
+        return GemCompatibilityValidator.CalculateBreakdown(ActiveGem, SocketedSupports).TotalMultiplier;
+    }
 
-        if (ActiveGem?.BaseStats != null)
-        {
-            float activeMult = GetFloat(ActiveGem.BaseStats, "damageMultiplier", 100f);
-            if (activeMult > 0f)
-            {
-                multiplier *= (activeMult / 100f);
-            }
-        }
-
-        foreach (var support in ValidLinkedSupports)
-        {
-            if (support.Modifiers == null)
-                continue;
-
-            if (support.Modifiers.TryGetValue("damageMultiplier", out _))
-            {
-                float dmgMult = GetFloat(support.Modifiers, "damageMultiplier", 0f);
-                multiplier *= (1f + dmgMult / 100f);
-            }
-
-            if (support.Modifiers.TryGetValue("morePhysicalDamagePercent", out _))
-            {
-                float morePhys = GetFloat(support.Modifiers, "morePhysicalDamagePercent", 0f);
-                multiplier *= (1f + morePhys / 100f);
-            }
-
-            if (support.Modifiers.TryGetValue("moreFireDamagePercent", out _))
-            {
-                float moreFire = GetFloat(support.Modifiers, "moreFireDamagePercent", 0f);
-                multiplier *= (1f + moreFire / 100f);
-            }
-
-            if (support.Modifiers.TryGetValue("moreAoeDamagePercent", out _))
-            {
-                float moreAoe = GetFloat(support.Modifiers, "moreAoeDamagePercent", 0f);
-                multiplier *= (1f + moreAoe / 100f);
-            }
-        }
-
-        return MathF.Max(0.01f, multiplier);
+    /// <summary>
+    /// Retrieves the detailed mathematical breakdown of the compounded damage multiplier.
+    /// </summary>
+    public DamageMultiplierBreakdown GetDamageMultiplierBreakdown()
+    {
+        return GemCompatibilityValidator.CalculateBreakdown(ActiveGem, SocketedSupports);
     }
 
     /// <summary>
