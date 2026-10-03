@@ -21,6 +21,11 @@ public sealed class SkillSocketSetup
     private readonly List<GemDefinition> _supportGems = new();
 
     /// <summary>
+    /// Event fired whenever the active gem or support gems within this setup change.
+    /// </summary>
+    public event Action? OnSetupChanged;
+
+    /// <summary>
     /// All support gems currently socketed into this active gem.
     /// </summary>
     public IReadOnlyList<GemDefinition> SocketedSupports => _supportGems;
@@ -68,6 +73,7 @@ public sealed class SkillSocketSetup
             return false;
 
         ActiveGem = gem;
+        OnSetupChanged?.Invoke();
         return true;
     }
 
@@ -77,6 +83,7 @@ public sealed class SkillSocketSetup
     public void ClearActiveGem()
     {
         ActiveGem = null;
+        OnSetupChanged?.Invoke();
     }
 
     /// <summary>
@@ -91,7 +98,36 @@ public sealed class SkillSocketSetup
             return false;
 
         _supportGems.Add(gem);
+        OnSetupChanged?.Invoke();
         return true;
+    }
+
+    /// <summary>
+    /// Sockets or replaces a Support Gem at a specific slot index (0 to 4).
+    /// </summary>
+    public bool SetSupportGemAt(int index, GemDefinition gem)
+    {
+        if (gem.Category != "Support")
+            return false;
+
+        if (index < 0 || index >= MaxSupportSlots)
+            return false;
+
+        if (index < _supportGems.Count)
+        {
+            _supportGems[index] = gem;
+            OnSetupChanged?.Invoke();
+            return true;
+        }
+
+        if (index == _supportGems.Count)
+        {
+            _supportGems.Add(gem);
+            OnSetupChanged?.Invoke();
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -103,6 +139,7 @@ public sealed class SkillSocketSetup
             return false;
 
         _supportGems.RemoveAt(index);
+        OnSetupChanged?.Invoke();
         return true;
     }
 
@@ -112,6 +149,7 @@ public sealed class SkillSocketSetup
     public void ClearSupports()
     {
         _supportGems.Clear();
+        OnSetupChanged?.Invoke();
     }
 
     /// <summary>
@@ -198,6 +236,56 @@ public sealed class SkillSocketSetup
     }
 
     /// <summary>
+    /// Calculates the compounded damage multiplier for all valid linked supports:
+    /// prod(1 + more/100) * prod(1 - less/100).
+    /// </summary>
+    public float CalculateTotalDamageMultiplier()
+    {
+        float multiplier = 1f;
+
+        if (ActiveGem?.BaseStats != null)
+        {
+            float activeMult = GetFloat(ActiveGem.BaseStats, "damageMultiplier", 100f);
+            if (activeMult > 0f)
+            {
+                multiplier *= (activeMult / 100f);
+            }
+        }
+
+        foreach (var support in ValidLinkedSupports)
+        {
+            if (support.Modifiers == null)
+                continue;
+
+            if (support.Modifiers.TryGetValue("damageMultiplier", out _))
+            {
+                float dmgMult = GetFloat(support.Modifiers, "damageMultiplier", 0f);
+                multiplier *= (1f + dmgMult / 100f);
+            }
+
+            if (support.Modifiers.TryGetValue("morePhysicalDamagePercent", out _))
+            {
+                float morePhys = GetFloat(support.Modifiers, "morePhysicalDamagePercent", 0f);
+                multiplier *= (1f + morePhys / 100f);
+            }
+
+            if (support.Modifiers.TryGetValue("moreFireDamagePercent", out _))
+            {
+                float moreFire = GetFloat(support.Modifiers, "moreFireDamagePercent", 0f);
+                multiplier *= (1f + moreFire / 100f);
+            }
+
+            if (support.Modifiers.TryGetValue("moreAoeDamagePercent", out _))
+            {
+                float moreAoe = GetFloat(support.Modifiers, "moreAoeDamagePercent", 0f);
+                multiplier *= (1f + moreAoe / 100f);
+            }
+        }
+
+        return MathF.Max(0.01f, multiplier);
+    }
+
+    /// <summary>
     /// Computes the base actions per second (APS or casts per second) for this skill.
     /// For attack skills, uses the equipped weapon's effective base APS (including dual-wielding bonuses).
     /// </summary>
@@ -276,6 +364,24 @@ public sealed class SkillSocketSetup
                 {
                     context.AddGlobalLess(MathF.Abs(dmgMult));
                 }
+            }
+
+            if (support.Modifiers.TryGetValue("morePhysicalDamagePercent", out _))
+            {
+                float morePhys = GetFloat(support.Modifiers, "morePhysicalDamagePercent", 0f);
+                context.AddGlobalMore(morePhys);
+            }
+
+            if (support.Modifiers.TryGetValue("moreFireDamagePercent", out _))
+            {
+                float moreFire = GetFloat(support.Modifiers, "moreFireDamagePercent", 0f);
+                context.AddGlobalMore(moreFire);
+            }
+
+            if (support.Modifiers.TryGetValue("moreAoeDamagePercent", out _))
+            {
+                float moreAoe = GetFloat(support.Modifiers, "moreAoeDamagePercent", 0f);
+                context.AddGlobalMore(moreAoe);
             }
 
             // Extra Physical as Fire (e.g. 35% for Added Fire Damage)
@@ -750,6 +856,33 @@ public sealed class SkillLoadout
 
     public GuardSkillState GuardSkill { get; } = new();
     public IReadOnlyList<FlaskSlot> Flasks { get; }
+
+    /// <summary>
+    /// Returns the socket setup at the specified slot index:
+    /// 0: Primary DPS, 1: Secondary, 2: Trigger, 3: Aura 1, 4: Aura 2.
+    /// </summary>
+    public SkillSocketSetup GetSetupAt(int index) => index switch
+    {
+        0 => PrimarySkill,
+        1 => SecondarySkill,
+        2 => TriggerSkill,
+        3 => Aura1,
+        4 => Aura2,
+        _ => PrimarySkill
+    };
+
+    /// <summary>
+    /// Returns the display label for the specified slot index.
+    /// </summary>
+    public string GetSlotName(int index) => index switch
+    {
+        0 => "Primary DPS",
+        1 => "Secondary / Cooldown",
+        2 => "Trigger / Guard",
+        3 => "Aura Reservoir I",
+        4 => "Aura Reservoir II",
+        _ => "Skill Slot"
+    };
 
     public SkillLoadout()
     {

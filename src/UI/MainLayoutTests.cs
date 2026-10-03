@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using IdleExile.Core.Models;
@@ -26,6 +27,7 @@ public static class MainLayoutTests
             TestOptimizedEquipmentDollLayout(existingMain);
             TestStickyDrawerLayout(existingMain);
             TestActionButtonAndCandidateDrawerLayout(existingMain);
+            TestGemViewIntegration(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -48,6 +50,7 @@ public static class MainLayoutTests
             TestStatusCardEliminationAndDiagnostics(main);
             TestStickyDrawerLayout(main);
             TestActionButtonAndCandidateDrawerLayout(main);
+            TestGemViewIntegration(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -565,6 +568,121 @@ public static class MainLayoutTests
             AssertTrue(equipView.CandidateItems.Any(i => i.InstanceId == candidate.InstanceId),
                 "Unequipped item must be returned to candidate items list");
         }
+    }
+
+    private static void TestGemViewIntegration(Main main)
+    {
+        GD.Print("[Tests] Verifying Task 3.1: GemView node hierarchy, layout, and tab integration...");
+
+        // 1. Verify GemView exists in TabWorkspaceContainer
+        var gemView = main.GetNodeOrNull<GemView>("%GemView");
+        AssertNotNull(gemView, "GemView must exist inside TabWorkspaceContainer with unique name %GemView");
+        AssertTrue(gemView.CustomMinimumSize.Y >= 390f, "GemView minimum height should be >= 390px");
+
+        // 2. Verify Key Nodes within GemView
+        var slotPrimary = gemView.GetNodeOrNull<Button>("%SlotPrimaryBtn");
+        AssertNotNull(slotPrimary, "GemView must contain %SlotPrimaryBtn");
+
+        var activeSocket = gemView.GetNodeOrNull<Button>("%ActiveGemSocket");
+        AssertNotNull(activeSocket, "GemView must contain %ActiveGemSocket");
+
+        var ringCanvas = gemView.GetNodeOrNull<SocketRingCanvas>("%SocketRingCanvas");
+        AssertNotNull(ringCanvas, "GemView must contain %SocketRingCanvas for drawing auto-link conduits");
+
+        for (int i = 0; i < 5; i++)
+        {
+            var supportSocket = gemView.GetNodeOrNull<Button>($"%SupportSocket{i}");
+            AssertNotNull(supportSocket, $"GemView must contain %SupportSocket{i}");
+        }
+
+        var metricsBar = gemView.GetNodeOrNull<PanelContainer>("%GemMetricsBar");
+        AssertNotNull(metricsBar, "GemView must contain %GemMetricsBar");
+
+        var inspector = gemView.GetNodeOrNull<PanelContainer>("%GemInspectorDrawer");
+        AssertNotNull(inspector, "GemView must contain %GemInspectorDrawer");
+
+        var candidateScroll = gemView.GetNodeOrNull<ScrollContainer>("%CandidateScroll");
+        AssertNotNull(candidateScroll, "GemView must contain %CandidateScroll");
+
+        var socketActionBtn = gemView.GetNodeOrNull<Button>("%SocketActionBtn");
+        AssertNotNull(socketActionBtn, "GemView must contain %SocketActionBtn");
+
+        var unsocketActionBtn = gemView.GetNodeOrNull<Button>("%UnsocketActionBtn");
+        AssertNotNull(unsocketActionBtn, "GemView must contain %UnsocketActionBtn");
+
+        // 3. Verify Tab Switching & Persistent Combat Viewport
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Skills);
+        AssertTrue(gemView.Visible, "GemView must be visible when Skills tab is active");
+        AssertFalse(main.EquipmentView?.Visible ?? true, "EquipmentView must be hidden when Skills tab is active");
+        AssertTrue(main.BattleViewport?.Visible ?? false, "BattleViewport MUST remain persistent and visible!");
+
+        // Switch back to Gear tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
+        AssertFalse(gemView.Visible, "GemView must be hidden when Gear tab is active");
+        AssertTrue(main.EquipmentView?.Visible ?? false, "EquipmentView must be visible when Gear tab is active");
+        AssertTrue(main.BattleViewport?.Visible ?? false, "BattleViewport MUST remain persistent and visible!");
+
+        // 4. Verify Interactive Socketing on GemView
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Skills);
+        gemView.SelectSkillSlot(0);
+
+        // Active Gem Socket test
+        gemView.SelectSocket(-1);
+        AssertTrue(gemView.SelectedSocketIndex == -1, "SelectedSocketIndex should be -1 for Active socket");
+
+        var fireball = new GemDefinition(
+            Id: "fireball_test",
+            Name: "Fireball Test",
+            Category: "Active",
+            Color: "Blue",
+            Tags: new[] { "spell", "projectile", "fire" },
+            RequiredTags: null,
+            BaseStats: new Dictionary<string, object>
+            {
+                ["manaCost"] = 12f,
+                ["damageMultiplier"] = 100f
+            },
+            Modifiers: null,
+            Description: "Test Fireball"
+        );
+
+        bool socketed = gemView.SocketGem(fireball);
+        AssertTrue(socketed, "SocketGem must socket Active Gem");
+        AssertEqual("Fireball Test", gemView.CurrentSetup.ActiveGem?.Name);
+
+        // Support Gem Socket test
+        var supportGem = new GemDefinition(
+            Id: "sup_test",
+            Name: "Test Support",
+            Category: "Support",
+            Color: "Green",
+            Tags: null,
+            RequiredTags: new[] { "projectile" },
+            BaseStats: null,
+            Modifiers: new Dictionary<string, object>
+            {
+                ["damageMultiplier"] = 25f,
+                ["manaMultiplier"] = 120f
+            },
+            Description: "Test Support"
+        );
+
+        gemView.SelectSocket(0);
+        bool supportSocketed = gemView.SocketGem(supportGem, 0);
+        AssertTrue(supportSocketed, "SocketGem must socket Support Gem into slot 0");
+        AssertEqual(1, gemView.CurrentSetup.SocketedSupports.Count);
+        AssertTrue(gemView.CurrentSetup.IsSupportCompatible(supportGem), "Test Support must be compatible with Fireball");
+
+        // Unsocket Support Gem
+        bool unsocketed = gemView.UnsocketGem(0);
+        AssertTrue(unsocketed, "UnsocketGem must remove support gem at slot 0");
+        AssertEqual(0, gemView.CurrentSetup.SocketedSupports.Count);
+    }
+
+    private static void AssertEqual<T>(T expected, T actual, string? message = null)
+    {
+        if (!EqualityComparer<T>.Default.Equals(expected, actual))
+            throw new Exception($"Assertion Failed: Expected '{expected}', but was '{actual}'. {message}");
     }
 
     private static void AssertNotNull([System.Diagnostics.CodeAnalysis.NotNull] object? obj, string message)

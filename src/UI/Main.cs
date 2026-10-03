@@ -18,6 +18,7 @@ public partial class Main : Control
     private BattleViewport? _battleViewport;
     private MapDeviceBar? _mapDeviceBar;
     private EquipmentView? _equipmentView;
+    private GemView? _gemView;
     private Button? _gearNavButton;
     private Button? _resizeModeButton;
     private Button? _screenCycleButton;
@@ -53,6 +54,7 @@ public partial class Main : Control
     public Control? TabWorkspaceContainer => _tabWorkspaceContainer;
     public BattleViewport? BattleViewport => _battleViewport;
     public EquipmentView? EquipmentView => _equipmentView;
+    public GemView? GemView => _gemView;
     public Control? MapDeviceMargin => _mapDeviceMargin;
     public Button? ResizeModeButton => _resizeModeButton;
 
@@ -83,6 +85,7 @@ public partial class Main : Control
         _battleViewport = GetNodeOrNull<BattleViewport>("%BattleViewport");
         _mapDeviceBar = GetNodeOrNull<MapDeviceBar>("%MapDeviceBar");
         _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
+        _gemView = GetNodeOrNull<GemView>("%GemView");
         _emergencyPortalButton = GetNodeOrNull<Button>("%EmergencyPortalButton");
         _subTabBarContainer = GetNodeOrNull<Control>("%SubTabBarContainer");
         _tabWorkspaceContainer = GetNodeOrNull<Control>("%TabWorkspaceContainer");
@@ -162,6 +165,9 @@ public partial class Main : Control
         // 4. Load JSON Database
         Db.LoadAll();
 
+        // 4b. Initialize GemView with skill loadout and database
+        _gemView?.Initialize(Loadout, Db, Player);
+
         // 5. Initialize FTUE Seeded Drop Coordinator
         DropCoordinator = new SeededDropCoordinator(Ftue);
 
@@ -238,6 +244,7 @@ public partial class Main : Control
         if (Db.Gems.TryGetValue(archetype.ActiveGemId, out var starterGem))
         {
             Loadout.PrimarySkill.SetActiveGem(starterGem);
+            _gemView?.RefreshView();
         }
 
         // 3. Update Status and Telemetry
@@ -613,6 +620,29 @@ public partial class Main : Control
 
         _mapDeviceBar?.SlotMap(mapDef, "Rare");
         _mapDeviceBar?.SetPortalActive(true);
+
+        // Ensure starter skill gems are set in demo mode if empty
+        if (Loadout.PrimarySkill.ActiveGem == null)
+        {
+            if (Db.Gems.TryGetValue("cleave", out var cleaveGem))
+            {
+                Loadout.PrimarySkill.SetActiveGem(cleaveGem);
+            }
+            else if (Db.Gems.TryGetValue("fireball", out var fireballGem))
+            {
+                Loadout.PrimarySkill.SetActiveGem(fireballGem);
+            }
+
+            if (Db.Gems.TryGetValue("added_fire_damage", out var addedFire))
+            {
+                Loadout.PrimarySkill.AddSupportGem(addedFire);
+            }
+            if (Db.Gems.TryGetValue("melee_physical_damage", out var meleePhys))
+            {
+                Loadout.PrimarySkill.AddSupportGem(meleePhys);
+            }
+            _gemView?.RefreshView();
+        }
     }
 
     /// <summary>
@@ -658,6 +688,15 @@ public partial class Main : Control
             }
         }
 
+        if (_gemView != null)
+        {
+            _gemView.Visible = (tab == WorkspaceTab.Skills);
+            if (tab == WorkspaceTab.Skills)
+            {
+                _gemView.RefreshView();
+            }
+        }
+
         if (_mapDeviceMargin != null)
         {
             _mapDeviceMargin.Visible = (tab == WorkspaceTab.Atlas);
@@ -669,7 +708,7 @@ public partial class Main : Control
             _battleViewport.Visible = true;
         }
 
-        if (tab != WorkspaceTab.Gear && tab != WorkspaceTab.Atlas && _statusLabel != null)
+        if (tab != WorkspaceTab.Gear && tab != WorkspaceTab.Atlas && tab != WorkspaceTab.Skills && _statusLabel != null)
         {
             _statusLabel.Text = $"{tab} Tab coming in upcoming phase!";
         }
@@ -796,6 +835,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.ExileMovementControllerTests.RunAll();
         IdleExile.Core.Tests.CorridorMonsterLayoutTests.RunAll();
         IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
+        IdleExile.Core.Tests.GemSystemTests.RunAll();
         IdleExile.UI.MainLayoutTests.RunAll(mainInstance);
         GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }

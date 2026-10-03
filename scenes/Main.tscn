@@ -1,9 +1,10 @@
-[gd_scene load_steps=12 format=3 uid="uid://c1x8v6p1y2m3k"]
+[gd_scene load_steps=13 format=3 uid="uid://c1x8v6p1y2m3k"]
 
 [ext_resource type="Script" path="res://src/UI/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/BattleViewport.tscn" id="2_battle_viewport"]
 [ext_resource type="PackedScene" path="res://scenes/MapDeviceBar.tscn" id="3_map_device_bar"]
 [ext_resource type="PackedScene" path="res://scenes/EquipmentView.tscn" id="4_equipment_view"]
+[ext_resource type="PackedScene" path="res://scenes/GemView.tscn" id="5_gem_view"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
 bg_color = Color(0.0627451, 0.0666667, 0.0862745, 1)
@@ -324,6 +325,12 @@ theme_override_constants/margin_bottom = 4
 
 [node name="EquipmentView" parent="MainLayout/TabWorkspaceContainer" instance=ExtResource("4_equipment_view")]
 unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GemView" parent="MainLayout/TabWorkspaceContainer" instance=ExtResource("5_gem_view")]
+unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 

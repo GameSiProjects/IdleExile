@@ -105,5 +105,30 @@
       "manaMultiplier": 130
     },
     "description": "Supported skills fire 2 additional projectiles."
+  },
+  {
+    "id": "melee_physical_damage",
+    "name": "Melee Physical Damage Support",
+    "category": "Support",
+    "color": "Red",
+    "requiredTags": ["melee", "physical", "attack"],
+    "modifiers": {
+      "morePhysicalDamagePercent": 35.0,
+      "manaMultiplier": 130
+    },
+    "description": "Supported skills deal 35% more physical damage with melee attacks."
+  },
+  {
+    "id": "concentrated_effect",
+    "name": "Concentrated Effect Support",
+    "category": "Support",
+    "color": "Blue",
+    "requiredTags": ["aoe"],
+    "modifiers": {
+      "moreAoeDamagePercent": 30.0,
+      "lessAoeRadiusPercent": 20.0,
+      "manaMultiplier": 140
+    },
+    "description": "Supported skills deal 30% more area damage, but have 20% less area of effect."
   }
 ]

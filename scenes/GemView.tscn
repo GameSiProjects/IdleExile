@@ -1,0 +1,830 @@
+[gd_scene load_steps=16 format=3 uid="uid://g1v2w3p4k5m6n"]
+
+[ext_resource type="Script" path="res://src/UI/Components/GemView.cs" id="1_gem_view"]
+[ext_resource type="Script" path="res://src/UI/Components/SocketRingCanvas.cs" id="2_ring_canvas"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.054902, 0.0588235, 0.0784314, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.22, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.0823529, 0.0862745, 0.117647, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.2, 0.25, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot_tab"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+bg_color = Color(0.09, 0.095, 0.13, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.27, 0.35, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slot_tab_pressed"]
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+bg_color = Color(0.16, 0.14, 0.11, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.88, 0.64, 0.25, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_active_socket"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.09, 0.095, 0.13, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.88, 0.64, 0.25, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.88, 0.64, 0.25, 0.25)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_support_socket"]
+content_margin_left = 2.0
+content_margin_top = 2.0
+content_margin_right = 2.0
+content_margin_bottom = 2.0
+bg_color = Color(0.08, 0.085, 0.11, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.28, 0.36, 1)
+corner_radius_top_left = 23
+corner_radius_top_right = 23
+corner_radius_bottom_right = 23
+corner_radius_bottom_left = 23
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_metrics"]
+bg_color = Color(0.065, 0.07, 0.095, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.2, 0.25, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_equip"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.11, 0.32, 0.17, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28, 0.75, 0.38, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_equip_hover"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.15, 0.42, 0.22, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.92, 0.5, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_unsocket"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.26, 0.12, 0.12, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.75, 0.32, 0.32, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_unsocket_hover"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.36, 0.16, 0.16, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.92, 0.42, 0.42, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_filter_btn"]
+content_margin_left = 5.0
+content_margin_top = 1.0
+content_margin_right = 5.0
+content_margin_bottom = 1.0
+bg_color = Color(0.09, 0.095, 0.12, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.24, 0.3, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_filter_btn_pressed"]
+content_margin_left = 5.0
+content_margin_top = 1.0
+content_margin_right = 5.0
+content_margin_bottom = 1.0
+bg_color = Color(0.14, 0.13, 0.1, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.65, 0.22, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="GemView" type="Control"]
+custom_minimum_size = Vector2(0, 390)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_gem_view")
+
+[node name="GemViewBg" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="GemViewMargin" type="MarginContainer" parent="GemViewBg"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="GemViewLayout" type="VBoxContainer" parent="GemViewBg/GemViewMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SkillSlotSelectorHBox" type="HBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="SlotPrimaryBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SkillSlotSelectorHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Slot 1: Kỹ Năng Chính (Primary DPS) • Xả chiêu liên tục dọn bản đồ"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
+toggle_mode = true
+button_pressed = true
+text = "⚔ Primary"
+
+[node name="SlotSecondaryBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SkillSlotSelectorHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Slot 2: Kỹ Năng Thứ Hai (Secondary / Cooldown) • Tự động xả chiêu khi gặp Rare/Boss"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
+toggle_mode = true
+text = "⚡ Secondary"
+
+[node name="SlotTriggerBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SkillSlotSelectorHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Slot 3: Kỹ Năng Tự Động Kích Hoạt (Trigger / Guard) • Bật khi dính sát thương"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
+toggle_mode = true
+text = "🛡 Trigger"
+
+[node name="SlotAura1Btn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SkillSlotSelectorHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Slot 4: Hào Quang Phòng Ngự (Aura Reservoir I)"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
+toggle_mode = true
+text = "✨ Aura I"
+
+[node name="SlotAura2Btn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SkillSlotSelectorHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Slot 5: Hào Quang Tấn Công (Aura Reservoir II)"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
+toggle_mode = true
+text = "🌟 Aura II"
+
+[node name="SocketHubContainer" type="PanelContainer" parent="GemViewBg/GemViewMargin/GemViewLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 168)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="SocketRingCanvas" type="Control" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+script = ExtResource("2_ring_canvas")
+
+[node name="ActiveGemSocket" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(68, 68)
+layout_mode = 0
+offset_left = 170.0
+offset_top = 82.0
+offset_right = 238.0
+offset_bottom = 150.0
+tooltip_text = "Active Skill Gem Socket"
+theme_override_styles/normal = SubResource("StyleBoxFlat_active_socket")
+
+[node name="ActiveVBox" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/ActiveGemSocket"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="ActiveGemIcon" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/ActiveGemSocket/ActiveVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "🔥"
+horizontal_alignment = 1
+
+[node name="ActiveGemName" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/ActiveGemSocket/ActiveVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "FIREBALL"
+horizontal_alignment = 1
+
+[node name="ActiveGemType" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/ActiveGemSocket/ActiveVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.75, 1)
+theme_override_font_sizes/font_size = 7
+text = "Active Skill"
+horizontal_alignment = 1
+
+[node name="ActiveGemElementPill" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/ActiveGemSocket/ActiveVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 7
+text = "FIRE"
+horizontal_alignment = 1
+
+[node name="SupportSocket0" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 110.0
+offset_top = 67.0
+offset_right = 156.0
+offset_bottom = 113.0
+tooltip_text = "Support Socket #1"
+theme_override_styles/normal = SubResource("StyleBoxFlat_support_socket")
+
+[node name="SupportVBox0" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket0"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="SupportIndex0" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket0/SupportVBox0"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 8
+text = "#1"
+horizontal_alignment = 1
+
+[node name="SupportName0" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket0/SupportVBox0"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "+"
+horizontal_alignment = 1
+
+[node name="SupportPip0" type="ColorRect" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket0"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(4, 4)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.28, 0.88, 0.42, 1)
+
+[node name="SupportSocket1" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 137.0
+offset_top = 31.0
+offset_right = 183.0
+offset_bottom = 77.0
+tooltip_text = "Support Socket #2"
+theme_override_styles/normal = SubResource("StyleBoxFlat_support_socket")
+
+[node name="SupportVBox1" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="SupportIndex1" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket1/SupportVBox1"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 8
+text = "#2"
+horizontal_alignment = 1
+
+[node name="SupportName1" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket1/SupportVBox1"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "+"
+horizontal_alignment = 1
+
+[node name="SupportPip1" type="ColorRect" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket1"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(4, 4)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.28, 0.88, 0.42, 1)
+
+[node name="SupportSocket2" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 181.0
+offset_top = 17.0
+offset_right = 227.0
+offset_bottom = 63.0
+tooltip_text = "Support Socket #3"
+theme_override_styles/normal = SubResource("StyleBoxFlat_support_socket")
+
+[node name="SupportVBox2" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="SupportIndex2" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket2/SupportVBox2"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 8
+text = "#3"
+horizontal_alignment = 1
+
+[node name="SupportName2" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket2/SupportVBox2"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "+"
+horizontal_alignment = 1
+
+[node name="SupportPip2" type="ColorRect" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket2"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(4, 4)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.28, 0.88, 0.42, 1)
+
+[node name="SupportSocket3" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 225.0
+offset_top = 31.0
+offset_right = 271.0
+offset_bottom = 77.0
+tooltip_text = "Support Socket #4"
+theme_override_styles/normal = SubResource("StyleBoxFlat_support_socket")
+
+[node name="SupportVBox3" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="SupportIndex3" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket3/SupportVBox3"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 8
+text = "#4"
+horizontal_alignment = 1
+
+[node name="SupportName3" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket3/SupportVBox3"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "+"
+horizontal_alignment = 1
+
+[node name="SupportPip3" type="ColorRect" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket3"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(4, 4)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.28, 0.88, 0.42, 1)
+
+[node name="SupportSocket4" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
+offset_left = 252.0
+offset_top = 67.0
+offset_right = 298.0
+offset_bottom = 113.0
+tooltip_text = "Support Socket #5"
+theme_override_styles/normal = SubResource("StyleBoxFlat_support_socket")
+
+[node name="SupportVBox4" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket4"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+
+[node name="SupportIndex4" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket4/SupportVBox4"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 8
+text = "#5"
+horizontal_alignment = 1
+
+[node name="SupportName4" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket4/SupportVBox4"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "+"
+horizontal_alignment = 1
+
+[node name="SupportPip4" type="ColorRect" parent="GemViewBg/GemViewMargin/GemViewLayout/SocketHubContainer/SocketRingCanvas/SupportSocket4"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(4, 4)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = -6.0
+offset_right = 2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.28, 0.88, 0.42, 1)
+
+[node name="GemMetricsBar" type="PanelContainer" parent="GemViewBg/GemViewMargin/GemViewLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_metrics")
+
+[node name="MetricsMargin" type="MarginContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/GemMetricsBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 2
+
+[node name="MetricsHBox" type="HBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/GemMetricsBar/MetricsMargin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MetricManaLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemMetricsBar/MetricsMargin/MetricsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+text = "💧 Mana: -"
+horizontal_alignment = 1
+
+[node name="MetricSpeedLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemMetricsBar/MetricsMargin/MetricsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+text = "⚡ Speed: -"
+horizontal_alignment = 1
+
+[node name="MetricDamageMultLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemMetricsBar/MetricsMargin/MetricsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+text = "💥 Mult: 1.00x"
+horizontal_alignment = 1
+
+[node name="MetricProjectilesLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemMetricsBar/MetricsMargin/MetricsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+text = "🏹 Proj: -"
+horizontal_alignment = 1
+
+[node name="MetricLinksLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemMetricsBar/MetricsMargin/MetricsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+text = "🔗 0/5 Linked"
+horizontal_alignment = 1
+
+[node name="GemInspectorDrawer" type="PanelContainer" parent="GemViewBg/GemViewMargin/GemViewLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="InspectorMargin" type="MarginContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="InspectorVBox" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="InspectorHeaderHBox" type="HBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="InspectorGemName" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox/InspectorHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "Khay Ngọc Kỹ Năng"
+
+[node name="InspectorCategoryBadge" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox/InspectorHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 0.95, 1)
+theme_override_font_sizes/font_size = 9
+text = "PoE 2 Gem Sockets"
+
+[node name="Spacer" type="Control" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox/InspectorHeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InspectorAttributeBadge" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox/InspectorHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "SLOT"
+
+[node name="InspectorTagsHBox" type="HBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="InspectorModifiersLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.82, 0.9, 1)
+theme_override_font_sizes/font_size = 9
+text = "Trang bị không có socket. Mọi liên kết kỹ năng nằm trực tiếp trong Active Gem."
+autowrap_mode = 2
+
+[node name="InspectorStatusLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.85, 0.55, 1)
+theme_override_font_sizes/font_size = 9
+text = "Tip: Bấm đúp vào ngọc bên dưới để cắm nhanh."
+
+[node name="CandidateSectionVBox" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 2
+
+[node name="CandidateActionHBox" type="HBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FilterAllBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Hiển thị tất cả ngọc"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_filter_btn_pressed")
+toggle_mode = true
+button_pressed = true
+text = "Tất Cả"
+
+[node name="FilterActiveBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Chỉ lọc Active Gems"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_filter_btn_pressed")
+toggle_mode = true
+text = "Active"
+
+[node name="FilterSupportBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Chỉ lọc Support Gems"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_filter_btn_pressed")
+toggle_mode = true
+text = "Support"
+
+[node name="ActionSpacer" type="Control" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SocketActionBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Cắm viên ngọc đang chọn vào khay"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_equip")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_equip_hover")
+disabled = true
+text = "Lắp Gem"
+
+[node name="UnsocketActionBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Gỡ ngọc khỏi khay socket đang chọn"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_unsocket")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_unsocket_hover")
+disabled = true
+text = "Gỡ Gem"
+
+[node name="CandidateScroll" type="ScrollContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+vertical_scroll_mode = 0
+
+[node name="CandidateHBox" type="HBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4

@@ -115,9 +115,19 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 ### 🔵 Phase 3: Hiện Thực Hóa Tab Ngọc Kỹ Năng PoE 2 (`scenes/GemView.tscn`)
 > **Mục tiêu:** Tạo giao diện khay ngọc kỹ năng độc lập (PoE 2 Model): Trang bị không có socket; Active Gem chứa tối đa 5 khe Support tự động liên kết.
 
-- [ ] **Task 3.1: Xây dựng Scene `GemView.tscn` và Controller `GemView.cs`**
-  - Trung tâm: Khay cắm **Active Skill Gem** to bản (hiển thị icon nguyên tố: Đỏ/Lửa, Xanh/Băng, Vàng/Lôi, Xanh lá/Vật lý).
-  - Vòng cung 5 khe cắm **Support Gems** liên kết tự động (Auto-Linked sockets) tỏa tròn xung quanh Active Gem.
+- [x] **Task 3.1: Xây dựng Scene `GemView.tscn` và Controller `GemView.cs`**
+  - Trung tâm: Khay cắm **Active Skill Gem** to bản (68x68px) hiển thị icon nguyên tố PoE: Đỏ/Lửa (`🔥`), Xanh/Băng (`❄`), Vàng/Lôi (`⚡`), Xanh lá/Vật lý (`🗡`), Tím/Chaos (`☠`).
+  - Vòng cung 5 khe cắm **Support Gems** (46x46px) liên kết tự động (Auto-Linked sockets) tỏa tròn dạng cánh cung phía trên Active Gem.
+  - Tích hợp `SocketRingCanvas` với thuật toán vẽ vector năng lượng (`DrawSocketLinks`):
+    - Dây dẫn năng lượng vàng kim/nguyên tố phát sáng kết nối trực tiếp từ rìa Active Gem đến từng Support Gem hợp lệ.
+    - Dây cảnh báo mờ khi không tương thích và dây âm bản khi khe cắm trống.
+    - Vòng cung thiên thể (Celestial Arc) bán kính 76px liên kết toàn bộ 5 khe cắm phụ trợ.
+  - Tích hợp thanh chuyển đổi 5 khay kỹ năng độc lập: `Slot 1 (Primary DPS)`, `Slot 2 (Secondary)`, `Slot 3 (Trigger)`, `Slot 4 (Aura I)`, `Slot 5 (Aura II)`.
+  - Thanh chỉ số thời gian thực (`GemMetricsBar`): Mana Cost hiệu dụng, Action Speed (APS/Cast), Hệ số nhân sát thương tổng hợp, Số lượng Projectiles/Sweep angle, và Số liên kết Active.
+  - Drawer thẩm định thông minh (`GemInspectorDrawer`): Hiển thị đầy đủ Tag Badges (`[SPELL]`, `[PROJECTILE]`, `[FIRE]`, `[AOE]`), Modifier breakdown và trạng thái tương thích tức thì.
+  - Khay Candidate Drawer (`CandidateScroll` & `CandidateHBox`): Bộ lọc `[Tất Cả]`, `[Active]`, `[Support]`, hỗ trợ 1-click Inspect, double-click Socketing, nút `[Lắp Gem]` và `[Gỡ Gem]`.
+  - Tích hợp liền mạch vào `Main.tscn` và `Main.cs`: Bấm nút `[💎 Gems]` trên Sub-Tab Bar hiển thị `GemView` tức thì trong khi `BattleViewport` vẫn duy trì 100% hiển thị liên tục (Persistent Combat Viewport).
+  - Vượt qua 100% bài kiểm thử tự động `GemSystemTests` và `TestGemViewIntegration` trong `MainLayoutTests`.
 - [ ] **Task 3.2: Bộ Thẩm Định Tương Thích Ngọc (Gem Tag Matching Validator)**
   - Khi hover hoặc chọn Support Gem, tự động làm sáng các Active Gem có tag tương thích (ví dụ: *Support Melee Physical Damage* chỉ sáng khi cắm cùng *Cleave*).
   - Hiển thị trực tiếp hệ số nhân sát thương tổng hợp: $\prod (1 + \text{More Damage})$.
