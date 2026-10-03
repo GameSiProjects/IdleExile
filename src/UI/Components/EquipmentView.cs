@@ -36,6 +36,30 @@ public partial class EquipmentView : Control
     public IGearItem? InspectedItem { get; private set; }
     public List<IGearItem> CandidateItems { get; } = new();
 
+    /// <summary>When true, the Sticky Drawer affix list only shows T1/T2 rows (summary mode).</summary>
+    public bool ShowHighTierAffixesOnly { get; private set; }
+
+    /// <summary>Last comparison rendered in the Sticky Drawer (null when inspecting equipped item / empty slot).</summary>
+    public EquipmentComparisonResult? LastComparison { get; private set; }
+
+    /// <summary>Current verdict badge rendered in the Sticky Drawer header.</summary>
+    public DeltaVerdict CurrentVerdict { get; private set; } = DeltaVerdict.EmptySlot;
+
+    /// <summary>Fixed pixel height of the Smart Tooltip Sticky Drawer (Task 2.2).</summary>
+    public const float StickyDrawerHeight = 140f;
+
+    private const float AffixScrollStep = 26f;
+    private const double AffixScrollDuration = 0.14;
+    private const double DrawerPulseDuration = 0.18;
+
+    private static readonly Color DeltaUpColor = new(0.35f, 0.85f, 0.45f);
+    private static readonly Color DeltaDownColor = new(0.95f, 0.4f, 0.35f);
+    private static readonly Color DeltaNeutralColor = new(0.78f, 0.8f, 0.85f);
+    private static readonly Color DeltaTradeOffColor = new(0.95f, 0.72f, 0.3f);
+    private static readonly Color HighTierAffixColor = new(1.0f, 0.86f, 0.42f);
+    private static readonly Color PrefixAffixColor = new(0.55f, 0.75f, 0.95f);
+    private static readonly Color SuffixAffixColor = new(0.9f, 0.75f, 0.45f);
+
     // ─────────────────────────────────────────────
     //  UI Node References
     // ─────────────────────────────────────────────
@@ -64,16 +88,28 @@ public partial class EquipmentView : Control
     private Label? _dexStatLabel;
     private Label? _intStatLabel;
 
-    // Smart Tooltip
+    // Smart Tooltip — Sticky Drawer (Task 2.2)
+    private PanelContainer? _smartDeltaDrawer;
     private Label? _tooltipTitleLabel;
     private Label? _tooltipSubtitleLabel;
     private Label? _tooltipBaseStatsLabel;
     private Label? _tooltipImplicitLabel;
     private VBoxContainer? _tooltipAffixListVBox;
     private PanelContainer? _deltaPreviewCard;
-    private Label? _deltaHeaderLabel;
-    private HBoxContainer? _deltaBadgesHBox;
+    private StyleBoxFlat? _deltaCardStyle;
+    private Label? _deltaVerdictLabel;
+    private Label? _deltaEhpLabel;
+    private Label? _deltaEhpDetailLabel;
+    private Label? _deltaDpsLabel;
+    private Label? _deltaDpsDetailLabel;
     private Label? _deltaSummaryLabel;
+    private Label? _affixHeaderLabel;
+    private Button? _affixFilterToggle;
+    private ScrollContainer? _affixScroll;
+    private Tween? _affixScrollTween;
+    private float _affixScrollTarget;
+    private Tween? _drawerPulseTween;
+    private string? _lastRenderedItemId;
 
     // Action Buttons
     private Button? _equipButton;
@@ -123,16 +159,30 @@ public partial class EquipmentView : Control
         _dexStatLabel = GetNodeOrNull<Label>("%DexStatLabel");
         _intStatLabel = GetNodeOrNull<Label>("%IntStatLabel");
 
-        // Tooltip
+        // Tooltip — Sticky Drawer
+        _smartDeltaDrawer = GetNodeOrNull<PanelContainer>("%SmartDeltaDrawer");
         _tooltipTitleLabel = GetNodeOrNull<Label>("%TooltipTitleLabel");
         _tooltipSubtitleLabel = GetNodeOrNull<Label>("%TooltipSubtitleLabel");
         _tooltipBaseStatsLabel = GetNodeOrNull<Label>("%TooltipBaseStatsLabel");
         _tooltipImplicitLabel = GetNodeOrNull<Label>("%TooltipImplicitLabel");
         _tooltipAffixListVBox = GetNodeOrNull<VBoxContainer>("%TooltipAffixListVBox");
         _deltaPreviewCard = GetNodeOrNull<PanelContainer>("%DeltaPreviewCard");
-        _deltaHeaderLabel = GetNodeOrNull<Label>("%DeltaHeaderLabel");
-        _deltaBadgesHBox = GetNodeOrNull<HBoxContainer>("%DeltaBadgesHBox");
+        _deltaVerdictLabel = GetNodeOrNull<Label>("%DeltaVerdictLabel");
+        _deltaEhpLabel = GetNodeOrNull<Label>("%DeltaEhpLabel");
+        _deltaEhpDetailLabel = GetNodeOrNull<Label>("%DeltaEhpDetailLabel");
+        _deltaDpsLabel = GetNodeOrNull<Label>("%DeltaDpsLabel");
+        _deltaDpsDetailLabel = GetNodeOrNull<Label>("%DeltaDpsDetailLabel");
         _deltaSummaryLabel = GetNodeOrNull<Label>("%DeltaSummaryLabel");
+        _affixHeaderLabel = GetNodeOrNull<Label>("%AffixHeaderLabel");
+        _affixFilterToggle = GetNodeOrNull<Button>("%AffixFilterToggle");
+        _affixScroll = GetNodeOrNull<ScrollContainer>("%AffixScroll");
+
+        // Duplicate the delta card stylebox so verdict tinting never mutates the shared scene resource
+        if (_deltaPreviewCard?.GetThemeStylebox("panel") is StyleBoxFlat cardStyle)
+        {
+            _deltaCardStyle = (StyleBoxFlat)cardStyle.Duplicate();
+            _deltaPreviewCard.AddThemeStyleboxOverride("panel", _deltaCardStyle);
+        }
 
         // Action Buttons
         _equipButton = GetNodeOrNull<Button>("%EquipButton");
@@ -202,6 +252,32 @@ public partial class EquipmentView : Control
         {
             _stashButton.Pressed += OnStashButtonPressed;
         }
+
+        if (_affixFilterToggle != null)
+        {
+            _affixFilterToggle.Toggled += SetHighTierAffixFilter;
+        }
+
+        if (_affixScroll != null)
+        {
+            _affixScroll.GuiInput += OnAffixScrollGuiInput;
+        }
+    }
+
+    /// <summary>
+    /// Toggles the Sticky Drawer affix list between full smooth-scroll mode and T1/T2 summary mode.
+    /// </summary>
+    public void SetHighTierAffixFilter(bool highTierOnly)
+    {
+        if (ShowHighTierAffixesOnly == highTierOnly) return;
+        ShowHighTierAffixesOnly = highTierOnly;
+
+        if (_affixFilterToggle != null && _affixFilterToggle.ButtonPressed != highTierOnly)
+        {
+            _affixFilterToggle.SetPressedNoSignal(highTierOnly);
+        }
+
+        RefreshTooltip();
     }
 
     /// <summary>
@@ -509,7 +585,7 @@ public partial class EquipmentView : Control
     }
 
     // ─────────────────────────────────────────────
-    //  Smart Tooltip & Delta Preview
+    //  Smart Tooltip — Sticky Drawer (Task 2.2, 140px)
     // ─────────────────────────────────────────────
 
     private void RefreshTooltip()
@@ -519,228 +595,342 @@ public partial class EquipmentView : Control
         var equippedItem = Player?.Gear.GetItem(SelectedSlot);
         var activeItem = InspectedItem ?? equippedItem;
 
+        string? renderedId = activeItem?.InstanceId ?? $"empty:{SelectedSlot}";
+        bool itemChanged = renderedId != _lastRenderedItemId;
+        _lastRenderedItemId = renderedId;
+        if (itemChanged)
+        {
+            ResetAffixScroll();
+            PulseDrawer();
+        }
+
         if (activeItem == null)
         {
-            // Empty slot state
-            _tooltipTitleLabel.Text = $"Ô {SelectedSlot} Trống";
-            _tooltipTitleLabel.Modulate = new Color(0.6f, 0.6f, 0.65f);
-
-            if (_tooltipSubtitleLabel != null)
-                _tooltipSubtitleLabel.Text = "Chưa trang bị vật phẩm. Nhấp vào đồ bên dưới để so sánh và mặc.";
-
-            if (_tooltipBaseStatsLabel != null)
-                _tooltipBaseStatsLabel.Text = "";
-
-            if (_tooltipImplicitLabel != null)
-                _tooltipImplicitLabel.Visible = false;
-
-            ClearAffixList();
-
-            if (_deltaPreviewCard != null)
-                _deltaPreviewCard.Visible = false;
-
+            RenderEmptyDrawer();
             UpdateActionButtons(null, isEquipped: false);
             return;
         }
 
-        // 1. Title & Meta
+        // 1. Header: Title + Verdict + compact single-line meta
         _tooltipTitleLabel.Text = activeItem.IsLocked ? $"🔒 {activeItem.Name}" : activeItem.Name;
         _tooltipTitleLabel.Modulate = GetRarityColor(activeItem.Rarity);
 
         if (_tooltipSubtitleLabel != null)
         {
-            if (activeItem is WeaponItemInstance weaponSub)
-            {
-                _tooltipSubtitleLabel.Text = $"{weaponSub.WeaponClassDisplayName} • {weaponSub.HandRequirementDisplayName}\n{weaponSub.Rarity} • ilvl: {weaponSub.ItemLevel} • Cấp {weaponSub.ReqLevel}";
-            }
-            else
-            {
-                _tooltipSubtitleLabel.Text = $"{activeItem.BaseName} • {activeItem.Rarity} • ilvl: {activeItem.ItemLevel} • Cấp {activeItem.ReqLevel}";
-            }
+            _tooltipSubtitleLabel.Text = activeItem is WeaponItemInstance weaponSub
+                ? $"{weaponSub.WeaponClassDisplayName} • {weaponSub.HandRequirementDisplayName} • {weaponSub.Rarity} • ilvl {weaponSub.ItemLevel} • Cấp {weaponSub.ReqLevel}"
+                : $"{activeItem.BaseName} • {activeItem.Rarity} • ilvl {activeItem.ItemLevel} • Cấp {activeItem.ReqLevel}";
         }
 
-        // 2. Base Stats (Armour / Weapon / Jewellery)
-        if (_tooltipBaseStatsLabel != null)
-        {
-            if (activeItem is WeaponItemInstance weapon)
-            {
-                _tooltipBaseStatsLabel.Text =
-                    $"Sát thương vật lý: {weapon.ComputedMinDamage:F0}-{weapon.ComputedMaxDamage:F0}\n" +
-                    $"Tỷ lệ chí mạng: {weapon.ComputedCritChance:F2}%\n" +
-                    $"Tốc độ tấn công: {weapon.ComputedAps:F2} APS\n" +
-                    $"DPS cơ bản: {weapon.TotalDps:F1} pDPS";
-                _tooltipBaseStatsLabel.Visible = true;
-            }
-            else if (activeItem is ArmourItemInstance armour)
-            {
-                var parts = new List<string>();
-                if (armour.LocalArmour > 0f) parts.Add($"Giáp: {armour.LocalArmour:F0}");
-                if (armour.LocalEvasion > 0f) parts.Add($"Né tránh: {armour.LocalEvasion:F0}");
-                if (armour.LocalEnergyShield > 0f) parts.Add($"Khiên ES: {armour.LocalEnergyShield:F0}");
-                if (armour.LocalBlockChance > 0f) parts.Add($"Đỡ đòn: {armour.LocalBlockChance:F0}%");
-                _tooltipBaseStatsLabel.Text = string.Join(" | ", parts) + (armour.Quality > 0 ? $" (Quality +{armour.Quality}%)" : "");
-                _tooltipBaseStatsLabel.Visible = parts.Count > 0;
-            }
-            else
-            {
-                _tooltipBaseStatsLabel.Visible = false;
-            }
-        }
+        // 2. Right column: base stats, implicit, affixes (smooth scroll / T1-T2 summary)
+        RenderBaseStats(activeItem);
+        RenderImplicit(activeItem);
+        RenderAffixList(activeItem);
 
-        // 3. Implicit
-        if (_tooltipImplicitLabel != null)
-        {
-            if (!string.IsNullOrWhiteSpace(activeItem.ImplicitDescription))
-            {
-                _tooltipImplicitLabel.Text = $"✦ (Implicit) {activeItem.ImplicitDescription}";
-                _tooltipImplicitLabel.Visible = true;
-                _tooltipImplicitLabel.Modulate = new Color(0.45f, 0.75f, 1.0f);
-            }
-            else
-            {
-                _tooltipImplicitLabel.Visible = false;
-            }
-        }
-
-        // 4. Explicit Affixes
-        ClearAffixList();
-        if (_tooltipAffixListVBox != null && activeItem.Affixes.Count > 0)
-        {
-            foreach (var affix in activeItem.Affixes)
-            {
-                float avg = (affix.MinValue + affix.MaxValue) / 2f;
-                string typePrefix = affix.Type == AffixType.Prefix ? "(P)" : "(S)";
-                string text = string.Format(affix.NameTemplate, avg);
-
-                var affixLabel = new Label
-                {
-                    Text = $"• {typePrefix} {text} (Tier {affix.Tier})",
-                    AutowrapMode = TextServer.AutowrapMode.WordSmart
-                };
-                affixLabel.AddThemeFontSizeOverride("font_size", 10);
-                affixLabel.AddThemeColorOverride("font_color", affix.Type == AffixType.Prefix ? new Color(0.55f, 0.75f, 0.95f) : new Color(0.9f, 0.75f, 0.45f));
-                _tooltipAffixListVBox.AddChild(affixLabel);
-            }
-        }
-
-        // 5. Delta Preview Card (Smart Tooltip)
+        // 3. Left column: the 2 decisive rows (▲/▼ EHP & ▲/▼ DPS)
         bool isEquipped = (equippedItem != null && equippedItem.InstanceId == activeItem.InstanceId);
-        if (_deltaPreviewCard != null)
+        if (Player != null && !isEquipped)
         {
-            if (Player != null && !isEquipped)
-            {
-                var delta = EquipmentComparisonService.Compare(Player, SelectedSlot, activeItem);
-                RenderDeltaPreview(delta);
-                _deltaPreviewCard.Visible = true;
-            }
-            else
-            {
-                // Active item is already equipped
-                if (_deltaHeaderLabel != null)
-                    _deltaHeaderLabel.Text = "TRANG BỊ ĐANG MẶC TRÊN NGƯỜI (EQUIPPED)";
-                if (_deltaSummaryLabel != null)
-                    _deltaSummaryLabel.Text = "Chọn đồ khác bên dưới để so sánh chênh lệch Delta EHP / DPS.";
-                ClearDeltaBadges();
-                _deltaPreviewCard.Visible = true;
-            }
+            var delta = EquipmentComparisonService.Compare(Player, SelectedSlot, activeItem);
+            LastComparison = delta;
+            RenderDeltaPreview(delta);
+        }
+        else
+        {
+            LastComparison = null;
+            RenderEquippedBaseline();
         }
 
-        // 6. Action Buttons
+        // 4. Action Buttons
         UpdateActionButtons(activeItem, isEquipped);
+    }
+
+    private void RenderEmptyDrawer()
+    {
+        LastComparison = null;
+
+        if (_tooltipTitleLabel != null)
+        {
+            _tooltipTitleLabel.Text = $"Ô {SelectedSlot} Trống";
+            _tooltipTitleLabel.Modulate = new Color(0.6f, 0.6f, 0.65f);
+        }
+
+        if (_tooltipSubtitleLabel != null)
+            _tooltipSubtitleLabel.Text = "Chưa trang bị. Chọn đồ dự phòng bên dưới để so sánh và mặc.";
+
+        if (_tooltipBaseStatsLabel != null)
+            _tooltipBaseStatsLabel.Visible = false;
+
+        if (_tooltipImplicitLabel != null)
+            _tooltipImplicitLabel.Visible = false;
+
+        ClearAffixList();
+        if (_affixHeaderLabel != null)
+            _affixHeaderLabel.Text = "KHÔNG CÓ AFFIX";
+
+        // Drawer stays pinned (sticky) — show the current baseline so the 140px slot never collapses
+        float ehp = Player != null ? EquipmentComparisonService.CalculateEffectiveHealthPool(Player) : 0f;
+        float dps = Player != null ? EquipmentComparisonService.CalculateTotalDps(Player) : 0f;
+        var (ehpLine, dpsLine) = SmartDeltaFormatter.FormatEquippedBaseline(ehp, dps);
+
+        ApplyVerdict(DeltaVerdict.EmptySlot);
+        ApplyDeltaLine(_deltaEhpLabel, _deltaEhpDetailLabel, ehpLine with { Detail = "Ô trống • chưa có mốc" });
+        ApplyDeltaLine(_deltaDpsLabel, _deltaDpsDetailLabel, dpsLine);
+
+        if (_deltaSummaryLabel != null)
+        {
+            _deltaSummaryLabel.Text = "Res: —";
+            _deltaSummaryLabel.Modulate = DeltaNeutralColor;
+        }
+    }
+
+    private void RenderBaseStats(IGearItem item)
+    {
+        if (_tooltipBaseStatsLabel == null) return;
+
+        if (item is WeaponItemInstance weapon)
+        {
+            _tooltipBaseStatsLabel.Text =
+                $"Vật lý {weapon.ComputedMinDamage:F0}-{weapon.ComputedMaxDamage:F0} • {weapon.ComputedAps:F2} APS • " +
+                $"Chí mạng {weapon.ComputedCritChance:F2}% • {weapon.TotalDps:F1} pDPS";
+            _tooltipBaseStatsLabel.Visible = true;
+        }
+        else if (item is ArmourItemInstance armour)
+        {
+            var parts = new List<string>(4);
+            if (armour.LocalArmour > 0f) parts.Add($"Giáp {armour.LocalArmour:F0}");
+            if (armour.LocalEvasion > 0f) parts.Add($"Né {armour.LocalEvasion:F0}");
+            if (armour.LocalEnergyShield > 0f) parts.Add($"ES {armour.LocalEnergyShield:F0}");
+            if (armour.LocalBlockChance > 0f) parts.Add($"Block {armour.LocalBlockChance:F0}%");
+            _tooltipBaseStatsLabel.Text = string.Join(" • ", parts) + (armour.Quality > 0 ? $" (Q +{armour.Quality}%)" : "");
+            _tooltipBaseStatsLabel.Visible = parts.Count > 0;
+        }
+        else
+        {
+            _tooltipBaseStatsLabel.Visible = false;
+        }
+    }
+
+    private void RenderImplicit(IGearItem item)
+    {
+        if (_tooltipImplicitLabel == null) return;
+
+        if (!string.IsNullOrWhiteSpace(item.ImplicitDescription))
+        {
+            _tooltipImplicitLabel.Text = $"✦ (Implicit) {item.ImplicitDescription}";
+            _tooltipImplicitLabel.Visible = true;
+        }
+        else
+        {
+            _tooltipImplicitLabel.Visible = false;
+        }
+    }
+
+    private void RenderAffixList(IGearItem item)
+    {
+        ClearAffixList();
+
+        var summary = SmartDeltaFormatter.SummarizeAffixes(item.Affixes, ShowHighTierAffixesOnly);
+
+        if (_affixHeaderLabel != null)
+            _affixHeaderLabel.Text = SmartDeltaFormatter.FormatAffixHeader(summary);
+
+        if (_affixFilterToggle != null)
+            _affixFilterToggle.Disabled = summary.HighTierCount == 0 && !ShowHighTierAffixesOnly;
+
+        if (_tooltipAffixListVBox == null) return;
+
+        if (summary.Lines.Count == 0 && ShowHighTierAffixesOnly && summary.PrefixCount + summary.SuffixCount > 0)
+        {
+            var none = new Label { Text = "Không có dòng T1/T2 trên món đồ này." };
+            none.AddThemeFontSizeOverride("font_size", 8);
+            none.AddThemeColorOverride("font_color", new Color(0.55f, 0.57f, 0.62f));
+            _tooltipAffixListVBox.AddChild(none);
+            return;
+        }
+
+        foreach (var line in summary.Lines)
+        {
+            var affixLabel = new Label
+            {
+                Text = SmartDeltaFormatter.FormatAffixRow(line),
+                AutowrapMode = TextServer.AutowrapMode.WordSmart
+            };
+            affixLabel.AddThemeFontSizeOverride("font_size", 9);
+            affixLabel.AddThemeColorOverride("font_color",
+                line.IsHighTier ? HighTierAffixColor
+                : line.Type == AffixType.Prefix ? PrefixAffixColor
+                : SuffixAffixColor);
+            _tooltipAffixListVBox.AddChild(affixLabel);
+        }
     }
 
     private void RenderDeltaPreview(EquipmentComparisonResult delta)
     {
-        if (_deltaHeaderLabel != null)
-        {
-            _deltaHeaderLabel.Text = delta.IsUpgrade
-                ? "DELTA PREVIEW (SO SÁNH: CẢI THIỆN NÂNG CẤP ▲)"
-                : "DELTA PREVIEW (SO SÁNH VỚI ĐỒ ĐANG MẶC)";
-            _deltaHeaderLabel.Modulate = delta.IsUpgrade ? new Color(0.35f, 0.85f, 0.45f) : Colors.White;
-        }
-
-        ClearDeltaBadges();
-
-        if (_deltaBadgesHBox != null)
-        {
-            // Delta EHP badge
-            string ehpSign = delta.DeltaEhp >= 0 ? "+" : "";
-            Color ehpColor = delta.DeltaEhp >= 0 ? new Color(0.35f, 0.85f, 0.45f) : new Color(0.95f, 0.4f, 0.35f);
-            AddDeltaBadge($"{ehpSign}{delta.DeltaEhp:F0} EHP", ehpColor);
-
-            // Delta DPS badge
-            string dpsSign = delta.DeltaDpsPercent >= 0 ? "+" : "";
-            Color dpsColor = delta.DeltaDpsPercent >= 0 ? new Color(0.88f, 0.72f, 0.25f) : new Color(0.85f, 0.35f, 0.35f);
-            AddDeltaBadge($"{dpsSign}{delta.DeltaDpsPercent:F1}% DPS", dpsColor);
-
-            // Delta Fire / Chaos Res badges if significant
-            if (MathF.Abs(delta.DeltaFireRes) >= 1f)
-            {
-                string sign = delta.DeltaFireRes >= 0 ? "+" : "";
-                Color col = delta.DeltaFireRes >= 0 ? new Color(0.35f, 0.85f, 0.45f) : new Color(0.95f, 0.4f, 0.35f);
-                AddDeltaBadge($"{sign}{delta.DeltaFireRes:F0}% Fire", col);
-            }
-
-            if (delta.DeltaChaosRes < 0f)
-            {
-                AddDeltaBadge($"{delta.DeltaChaosRes:F0}% Chaos", new Color(0.95f, 0.4f, 0.35f));
-            }
-        }
+        ApplyVerdict(SmartDeltaFormatter.ClassifyVerdict(delta));
+        ApplyDeltaLine(_deltaEhpLabel, _deltaEhpDetailLabel, SmartDeltaFormatter.FormatEhpDelta(delta));
+        ApplyDeltaLine(_deltaDpsLabel, _deltaDpsDetailLabel, SmartDeltaFormatter.FormatDpsDelta(delta));
 
         if (_deltaSummaryLabel != null)
         {
-            _deltaSummaryLabel.Text = delta.HighlightNotes.Count > 0
-                ? string.Join(" • ", delta.HighlightNotes)
-                : (delta.IsUpgrade ? "Nâng cấp chỉ số toàn diện" : "Chỉ số cân bằng");
+            _deltaSummaryLabel.Text = SmartDeltaFormatter.FormatResistanceSummary(delta);
+            _deltaSummaryLabel.TooltipText = delta.HighlightNotes.Count > 0
+                ? string.Join("\n", delta.HighlightNotes)
+                : string.Empty;
+
+            bool anyResLoss = delta.DeltaFireRes < 0f || delta.DeltaColdRes < 0f ||
+                              delta.DeltaLightningRes < 0f || delta.DeltaChaosRes < 0f;
+            _deltaSummaryLabel.Modulate = anyResLoss ? DeltaTradeOffColor : DeltaNeutralColor;
         }
     }
 
-    private void AddDeltaBadge(string text, Color color)
+    private void RenderEquippedBaseline()
     {
-        if (_deltaBadgesHBox == null) return;
-        var panel = new PanelContainer();
-        var style = new StyleBoxFlat
-        {
-            BgColor = new Color(color.R, color.G, color.B, 0.18f),
-            BorderColor = color,
-            BorderWidthBottom = 1,
-            BorderWidthTop = 1,
-            BorderWidthLeft = 1,
-            BorderWidthRight = 1,
-            CornerRadiusBottomLeft = 3,
-            CornerRadiusBottomRight = 3,
-            CornerRadiusTopLeft = 3,
-            CornerRadiusTopRight = 3
-        };
-        panel.AddThemeStyleboxOverride("panel", style);
+        float ehp = Player != null ? EquipmentComparisonService.CalculateEffectiveHealthPool(Player) : 0f;
+        float dps = Player != null ? EquipmentComparisonService.CalculateTotalDps(Player) : 0f;
+        var (ehpLine, dpsLine) = SmartDeltaFormatter.FormatEquippedBaseline(ehp, dps);
 
-        var lbl = new Label
-        {
-            Text = text,
-            Modulate = color
-        };
-        lbl.AddThemeFontSizeOverride("font_size", 10);
-        panel.AddChild(lbl);
-        _deltaBadgesHBox.AddChild(panel);
-    }
+        ApplyVerdict(DeltaVerdict.Equipped);
+        ApplyDeltaLine(_deltaEhpLabel, _deltaEhpDetailLabel, ehpLine);
+        ApplyDeltaLine(_deltaDpsLabel, _deltaDpsDetailLabel, dpsLine);
 
-    private void ClearDeltaBadges()
-    {
-        if (_deltaBadgesHBox == null) return;
-        foreach (Node child in _deltaBadgesHBox.GetChildren())
+        if (_deltaSummaryLabel != null)
         {
-            child.QueueFree();
+            _deltaSummaryLabel.Text = "Res: đang mặc";
+            _deltaSummaryLabel.TooltipText = string.Empty;
+            _deltaSummaryLabel.Modulate = DeltaNeutralColor;
         }
     }
+
+    private void ApplyVerdict(DeltaVerdict verdict)
+    {
+        CurrentVerdict = verdict;
+        Color color = GetVerdictColor(verdict);
+
+        if (_deltaVerdictLabel != null)
+        {
+            _deltaVerdictLabel.Text = SmartDeltaFormatter.VerdictText(verdict);
+            _deltaVerdictLabel.AddThemeColorOverride("font_color", color);
+        }
+
+        if (_deltaCardStyle != null)
+        {
+            _deltaCardStyle.BorderColor = new Color(color.R, color.G, color.B, 0.85f);
+            _deltaCardStyle.BgColor = new Color(color.R * 0.12f, color.G * 0.12f, color.B * 0.12f, 0.95f);
+        }
+    }
+
+    private static void ApplyDeltaLine(Label? headline, Label? detail, DeltaLine line)
+    {
+        if (headline != null)
+        {
+            headline.Text = line.Headline;
+            headline.AddThemeColorOverride("font_color", GetDirectionColor(line.Direction));
+        }
+
+        if (detail != null)
+        {
+            detail.Text = line.Detail;
+        }
+    }
+
+    private static Color GetDirectionColor(DeltaDirection direction) => direction switch
+    {
+        DeltaDirection.Up => DeltaUpColor,
+        DeltaDirection.Down => DeltaDownColor,
+        _ => DeltaNeutralColor
+    };
+
+    private static Color GetVerdictColor(DeltaVerdict verdict) => verdict switch
+    {
+        DeltaVerdict.Upgrade => DeltaUpColor,
+        DeltaVerdict.Downgrade => DeltaDownColor,
+        DeltaVerdict.TradeOff => DeltaTradeOffColor,
+        DeltaVerdict.Equipped => new Color(0.88f, 0.72f, 0.25f),
+        _ => new Color(0.55f, 0.57f, 0.62f)
+    };
 
     private void ClearAffixList()
     {
         if (_tooltipAffixListVBox == null) return;
         foreach (Node child in _tooltipAffixListVBox.GetChildren())
         {
+            // Detach immediately so child counts are accurate within the same frame
+            _tooltipAffixListVBox.RemoveChild(child);
             child.QueueFree();
         }
     }
+
+    // ─────────────────────────────────────────────
+    //  Sticky Drawer Micro-Interactions
+    // ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Smooth wheel scrolling for the affix list: intercepts wheel events and tweens scroll_vertical
+    /// instead of jumping, keeping the 140px drawer readable during quick 1.5s comparisons.
+    /// </summary>
+    private void OnAffixScrollGuiInput(InputEvent @event)
+    {
+        if (_affixScroll == null) return;
+        if (@event is not InputEventMouseButton { Pressed: true } mb) return;
+        if (mb.ButtonIndex != MouseButton.WheelUp && mb.ButtonIndex != MouseButton.WheelDown) return;
+
+        float direction = mb.ButtonIndex == MouseButton.WheelDown ? 1f : -1f;
+        float factor = mb.Factor > 0f ? mb.Factor : 1f;
+        SmoothScrollAffixesBy(direction * AffixScrollStep * factor);
+        _affixScroll.AcceptEvent();
+    }
+
+    /// <summary>
+    /// Tweens the affix list scroll offset by <paramref name="deltaPixels"/>, clamped to the scrollable range.
+    /// </summary>
+    public void SmoothScrollAffixesBy(float deltaPixels)
+    {
+        if (_affixScroll == null) return;
+
+        var vbar = _affixScroll.GetVScrollBar();
+        float maxScroll = vbar != null ? MathF.Max(0f, (float)(vbar.MaxValue - vbar.Page)) : 0f;
+
+        // Chain from the in-flight target so rapid wheel ticks accumulate smoothly
+        bool tweenRunning = _affixScrollTween != null && _affixScrollTween.IsValid() && _affixScrollTween.IsRunning();
+        float origin = tweenRunning ? _affixScrollTarget : _affixScroll.ScrollVertical;
+        _affixScrollTarget = Math.Clamp(origin + deltaPixels, 0f, maxScroll);
+
+        _affixScrollTween?.Kill();
+        if (!IsInsideTree())
+        {
+            _affixScroll.ScrollVertical = (int)_affixScrollTarget;
+            return;
+        }
+
+        _affixScrollTween = CreateTween();
+        _affixScrollTween.SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+        _affixScrollTween.TweenProperty(_affixScroll, "scroll_vertical", (int)_affixScrollTarget, AffixScrollDuration);
+    }
+
+    private void ResetAffixScroll()
+    {
+        _affixScrollTween?.Kill();
+        _affixScrollTween = null;
+        _affixScrollTarget = 0f;
+        if (_affixScroll != null)
+            _affixScroll.ScrollVertical = 0;
+    }
+
+    /// <summary>
+    /// Brief brightness pulse on the drawer when the inspected item changes (dopamine cue, 0.18s).
+    /// </summary>
+    private void PulseDrawer()
+    {
+        if (_smartDeltaDrawer == null || !IsInsideTree()) return;
+
+        _drawerPulseTween?.Kill();
+        _smartDeltaDrawer.Modulate = new Color(1.25f, 1.22f, 1.12f, 1f);
+        _drawerPulseTween = CreateTween();
+        _drawerPulseTween.SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        _drawerPulseTween.TweenProperty(_smartDeltaDrawer, "modulate", Colors.White, DrawerPulseDuration);
+    }
+
 
     private void UpdateActionButtons(IGearItem? item, bool isEquipped)
     {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using IdleExile.Core.Models;
 using IdleExile.Core.Services;
 using IdleExile.Core.State;
@@ -23,6 +24,7 @@ public static class EquipmentSystemTests
         TestLocalArmourCalculation();
         TestSoftAttributesIntegration();
         TestSmartDeltaComparison();
+        TestSmartDeltaFormatter();
         TestItemLocking();
 
         Console.WriteLine("[Tests] All EquipmentSystemTests PASSED successfully!");
@@ -183,6 +185,63 @@ public static class EquipmentSystemTests
         AssertTrue(delta.IsUpgrade, "Candidate item with strictly higher stats is marked as IsUpgrade");
         AssertTrue(delta.HighlightNotes.Count > 0, "Highlight notes generated for quick skimmability");
         AssertEqual(45f, delta.DeltaFireRes, "Delta Fire Resistance matches candidate affix bonus");
+    }
+
+    private static void TestSmartDeltaFormatter()
+    {
+        var player = new PlayerState();
+        player.Initialize(1000f, 200f, 200f);
+
+        var currentBodyDef = new ArmourBaseDefinition("vest", "Plate Vest", ArmourSlot.BodyArmour, BaseArmour: 100);
+        var currentBody = new ArmourItemInstance(currentBodyDef);
+        player.Gear.Equip(GearSlot.BodyArmour, currentBody);
+
+        var candidateDef = new ArmourBaseDefinition("astral", "Astral Plate", ArmourSlot.BodyArmour, BaseArmour: 780);
+        var candidate = new ArmourItemInstance(candidateDef, "Rare", quality: 20);
+        candidate.Affixes.Add(new AffixDefinition("life_t1", "+{0} to Maximum Life", AffixType.Prefix, 1, 80, 115, 115, new[] { "life" }));
+        candidate.Affixes.Add(new AffixDefinition("armour_t2", "{0}% Increased Armour", AffixType.Prefix, 2, 70, 80, 80, new[] { "armour" }));
+        candidate.Affixes.Add(new AffixDefinition("fire_t1", "+{0}% to Fire Resistance", AffixType.Suffix, 1, 80, 45, 45, new[] { "fire", "resistance" }));
+        candidate.Affixes.Add(new AffixDefinition("cold_t4", "+{0}% to Cold Resistance", AffixType.Suffix, 4, 30, 20, 20, new[] { "cold", "resistance" }));
+        candidate.RecalculateStats();
+
+        var delta = EquipmentComparisonService.Compare(player, GearSlot.BodyArmour, candidate);
+
+        // 1. Decisive Lines (EHP and DPS)
+        var ehpLine = SmartDeltaFormatter.FormatEhpDelta(delta);
+        AssertEqual(DeltaDirection.Up, ehpLine.Direction, "EHP direction should be Up");
+        AssertTrue(ehpLine.Headline.StartsWith("▲ +"), $"EHP Headline should start with '▲ +', was '{ehpLine.Headline}'");
+        AssertTrue(ehpLine.Headline.Contains("EHP"), "EHP Headline should mention EHP");
+        AssertTrue(ehpLine.Detail.Contains("→"), "EHP Detail should contain arrow indicator");
+
+        var dpsLine = SmartDeltaFormatter.FormatDpsDelta(delta);
+        AssertTrue(dpsLine.Headline.Contains("DPS"), "DPS Headline should contain DPS");
+
+        // 2. Verdict Classification
+        var verdict = SmartDeltaFormatter.ClassifyVerdict(delta);
+        AssertEqual(DeltaVerdict.Upgrade, verdict, "Strictly better item should be classified as Upgrade");
+        AssertEqual("▲ NÂNG CẤP", SmartDeltaFormatter.VerdictText(verdict), "Verdict text should be ▲ NÂNG CẤP");
+
+        // 3. Resistance Summary
+        string resSummary = SmartDeltaFormatter.FormatResistanceSummary(delta);
+        AssertTrue(resSummary.Contains("Fire +45"), $"Res summary should contain 'Fire +45', was '{resSummary}'");
+        AssertTrue(resSummary.Contains("Cold +20"), $"Res summary should contain 'Cold +20', was '{resSummary}'");
+
+        // 4. Affix Summary (T1/T2 filtering)
+        var fullSummary = SmartDeltaFormatter.SummarizeAffixes(candidate.Affixes, highTierOnly: false);
+        AssertEqual(2, fullSummary.PrefixCount, "Should have 2 Prefixes");
+        AssertEqual(2, fullSummary.SuffixCount, "Should have 2 Suffixes");
+        AssertEqual(3, fullSummary.HighTierCount, "Should have 3 high tier (T1/T2) affixes");
+        AssertEqual(1, fullSummary.BestTier, "Best tier should be 1");
+        AssertEqual(4, fullSummary.Lines.Count, "All 4 lines included when highTierOnly is false");
+
+        var highTierSummary = SmartDeltaFormatter.SummarizeAffixes(candidate.Affixes, highTierOnly: true);
+        AssertEqual(3, highTierSummary.Lines.Count, "Only 3 high tier lines included when highTierOnly is true");
+        AssertTrue(highTierSummary.Lines.All(l => l.Tier <= 2), "All lines must be Tier <= 2");
+
+        string headerText = SmartDeltaFormatter.FormatAffixHeader(fullSummary);
+        AssertTrue(headerText.Contains("4 MODS"), "Header must mention 4 MODS");
+        AssertTrue(headerText.Contains("2P/2S"), "Header must mention 2P/2S");
+        AssertTrue(headerText.Contains("★ T1-T2 ×3"), "Header must mention ★ T1-T2 ×3");
     }
 
     private static void TestItemLocking()

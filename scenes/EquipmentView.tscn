@@ -90,6 +90,50 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sticky_drawer"]
+bg_color = Color(0.0627451, 0.0666667, 0.0901961, 1)
+border_width_left = 1
+border_width_top = 2
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.55, 0.45, 0.18, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_filter_toggle"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+bg_color = Color(0.1, 0.105, 0.14, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.32, 0.4, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_filter_toggle_on"]
+content_margin_left = 4.0
+content_margin_top = 0.0
+content_margin_right = 4.0
+content_margin_bottom = 0.0
+bg_color = Color(0.28, 0.22, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.88, 0.72, 0.25, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
 [node name="EquipmentView" type="Control"]
 custom_minimum_size = Vector2(0, 0)
 layout_mode = 3
@@ -601,99 +645,186 @@ theme_override_font_sizes/font_size = 8
 text = "INT: 14 (+7 Mana, +2% ES)"
 clip_text = true
 
-[node name="TooltipCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_card")
-
-[node name="TooltipMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard"]
-layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 8
-
-[node name="TooltipVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="TooltipHeaderVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox"]
-layout_mode = 2
-theme_override_constants/separation = 1
-
-[node name="TooltipTitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/TooltipHeaderVBox"]
+[node name="SmartDeltaDrawer" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox"]
 unique_name_in_owner = true
+clip_contents = true
+custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.75, 0.27, 1)
-theme_override_font_sizes/font_size = 12
-text = "Astral Plate of the Colossus"
+size_flags_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_sticky_drawer")
 
-[node name="TooltipSubtitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/TooltipHeaderVBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.65, 0.7, 1)
-theme_override_font_sizes/font_size = 9
-text = "Astral Plate • Rare • ilvl: 84 • Level 68"
-
-[node name="TooltipBaseStatsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
-theme_override_font_sizes/font_size = 10
-text = "Armour: 1,120 (Quality +20%)"
-
-[node name="TooltipImplicitLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
-theme_override_font_sizes/font_size = 9
-text = "• (Implicit) +12% to all Elemental Resistances"
-
-[node name="AffixScroll" type="ScrollContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox"]
-custom_minimum_size = Vector2(0, 52)
-layout_mode = 2
-horizontal_scroll_mode = 0
-
-[node name="TooltipAffixListVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/AffixScroll"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 2
-
-[node name="DeltaPreviewCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_delta_card")
-
-[node name="DeltaMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/DeltaPreviewCard"]
+[node name="DrawerMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer"]
 layout_mode = 2
 theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 4
+theme_override_constants/margin_top = 3
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 4
 
-[node name="DeltaVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/DeltaPreviewCard/DeltaMargin"]
+[node name="DrawerVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin"]
 layout_mode = 2
-theme_override_constants/separation = 2
+theme_override_constants/separation = 1
 
-[node name="DeltaHeaderLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
-theme_override_font_sizes/font_size = 9
-text = "DELTA PREVIEW (SO SÁNH VỚI ĐỒ ĐANG MẶC):"
-
-[node name="DeltaBadgesHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
-unique_name_in_owner = true
+[node name="DrawerHeaderHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="DeltaSummaryLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TooltipCard/TooltipMargin/TooltipVBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+[node name="TooltipTitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.82, 0.85, 1)
-theme_override_font_sizes/font_size = 9
-text = "▲ +840 EHP • ▲ +12% Fire Res • ▼ -15% Chaos Res"
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.75, 0.27, 1)
+theme_override_font_sizes/font_size = 11
+text = "Astral Plate of the Colossus"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="DeltaVerdictLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 10
+text = "▲ NÂNG CẤP"
+horizontal_alignment = 2
+
+[node name="TooltipSubtitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
+theme_override_font_sizes/font_size = 8
+text = "Astral Plate • Rare • ilvl 84 • Cấp 68"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="DrawerBodyHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="DeltaPreviewCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_delta_card")
+
+[node name="DeltaMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 2
+
+[node name="DeltaVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 0
+
+[node name="DeltaEhpLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 14
+text = "▲ +840 EHP"
+clip_text = true
+
+[node name="DeltaEhpDetailLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
+theme_override_font_sizes/font_size = 8
+text = "5,240 → 6,080 (+16.0%)"
+clip_text = true
+
+[node name="DeltaDpsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 14
+text = "▲ +12.4% DPS"
+clip_text = true
+
+[node name="DeltaDpsDetailLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
+theme_override_font_sizes/font_size = 8
+text = "14,280.0 → 16,050.0 (+1,770.0)"
+clip_text = true
+
+[node name="DeltaSummaryLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.8, 0.84, 1)
+theme_override_font_sizes/font_size = 8
+text = "Res: Fire +45 • Chaos -15"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="AffixColumnVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="AffixHeaderHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="AffixHeaderLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.88, 0.72, 0.25, 1)
+theme_override_font_sizes/font_size = 8
+text = "4 MODS • 2P/2S • ★ T1-T2 ×4"
+clip_text = true
+
+[node name="AffixFilterToggle" type="Button" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixHeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 14)
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Chỉ hiển thị các dòng Affix bậc cao (Tier 1 / Tier 2)"
+theme_override_colors/font_color = Color(0.75, 0.77, 0.82, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.88, 0.5, 1)
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_toggle")
+theme_override_styles/hover = SubResource("StyleBoxFlat_filter_toggle")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_filter_toggle_on")
+theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_filter_toggle_on")
+toggle_mode = true
+text = "★ T1/T2"
+
+[node name="AffixScroll" type="ScrollContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="AffixContentVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="TooltipBaseStatsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
+theme_override_font_sizes/font_size = 8
+text = "Giáp: 1,120 (Quality +20%)"
+autowrap_mode = 3
+
+[node name="TooltipImplicitLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.75, 1, 1)
+theme_override_font_sizes/font_size = 8
+text = "✦ (Implicit) +12% to all Elemental Resistances"
+autowrap_mode = 3
+
+[node name="TooltipAffixListVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
 
 [node name="ActionButtonsHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox"]
 layout_mode = 2

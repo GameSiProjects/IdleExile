@@ -99,7 +99,7 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
     - Hàng 3 (Găng - Giày): 52x28px
     - Hàng 4 (Dây chuyền - Nhẫn 1 - Nhẫn 2 - Thắt lưng): 46x26px
   - Cụm Survival Benchmark (EHP, Armour, Evasion, Resists) đặt song song bên phải Doll.
-- [ ] **Task 2.2: Thiết kế Smart Tooltip Delta dạng Sticky Drawer (140px)**
+- [x] **Task 2.2: Thiết kế Smart Tooltip Delta dạng Sticky Drawer (140px)**
   - Đặt ngay bên dưới Doll, hiển thị trực tiếp đồ đang chọn:
     - 2 dòng chỉ số quyết định: **▲/▼ EHP** và **▲/▼ DPS** (Font to bản màu xanh lá/đỏ).
     - Danh sách Affixes hiển thị dạng cuộn mượt hoặc tóm tắt các dòng T1/T2.

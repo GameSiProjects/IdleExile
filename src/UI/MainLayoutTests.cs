@@ -22,6 +22,7 @@ public static class MainLayoutTests
             TestModeSwitching(existingMain);
             TestStatusCardEliminationAndDiagnostics(existingMain);
             TestOptimizedEquipmentDollLayout(existingMain);
+            TestStickyDrawerLayout(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -42,6 +43,7 @@ public static class MainLayoutTests
         {
             TestFiveTierHierarchy(main);
             TestStatusCardEliminationAndDiagnostics(main);
+            TestStickyDrawerLayout(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -391,6 +393,83 @@ public static class MainLayoutTests
 
         var strBenchmark = equipView.GetNodeOrNull<Label>("%StrStatLabel");
         AssertNotNull(strBenchmark, "StrStatLabel must exist in BenchmarkCard");
+    }
+
+    /// <summary>
+    /// Verifies Task 2.2: Smart Tooltip Delta dạng Sticky Drawer (140px).
+    /// Conforms to docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md:
+    /// - Sticky Drawer positioned right under the Doll with fixed height 140px.
+    /// - Clip contents enabled to prevent layout expansion.
+    /// - 2 decisive headline rows: ▲/▼ EHP and ▲/▼ DPS with font size 14.
+    /// - DeltaVerdictLabel shows instant verdict badge (▲ NÂNG CẤP, ▼ HẠ CẤP, etc.).
+    /// - AffixFilterToggle button toggles between full list and T1/T2 summary.
+    /// - Smooth wheel scrolling capability in AffixScroll.
+    /// - Live comparison updates when inspecting candidate items.
+    /// </summary>
+    private static void TestStickyDrawerLayout(Main main)
+    {
+        var equipView = main.GetNodeOrNull<EquipmentView>("%EquipmentView");
+        AssertNotNull(equipView, "EquipmentView must exist");
+
+        // 1. Sticky Drawer structure and 140px budget
+        var drawer = equipView.GetNodeOrNull<Control>("%SmartDeltaDrawer");
+        AssertNotNull(drawer, "SmartDeltaDrawer must exist with unique name %SmartDeltaDrawer");
+        AssertTrue(Mathf.IsEqualApprox(drawer.CustomMinimumSize.Y, EquipmentView.StickyDrawerHeight),
+            $"SmartDeltaDrawer height must be {EquipmentView.StickyDrawerHeight}px, was {drawer.CustomMinimumSize.Y}");
+        AssertTrue(drawer.ClipContents, "SmartDeltaDrawer must have ClipContents enabled to maintain 140px budget");
+
+        // 2. Decisive metrics (EHP & DPS) labels with large font size (14)
+        var ehpLabel = equipView.GetNodeOrNull<Label>("%DeltaEhpLabel");
+        AssertNotNull(ehpLabel, "DeltaEhpLabel must exist in drawer");
+        int ehpFontSize = ehpLabel.GetThemeFontSize("font_size");
+        AssertTrue(ehpFontSize >= 12, $"DeltaEhpLabel font size should be large (>=12, configured 14), was {ehpFontSize}");
+
+        var dpsLabel = equipView.GetNodeOrNull<Label>("%DeltaDpsLabel");
+        AssertNotNull(dpsLabel, "DeltaDpsLabel must exist in drawer");
+        int dpsFontSize = dpsLabel.GetThemeFontSize("font_size");
+        AssertTrue(dpsFontSize >= 12, $"DeltaDpsLabel font size should be large (>=12, configured 14), was {dpsFontSize}");
+
+        // 3. Verdict badge and summary labels
+        var verdictLabel = equipView.GetNodeOrNull<Label>("%DeltaVerdictLabel");
+        AssertNotNull(verdictLabel, "DeltaVerdictLabel must exist for quick verdict badge");
+
+        var summaryLabel = equipView.GetNodeOrNull<Label>("%DeltaSummaryLabel");
+        AssertNotNull(summaryLabel, "DeltaSummaryLabel must exist for resistance summary");
+
+        // 4. Affix column: header, toggle button, scroll container
+        var affixHeader = equipView.GetNodeOrNull<Label>("%AffixHeaderLabel");
+        AssertNotNull(affixHeader, "AffixHeaderLabel must exist");
+
+        var filterToggle = equipView.GetNodeOrNull<Button>("%AffixFilterToggle");
+        AssertNotNull(filterToggle, "AffixFilterToggle button must exist");
+
+        var affixScroll = equipView.GetNodeOrNull<ScrollContainer>("%AffixScroll");
+        AssertNotNull(affixScroll, "AffixScroll must exist");
+
+        // 5. Test candidate inspection and Delta update
+        if (equipView.CandidateItems.Count > 0)
+        {
+            var candidate = equipView.CandidateItems[0];
+            equipView.InspectCandidate(candidate);
+
+            AssertTrue(equipView.InspectedItem?.InstanceId == candidate.InstanceId, "InspectedItem should match candidate");
+            AssertTrue(!string.IsNullOrEmpty(ehpLabel.Text), "DeltaEhpLabel must be populated");
+            AssertTrue(!string.IsNullOrEmpty(dpsLabel.Text), "DeltaDpsLabel must be populated");
+            AssertTrue(!string.IsNullOrEmpty(verdictLabel.Text), "DeltaVerdictLabel must be populated");
+
+            // 6. Test T1/T2 affix filter toggle
+            equipView.SetHighTierAffixFilter(true);
+            AssertTrue(equipView.ShowHighTierAffixesOnly, "ShowHighTierAffixesOnly should be true");
+
+            var affixList = equipView.GetNodeOrNull<VBoxContainer>("%TooltipAffixListVBox");
+            AssertNotNull(affixList, "TooltipAffixListVBox must exist");
+
+            equipView.SetHighTierAffixFilter(false);
+            AssertFalse(equipView.ShowHighTierAffixesOnly, "ShowHighTierAffixesOnly should be false");
+        }
+
+        // 7. Test smooth scroll helper
+        equipView.SmoothScrollAffixesBy(50f);
     }
 
     private static void AssertNotNull([System.Diagnostics.CodeAnalysis.NotNull] object? obj, string message)
