@@ -1,5 +1,7 @@
 using System;
+using System.Linq;
 using Godot;
+using IdleExile.Core.Models;
 using IdleExile.UI.Components;
 
 namespace IdleExile.UI;
@@ -23,6 +25,7 @@ public static class MainLayoutTests
             TestStatusCardEliminationAndDiagnostics(existingMain);
             TestOptimizedEquipmentDollLayout(existingMain);
             TestStickyDrawerLayout(existingMain);
+            TestActionButtonAndCandidateDrawerLayout(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -44,6 +47,7 @@ public static class MainLayoutTests
             TestFiveTierHierarchy(main);
             TestStatusCardEliminationAndDiagnostics(main);
             TestStickyDrawerLayout(main);
+            TestActionButtonAndCandidateDrawerLayout(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -470,6 +474,97 @@ public static class MainLayoutTests
 
         // 7. Test smooth scroll helper
         equipView.SmoothScrollAffixesBy(50f);
+    }
+
+    /// <summary>
+    /// Verifies Task 2.3: Thanh Action Buttons & Candidate Drawer Mini (60px).
+    /// Conforms to docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md:
+    /// - ActionCandidateSection has fixed height budget 60px with ClipContents enabled.
+    /// - 1-Click Action Buttons: [Mặc Ngay] (Green), [Khóa Đồ] (Amber), [Cất Rương] (Blue).
+    /// - Candidate Drawer provides horizontal smooth scrolling for items matching selected slot.
+    /// - Fast 1.5s comparison candidate cards with dynamic EHP/DPS delta badges.
+    /// - 1-click candidate inspection and 1-click / double-click equip actions.
+    /// </summary>
+    private static void TestActionButtonAndCandidateDrawerLayout(Main main)
+    {
+        var equipView = main.GetNodeOrNull<EquipmentView>("%EquipmentView");
+        AssertNotNull(equipView, "EquipmentView must exist");
+
+        // 1. 60px height constraint & clipping
+        var section = equipView.GetNodeOrNull<Control>("%ActionCandidateSection");
+        AssertNotNull(section, "ActionCandidateSection must exist with unique name %ActionCandidateSection");
+        AssertTrue(Mathf.IsEqualApprox(section.CustomMinimumSize.Y, EquipmentView.ActionCandidateSectionHeight),
+            $"ActionCandidateSection height must be {EquipmentView.ActionCandidateSectionHeight}px, was {section.CustomMinimumSize.Y}");
+        AssertTrue(section.ClipContents, "ActionCandidateSection must clip contents to preserve 60px budget");
+
+        // 2. Action Buttons existence
+        var equipBtn = equipView.GetNodeOrNull<Button>("%EquipButton");
+        AssertNotNull(equipBtn, "EquipButton must exist");
+
+        var lockBtn = equipView.GetNodeOrNull<Button>("%LockButton");
+        AssertNotNull(lockBtn, "LockButton must exist");
+
+        var stashBtn = equipView.GetNodeOrNull<Button>("%StashButton");
+        AssertNotNull(stashBtn, "StashButton must exist");
+
+        // 3. Candidate Drawer Panel & ScrollContainer
+        var drawerPanel = equipView.GetNodeOrNull<PanelContainer>("%CandidateDrawerPanel");
+        AssertNotNull(drawerPanel, "CandidateDrawerPanel must exist");
+
+        var candidateScroll = equipView.GetNodeOrNull<ScrollContainer>("%CandidateScroll");
+        AssertNotNull(candidateScroll, "CandidateScroll must exist");
+        AssertTrue(candidateScroll.ClipContents, "CandidateScroll must have ClipContents enabled");
+
+        var candidateHBox = equipView.GetNodeOrNull<HBoxContainer>("%CandidateHBox");
+        AssertNotNull(candidateHBox, "CandidateHBox must exist");
+
+        // 4. Smooth horizontal scroll helpers
+        equipView.SmoothScrollCandidatesBy(45f);
+        equipView.ResetCandidateScroll();
+
+        // 5. Candidate items card rendering and fast 1.5s comparison
+        equipView.SelectSlot(GearSlot.BodyArmour);
+        var matchingCandidates = equipView.CandidateItems
+            .Where(i => i.TargetSlot == GearSlot.BodyArmour)
+            .ToList();
+
+        if (matchingCandidates.Count > 0)
+        {
+            var candidate = matchingCandidates[0];
+
+            // Inspect candidate (1-click)
+            equipView.InspectCandidate(candidate);
+            AssertTrue(equipView.InspectedItem?.InstanceId == candidate.InstanceId,
+                "Inspecting candidate must update InspectedItem");
+            AssertFalse(equipBtn.Disabled, "EquipButton should be enabled when candidate is inspected");
+            AssertTrue(equipBtn.Text == "Mặc Ngay", "EquipButton text should say 'Mặc Ngay'");
+
+            // 1-Click Lock Toggle
+            bool initialLock = candidate.IsLocked;
+            lockBtn.EmitSignal(Button.SignalName.Pressed);
+            AssertTrue(candidate.IsLocked != initialLock, "Clicking LockButton must toggle item lock state");
+            AssertTrue(stashBtn.Disabled == candidate.IsLocked, "Locked candidate item must disable StashButton");
+
+            // Toggle lock back to initial state
+            lockBtn.EmitSignal(Button.SignalName.Pressed);
+            AssertTrue(candidate.IsLocked == initialLock, "Toggling lock again must restore initial lock state");
+
+            // 1-Click Equip
+            equipBtn.EmitSignal(Button.SignalName.Pressed);
+            AssertTrue(main.Player?.Gear.GetItem(GearSlot.BodyArmour)?.InstanceId == candidate.InstanceId,
+                "EquipButton must equip the inspected candidate item into player gear");
+            AssertTrue(equipBtn.Disabled, "EquipButton must be disabled when item is equipped");
+            AssertTrue(equipBtn.Text == "Đã Mặc", "EquipButton text must say 'Đã Mặc'");
+            AssertFalse(stashBtn.Disabled, "StashButton must be enabled for equipped item");
+            AssertTrue(stashBtn.Text == "Tháo Đồ", "StashButton text must say 'Tháo Đồ' for equipped item");
+
+            // 1-Click Unequip / Stash
+            stashBtn.EmitSignal(Button.SignalName.Pressed);
+            AssertTrue(main.Player?.Gear.GetItem(GearSlot.BodyArmour) == null,
+                "StashButton must unequip the active item when clicked");
+            AssertTrue(equipView.CandidateItems.Any(i => i.InstanceId == candidate.InstanceId),
+                "Unequipped item must be returned to candidate items list");
+        }
     }
 
     private static void AssertNotNull([System.Diagnostics.CodeAnalysis.NotNull] object? obj, string message)

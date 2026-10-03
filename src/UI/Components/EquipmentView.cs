@@ -48,9 +48,14 @@ public partial class EquipmentView : Control
     /// <summary>Fixed pixel height of the Smart Tooltip Sticky Drawer (Task 2.2).</summary>
     public const float StickyDrawerHeight = 140f;
 
+    /// <summary>Fixed pixel height of the Action Buttons & Candidate Drawer Mini (Task 2.3).</summary>
+    public const float ActionCandidateSectionHeight = 60f;
+
     private const float AffixScrollStep = 26f;
     private const double AffixScrollDuration = 0.14;
     private const double DrawerPulseDuration = 0.18;
+    private const float CandidateScrollStep = 45f;
+    private const double CandidateScrollDuration = 0.14;
 
     private static readonly Color DeltaUpColor = new(0.35f, 0.85f, 0.45f);
     private static readonly Color DeltaDownColor = new(0.95f, 0.4f, 0.35f);
@@ -111,12 +116,15 @@ public partial class EquipmentView : Control
     private Tween? _drawerPulseTween;
     private string? _lastRenderedItemId;
 
-    // Action Buttons
+    // Action Candidate Section (Task 2.3)
+    private Control? _actionCandidateSection;
+    private PanelContainer? _candidateDrawerPanel;
+    private ScrollContainer? _candidateScroll;
+    private Tween? _candidateScrollTween;
+    private float _candidateScrollTarget;
     private Button? _equipButton;
     private Button? _lockButton;
     private Button? _stashButton;
-
-    // Candidate Items Drawer
     private HBoxContainer? _candidateHBox;
 
     public override void _Ready()
@@ -184,12 +192,13 @@ public partial class EquipmentView : Control
             _deltaPreviewCard.AddThemeStyleboxOverride("panel", _deltaCardStyle);
         }
 
-        // Action Buttons
+        // Action Candidate Section (Task 2.3)
+        _actionCandidateSection = GetNodeOrNull<Control>("%ActionCandidateSection");
+        _candidateDrawerPanel = GetNodeOrNull<PanelContainer>("%CandidateDrawerPanel");
+        _candidateScroll = GetNodeOrNull<ScrollContainer>("%CandidateScroll");
         _equipButton = GetNodeOrNull<Button>("%EquipButton");
         _lockButton = GetNodeOrNull<Button>("%LockButton");
         _stashButton = GetNodeOrNull<Button>("%StashButton");
-
-        // Candidate Drawer
         _candidateHBox = GetNodeOrNull<HBoxContainer>("%CandidateHBox");
     }
 
@@ -262,6 +271,11 @@ public partial class EquipmentView : Control
         {
             _affixScroll.GuiInput += OnAffixScrollGuiInput;
         }
+
+        if (_candidateScroll != null)
+        {
+            _candidateScroll.GuiInput += OnCandidateScrollGuiInput;
+        }
     }
 
     /// <summary>
@@ -313,6 +327,7 @@ public partial class EquipmentView : Control
         var equipped = Player?.Gear.GetItem(slot);
         InspectedItem = equipped;
 
+        ResetCandidateScroll();
         RefreshSlotButtons();
         RefreshCandidates();
         RefreshTooltip();
@@ -340,6 +355,7 @@ public partial class EquipmentView : Control
         InspectedItem = candidate;
 
         RefreshSlotButtons();
+        RefreshCandidates();
         RefreshTooltip();
     }
 
@@ -508,7 +524,7 @@ public partial class EquipmentView : Control
     }
 
     // ─────────────────────────────────────────────
-    //  Candidate Drawer
+    //  Candidate Drawer & Smooth Horizontal Scrolling (Task 2.3)
     // ─────────────────────────────────────────────
 
     private void RefreshCandidates()
@@ -517,6 +533,7 @@ public partial class EquipmentView : Control
 
         foreach (Node child in _candidateHBox.GetChildren())
         {
+            _candidateHBox.RemoveChild(child);
             child.QueueFree();
         }
 
@@ -528,35 +545,209 @@ public partial class EquipmentView : Control
         {
             var emptyLabel = new Label
             {
-                Text = "Không có đồ dự phòng trong rương",
-                HorizontalAlignment = HorizontalAlignment.Center
+                Text = "Không có đồ dự phòng cho ô này",
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+                SizeFlagsVertical = SizeFlags.ExpandFill
             };
-            emptyLabel.AddThemeColorOverride("font_color", new Color(0.5f, 0.5f, 0.55f));
-            emptyLabel.AddThemeFontSizeOverride("font_size", 10);
+            emptyLabel.AddThemeColorOverride("font_color", new Color(0.48f, 0.50f, 0.56f));
+            emptyLabel.AddThemeFontSizeOverride("font_size", 9);
             _candidateHBox.AddChild(emptyLabel);
             return;
         }
 
         foreach (var item in matchingCandidates)
         {
-            var btn = new Button
-            {
-                Text = $"{item.Name}\n[{item.Rarity}]",
-                CustomMinimumSize = new Vector2(105, 34),
-                Alignment = HorizontalAlignment.Center
-            };
-            btn.AddThemeFontSizeOverride("font_size", 10);
-            btn.AddThemeColorOverride("font_color", GetRarityColor(item.Rarity));
-
-            bool isInspected = (InspectedItem != null && InspectedItem.InstanceId == item.InstanceId);
-            if (isInspected)
-            {
-                btn.Modulate = new Color(1.3f, 1.3f, 1.0f);
-            }
-
-            btn.Pressed += () => InspectCandidate(item);
-            _candidateHBox.AddChild(btn);
+            var card = CreateCandidateCard(item);
+            _candidateHBox.AddChild(card);
         }
+    }
+
+    private Button CreateCandidateCard(IGearItem item)
+    {
+        bool isInspected = (InspectedItem != null && InspectedItem.InstanceId == item.InstanceId);
+        Color rarityColor = GetRarityColor(item.Rarity);
+
+        var cardBtn = new Button
+        {
+            CustomMinimumSize = new Vector2(116, 26),
+            FocusMode = FocusModeEnum.None
+        };
+
+        var normalStyle = new StyleBoxFlat
+        {
+            BgColor = isInspected ? new Color(0.14f, 0.12f, 0.06f, 0.98f) : new Color(0.075f, 0.08f, 0.105f, 0.95f),
+            BorderColor = isInspected ? new Color(0.95f, 0.75f, 0.27f, 1f) : new Color(rarityColor.R * 0.65f, rarityColor.G * 0.65f, rarityColor.B * 0.65f, 0.8f),
+            BorderWidthLeft = isInspected ? 2 : 1,
+            BorderWidthTop = isInspected ? 2 : 1,
+            BorderWidthRight = isInspected ? 2 : 1,
+            BorderWidthBottom = isInspected ? 2 : 1,
+            CornerRadiusTopLeft = 3,
+            CornerRadiusTopRight = 3,
+            CornerRadiusBottomRight = 3,
+            CornerRadiusBottomLeft = 3,
+            ContentMarginLeft = 4,
+            ContentMarginTop = 1,
+            ContentMarginRight = 4,
+            ContentMarginBottom = 1
+        };
+
+        var hoverStyle = new StyleBoxFlat
+        {
+            BgColor = isInspected ? new Color(0.18f, 0.15f, 0.08f, 1f) : new Color(0.11f, 0.12f, 0.16f, 1f),
+            BorderColor = isInspected ? new Color(1f, 0.85f, 0.4f, 1f) : new Color(rarityColor.R * 0.9f, rarityColor.G * 0.9f, rarityColor.B * 0.9f, 1f),
+            BorderWidthLeft = isInspected ? 2 : 1,
+            BorderWidthTop = isInspected ? 2 : 1,
+            BorderWidthRight = isInspected ? 2 : 1,
+            BorderWidthBottom = isInspected ? 2 : 1,
+            CornerRadiusTopLeft = 3,
+            CornerRadiusTopRight = 3,
+            CornerRadiusBottomRight = 3,
+            CornerRadiusBottomLeft = 3,
+            ContentMarginLeft = 4,
+            ContentMarginTop = 1,
+            ContentMarginRight = 4,
+            ContentMarginBottom = 1
+        };
+
+        var pressedStyle = (StyleBoxFlat)normalStyle.Duplicate();
+        pressedStyle.BgColor = new Color(0.05f, 0.055f, 0.07f, 1f);
+
+        cardBtn.AddThemeStyleboxOverride("normal", normalStyle);
+        cardBtn.AddThemeStyleboxOverride("hover", hoverStyle);
+        cardBtn.AddThemeStyleboxOverride("pressed", pressedStyle);
+
+        var margin = new MarginContainer
+        {
+            MouseFilter = MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill
+        };
+        margin.AddThemeConstantOverride("margin_left", 0);
+        margin.AddThemeConstantOverride("margin_top", 0);
+        margin.AddThemeConstantOverride("margin_right", 0);
+        margin.AddThemeConstantOverride("margin_bottom", 0);
+
+        var vbox = new VBoxContainer
+        {
+            MouseFilter = MouseFilterEnum.Ignore,
+            Alignment = BoxContainer.AlignmentMode.Center
+        };
+        vbox.AddThemeConstantOverride("separation", 0);
+
+        string displayName = item.IsLocked ? $"🔒 {item.Name}" : item.Name;
+        var nameLabel = new Label
+        {
+            Text = displayName,
+            ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        nameLabel.AddThemeFontSizeOverride("font_size", 8);
+        nameLabel.AddThemeColorOverride("font_color", rarityColor);
+        vbox.AddChild(nameLabel);
+
+        var (deltaText, deltaColor) = GetCandidateQuickDelta(item);
+        var deltaLabel = new Label
+        {
+            Text = deltaText,
+            ClipText = true,
+            TextOverrunBehavior = TextServer.OverrunBehavior.TrimEllipsis,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        deltaLabel.AddThemeFontSizeOverride("font_size", 8);
+        deltaLabel.AddThemeColorOverride("font_color", deltaColor);
+        vbox.AddChild(deltaLabel);
+
+        margin.AddChild(vbox);
+        cardBtn.AddChild(margin);
+
+        cardBtn.TooltipText = $"{item.Name} ({item.Rarity})\nClick: Xem chi tiết • Nhấp đúp: Mặc ngay";
+        cardBtn.Pressed += () => InspectCandidate(item);
+
+        cardBtn.GuiInput += (ev) =>
+        {
+            if (ev is InputEventMouseButton mb && mb.ButtonIndex == MouseButton.Left && mb.DoubleClick)
+            {
+                InspectCandidate(item);
+                OnEquipButtonPressed();
+            }
+        };
+
+        return cardBtn;
+    }
+
+    private (string Text, Color TextColor) GetCandidateQuickDelta(IGearItem candidate)
+    {
+        if (Player == null)
+            return ($"[{candidate.Rarity}]", DeltaNeutralColor);
+
+        var delta = EquipmentComparisonService.Compare(Player, SelectedSlot, candidate);
+        var verdict = SmartDeltaFormatter.ClassifyVerdict(delta);
+        return verdict switch
+        {
+            DeltaVerdict.Upgrade => (
+                MathF.Abs(delta.DeltaEhp) >= 1f ? $"▲ +{delta.DeltaEhp:F0} EHP"
+                : (MathF.Abs(delta.DeltaDpsPercent) >= 0.1f ? $"▲ +{delta.DeltaDpsPercent:F1}% DPS" : "▲ NÂNG CẤP"),
+                DeltaUpColor
+            ),
+            DeltaVerdict.Downgrade => (
+                MathF.Abs(delta.DeltaEhp) >= 1f ? $"▼ {delta.DeltaEhp:F0} EHP"
+                : (MathF.Abs(delta.DeltaDpsPercent) >= 0.1f ? $"▼ {delta.DeltaDpsPercent:F1}% DPS" : "▼ HẠ CẤP"),
+                DeltaDownColor
+            ),
+            DeltaVerdict.TradeOff => (
+                delta.DeltaDpsPercent > 0 ? "▲ DPS / ▼ EHP" : "▲ EHP / ▼ DPS",
+                DeltaTradeOffColor
+            ),
+            DeltaVerdict.Equipped => ("Đang mặc", new Color(0.88f, 0.72f, 0.25f)),
+            _ => ("— Tương đương", DeltaNeutralColor)
+        };
+    }
+
+    private void OnCandidateScrollGuiInput(InputEvent @event)
+    {
+        if (_candidateScroll == null) return;
+        if (@event is not InputEventMouseButton { Pressed: true } mb) return;
+        if (mb.ButtonIndex != MouseButton.WheelUp && mb.ButtonIndex != MouseButton.WheelDown) return;
+
+        float direction = mb.ButtonIndex == MouseButton.WheelDown ? 1f : -1f;
+        float factor = mb.Factor > 0f ? mb.Factor : 1f;
+        SmoothScrollCandidatesBy(direction * CandidateScrollStep * factor);
+        _candidateScroll.AcceptEvent();
+    }
+
+    public void SmoothScrollCandidatesBy(float deltaPixels)
+    {
+        if (_candidateScroll == null) return;
+
+        var hbar = _candidateScroll.GetHScrollBar();
+        float maxScroll = hbar != null ? MathF.Max(0f, (float)(hbar.MaxValue - hbar.Page)) : 0f;
+
+        bool tweenRunning = _candidateScrollTween != null && _candidateScrollTween.IsValid() && _candidateScrollTween.IsRunning();
+        float origin = tweenRunning ? _candidateScrollTarget : _candidateScroll.ScrollHorizontal;
+        _candidateScrollTarget = Math.Clamp(origin + deltaPixels, 0f, maxScroll);
+
+        _candidateScrollTween?.Kill();
+        if (!IsInsideTree())
+        {
+            _candidateScroll.ScrollHorizontal = (int)_candidateScrollTarget;
+            return;
+        }
+
+        _candidateScrollTween = CreateTween();
+        _candidateScrollTween.SetTrans(Tween.TransitionType.Cubic).SetEase(Tween.EaseType.Out);
+        _candidateScrollTween.TweenProperty(_candidateScroll, "scroll_horizontal", (int)_candidateScrollTarget, CandidateScrollDuration);
+    }
+
+    public void ResetCandidateScroll()
+    {
+        _candidateScrollTween?.Kill();
+        _candidateScrollTween = null;
+        _candidateScrollTarget = 0f;
+        if (_candidateScroll != null)
+            _candidateScroll.ScrollHorizontal = 0;
     }
 
     private bool IsCandidateValidForSlot(IGearItem item, GearSlot slot)
@@ -946,11 +1137,11 @@ public partial class EquipmentView : Control
             if (item != null)
             {
                 _lockButton.Text = item.IsLocked ? "🔓 Mở Khóa" : "🔒 Khóa Đồ";
-                _lockButton.Modulate = item.IsLocked ? new Color(0.95f, 0.75f, 0.35f) : Colors.White;
+                _lockButton.Modulate = item.IsLocked ? new Color(1.15f, 0.95f, 0.55f) : Colors.White;
             }
             else
             {
-                _lockButton.Text = "Khóa Đồ";
+                _lockButton.Text = "🔒 Khóa Đồ";
                 _lockButton.Modulate = Colors.White;
             }
         }
@@ -1002,15 +1193,16 @@ public partial class EquipmentView : Control
             {
                 CandidateItems.Add(unequipped);
                 OnItemStashed?.Invoke(SelectedSlot, unequipped);
-                InspectedItem = null;
+                InspectedItem = unequipped;
                 RefreshView();
             }
         }
         else
         {
             // Moving candidate item to stash
-            CandidateItems.RemoveAll(i => i.InstanceId == InspectedItem.InstanceId);
-            OnItemStashed?.Invoke(SelectedSlot, InspectedItem);
+            var itemToStash = InspectedItem;
+            CandidateItems.RemoveAll(i => i.InstanceId == itemToStash.InstanceId);
+            OnItemStashed?.Invoke(SelectedSlot, itemToStash);
             InspectedItem = Player.Gear.GetItem(SelectedSlot);
             RefreshView();
         }

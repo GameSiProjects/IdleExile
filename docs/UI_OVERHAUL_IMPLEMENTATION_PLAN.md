@@ -103,9 +103,12 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
   - Đặt ngay bên dưới Doll, hiển thị trực tiếp đồ đang chọn:
     - 2 dòng chỉ số quyết định: **▲/▼ EHP** và **▲/▼ DPS** (Font to bản màu xanh lá/đỏ).
     - Danh sách Affixes hiển thị dạng cuộn mượt hoặc tóm tắt các dòng T1/T2.
-- [ ] **Task 2.3: Thanh Action Buttons & Candidate Drawer Mini (60px)**
+- [x] **Task 2.3: Thanh Action Buttons & Candidate Drawer Mini (60px)**
   - Hàng nút bấm 1-Click: `[Mặc Ngay]` (Xanh lục), `[Khóa Đồ]` (Vàng hổ phách), `[Cất Rương]` (Xanh lam).
-  - Khay Candidate Drawer nằm ngang cuộn êm các đồ nhặt được cùng phân loại slot để so sánh nhanh trong 1.5 giây.
+  - Khay Candidate Drawer nằm ngang cuộn êm (`SmoothScrollCandidatesBy`, cubic easing) các đồ nhặt được cùng phân loại slot để so sánh nhanh trong 1.5 giây.
+  - Card đồ dự phòng hiển thị tên theo màu rarity PoE và mini badge delta EHP/DPS trực quan.
+  - Hỗ trợ 1-click Inspect, 1-click Action, và double-click trang bị tức thì.
+  - Khung giới hạn chuẩn 60px (`ActionCandidateSectionHeight = 60f`), bảo đảm tổng chiều cao toàn bộ EquipmentView nằm trọn vẹn trong ngân sách 410px mà không bị thanh cuộn dọc.
 
 ---
 
