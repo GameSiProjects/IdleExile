@@ -146,9 +146,11 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 ### 🟣 Phase 4: Tab Bản Đồ & Hàng Đợi Tự Động (`scenes/AtlasView.tscn`)
 > **Mục tiêu:** Hợp nhất Cỗ máy bản đồ (Map Device), danh sách Map Tiers (T1–T16+) và khay hàng đợi tự động chạy map (Map Queue 10 slots).
 
-- [ ] **Task 4.1: Xây dựng Scene `AtlasView.tscn` và Controller `AtlasView.cs`**
-  - Khay kích hoạt Map Device ở trung tâm với vòng xoay cổ ngữ và nút `[⚔ KÍCH HOẠT BẢN ĐỒ]`.
-  - Hiển thị đầy đủ Map Modifiers (Quantity, Pack Size, Mod nguy hiểm Reflect/-Max Res).
+- [x] **Task 4.1: Xây dựng Scene `AtlasView.tscn` và Controller `AtlasView.cs`**
+  - Khay kích hoạt Map Device ở trung tâm với vòng xoay cổ ngữ (`RunicDeviceCanvas`), bệ nạp bản đồ (`SlottedPlateCard`), hiệu ứng Golden Pulse và nút `[⚔ KÍCH HOẠT BẢN ĐỒ]`.
+  - Hiển thị đầy đủ Map Modifiers (Quantity, Pack Size, Mod nguy hiểm Reflect/-Max Res/No Leech) với hệ thống Threat Badges trực quan và khay duyệt Map Slates khả dụng (T0–T16+).
+  - Tích hợp liền mạch vào `Main.tscn` và `Main.cs`: Bấm nút `[🗺 Atlas]` chuyển đổi ngay lập tức sang `AtlasView`, duy trì persistent combat viewport.
+  - Vượt qua 100% bài kiểm thử tự động `AtlasSystemTests` và `TestAtlasViewIntegration` trong `MainLayoutTests`.
 - [ ] **Task 4.2: Tích hợp Hàng Đợi Map Queue (10 Slots - Task 5.2 GDD)**
   - Khay 10 ô chứa sẵn bản đồ đã roll affixes.
   - Tự động kích hoạt map tiếp theo sau 3 giây delay khi hoàn thành map cũ, mang lại trải nghiệm **True Zero-APM Endless Mapping**.

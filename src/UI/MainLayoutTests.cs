@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using IdleExile.Core.Models;
+using IdleExile.Core.Simulation;
 using IdleExile.UI.Components;
 
 namespace IdleExile.UI;
@@ -28,6 +29,7 @@ public static class MainLayoutTests
             TestStickyDrawerLayout(existingMain);
             TestActionButtonAndCandidateDrawerLayout(existingMain);
             TestGemViewIntegration(existingMain);
+            TestAtlasViewIntegration(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -51,6 +53,7 @@ public static class MainLayoutTests
             TestStickyDrawerLayout(main);
             TestActionButtonAndCandidateDrawerLayout(main);
             TestGemViewIntegration(main);
+            TestAtlasViewIntegration(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -721,6 +724,107 @@ public static class MainLayoutTests
         var metricLabel = gemView.GetNodeOrNull<Label>("%MetricDamageMultLabel");
         AssertNotNull(metricLabel, "MetricDamageMultLabel must exist");
         AssertTrue(metricLabel.Text.Contains("∏"), $"MetricDamageMultLabel must display product symbol ∏, was '{metricLabel.Text}'");
+    }
+
+    private static void TestAtlasViewIntegration(Main main)
+    {
+        GD.Print("[Tests] Verifying Task 4.1: AtlasView node hierarchy, layout, and map activation...");
+
+        var atlasView = main.AtlasView;
+        AssertNotNull(atlasView, "AtlasView must be instantiated in Main.tscn");
+
+        // 1. Verify Node Hierarchy
+        var tierFilterBar = atlasView.GetNodeOrNull<Control>("%TierFilterHBox") ?? atlasView.GetNodeOrNull<Control>("%TierAllBtn")?.GetParent<Control>();
+        AssertNotNull(tierFilterBar, "TierFilterHBox must exist in AtlasView");
+
+        var runicCanvas = atlasView.GetNodeOrNull<RunicDeviceCanvas>("%RunicDeviceCanvas");
+        AssertNotNull(runicCanvas, "RunicDeviceCanvas must exist in AtlasView for ancient runic geometry");
+
+        var slottedTierBadge = atlasView.GetNodeOrNull<Label>("%SlottedTierBadge");
+        AssertNotNull(slottedTierBadge, "SlottedTierBadge must exist");
+
+        var slottedMapName = atlasView.GetNodeOrNull<Label>("%SlottedMapNameLabel");
+        AssertNotNull(slottedMapName, "SlottedMapNameLabel must exist");
+
+        var activateBtn = atlasView.GetNodeOrNull<Button>("%ActivateMapBtn");
+        AssertNotNull(activateBtn, "ActivateMapBtn must exist");
+
+        var emergencyBtn = atlasView.GetNodeOrNull<Button>("%EmergencyPortalBtn");
+        AssertNotNull(emergencyBtn, "EmergencyPortalBtn must exist");
+
+        var qtyLabel = atlasView.GetNodeOrNull<Label>("%QtyValueLabel");
+        AssertNotNull(qtyLabel, "QtyValueLabel must exist");
+
+        var threatBadges = atlasView.GetNodeOrNull<HBoxContainer>("%ThreatBadgesHBox");
+        AssertNotNull(threatBadges, "ThreatBadgesHBox must exist");
+
+        var mapSlatesHBox = atlasView.GetNodeOrNull<HBoxContainer>("%MapSlatesHBox");
+        AssertNotNull(mapSlatesHBox, "MapSlatesHBox must exist in Available Maps drawer");
+
+        // 2. Tab Navigation to Atlas
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Atlas);
+        AssertTrue(main.MapDeviceMargin?.Visible ?? false, "MapDeviceMargin must be visible on Atlas tab");
+        AssertTrue(atlasView.Visible, "AtlasView must be visible on Atlas tab");
+
+        // 3. Test Slotted Map and Modifiers Breakdown
+        var testMap = new MapDefinition("strand_test", "Strand Test", 1, 1, false, 10, 100, "Tidal Behemoth", "Coast");
+        var modDef = new MapModifierDefinition("test_reflect", "Monsters reflect {0}% Elemental Damage", 40, 15, 15f, 20f);
+        var rolledMods = new List<RolledMapModifier> { new(modDef, 18f) };
+
+        atlasView.SlotMap(testMap, rolledMods, "Rare");
+        AssertEqual("strand_test", atlasView.SlottedMap?.Id, "Slotted map ID mismatch");
+        AssertEqual("T1", slottedTierBadge.Text, "Tier badge text mismatch");
+        AssertEqual("Strand Test", slottedMapName.Text, "Slotted map name mismatch");
+        AssertTrue(qtyLabel.Text.Contains("+50%"), $"Total Quantity must be Base 10 + Bonus 40 = 50%, was '{qtyLabel.Text}'");
+
+        // Threat badge must be displayed for elemental reflect
+        AssertTrue(threatBadges.GetChildCount() > 0, "ThreatBadgesHBox must display badges for dangerous affixes");
+
+        // 4. Test Normal Map Slate (0 Modifiers)
+        atlasView.SlotMap(testMap, Array.Empty<RolledMapModifier>(), "Normal");
+        var noModsLabel = atlasView.GetNodeOrNull<Label>("%NoModsLabel");
+        AssertNotNull(noModsLabel, "NoModsLabel must exist");
+        AssertTrue(noModsLabel.Visible, "NoModsLabel must be visible for Normal Map with 0 modifiers");
+
+        // 5. Test Tier Filter Switching
+        atlasView.SetTierFilter("T0");
+        AssertEqual("T0", atlasView.CurrentTierFilter, "CurrentTierFilter mismatch");
+
+        atlasView.SetTierFilter("White");
+        AssertEqual("White", atlasView.CurrentTierFilter, "CurrentTierFilter mismatch");
+
+        atlasView.SetTierFilter("All");
+        AssertEqual("All", atlasView.CurrentTierFilter, "CurrentTierFilter mismatch");
+
+        // 6. Test Golden Pulse
+        atlasView.SetGoldenPulse(true);
+        AssertTrue(atlasView.IsGoldenPulse, "IsGoldenPulse should be true");
+        AssertTrue(runicCanvas.IsGoldenPulse, "RunicDeviceCanvas.IsGoldenPulse should be true");
+
+        atlasView.SetGoldenPulse(false);
+        AssertFalse(atlasView.IsGoldenPulse, "IsGoldenPulse should be false");
+        AssertFalse(runicCanvas.IsGoldenPulse, "RunicDeviceCanvas.IsGoldenPulse should be false");
+
+        // 7. Test Portal Activation & Emergency Portal Trigger
+        atlasView.SetPortalActive(false);
+        bool mapActivatedFired = false;
+        atlasView.OnMapActivated += (m, mods, r) => mapActivatedFired = true;
+
+        activateBtn.EmitSignal(Button.SignalName.Pressed);
+        AssertTrue(mapActivatedFired, "OnMapActivated event must fire when Activate button is pressed");
+        AssertTrue(atlasView.IsPortalActive, "AtlasView.IsPortalActive must be true after activation");
+        AssertTrue(runicCanvas.IsPortalActive, "RunicDeviceCanvas.IsPortalActive must be true after activation");
+        AssertTrue(activateBtn.Disabled, "Activate button must be disabled when portal is active");
+        AssertFalse(emergencyBtn.Disabled, "Emergency portal button must be enabled when portal is active");
+
+        bool emergencyFired = false;
+        atlasView.OnEmergencyPortalTriggered += () => emergencyFired = true;
+        emergencyBtn.EmitSignal(Button.SignalName.Pressed);
+        AssertTrue(emergencyFired, "OnEmergencyPortalTriggered event must fire when Emergency button is pressed");
+        AssertFalse(atlasView.IsPortalActive, "IsPortalActive must be false after emergency retreat");
+
+        // Switch back to Gear tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

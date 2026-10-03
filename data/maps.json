@@ -49,12 +49,78 @@
       "basePackSize": 115,
       "bossName": "Statue Sentinel",
       "description": "Crumbled imperial pillars where ancient animated armors patrol."
+    },
+    {
+      "id": "canyon",
+      "name": "Canyon Map",
+      "tier": 7,
+      "monsterLevel": 58,
+      "baseQuantity": 35,
+      "basePackSize": 120,
+      "bossName": "Gorgon Queen",
+      "description": "A sun-baked canyon between razor sharp cliffs."
+    },
+    {
+      "id": "promenade",
+      "name": "Promenade Map",
+      "tier": 9,
+      "monsterLevel": 66,
+      "baseQuantity": 45,
+      "basePackSize": 125,
+      "bossName": "Gladiator Paragon",
+      "description": "An elevated walkway lined with decaying imperial monuments."
+    },
+    {
+      "id": "crimson_temple",
+      "name": "Crimson Temple",
+      "tier": 14,
+      "monsterLevel": 81,
+      "baseQuantity": 65,
+      "basePackSize": 135,
+      "bossName": "Sanguine Priestess",
+      "description": "Blood-soaked corridors of a forgotten sacrificial cult."
+    },
+    {
+      "id": "burial_chambers",
+      "name": "Burial Chambers",
+      "tier": 15,
+      "monsterLevel": 82,
+      "baseQuantity": 70,
+      "basePackSize": 140,
+      "bossName": "Witch of the Cauldron",
+      "description": "Ancient underground catacombs where ancestral spirits slumber."
+    },
+    {
+      "id": "crucible_apex",
+      "name": "Crucible Apex",
+      "tier": 16,
+      "monsterLevel": 85,
+      "baseQuantity": 80,
+      "basePackSize": 150,
+      "bossName": "The Arbiter",
+      "description": "The burning core of the Crucible altar where the ultimate test awaits."
     }
   ],
   "mapModifiers": [
     {
       "id": "extra_damage_cold",
       "nameTemplate": "Monsters deal {0}% extra damage as Cold",
+      "bonusQuantity": 15,
+      "bonusPackSize": 10,
+      "min": 30,
+      "max": 50
+    },
+    {
+      "id": "extra_damage_fire",
+      "nameTemplate": "Monsters deal {0}% extra damage as Fire",
+      "bonusQuantity": 15,
+      "bonusPackSize": 10,
+      "min": 30,
+      "max": 50
+    },
+    {
+      "id": "extra_damage_lightning",
+      "nameTemplate": "Monsters deal {0}% extra damage as Lightning",
       "bonusQuantity": 15,
       "bonusPackSize": 10,
       "min": 30,
@@ -75,6 +141,30 @@
       "bonusPackSize": 15,
       "min": 15,
       "max": 20
+    },
+    {
+      "id": "monster_reflect_physical",
+      "nameTemplate": "Monsters reflect {0}% of Physical Damage",
+      "bonusQuantity": 40,
+      "bonusPackSize": 15,
+      "min": 15,
+      "max": 20
+    },
+    {
+      "id": "cannot_leech_life_mana",
+      "nameTemplate": "Players cannot Leech Life or Mana",
+      "bonusQuantity": 25,
+      "bonusPackSize": 15,
+      "min": 0,
+      "max": 0
+    },
+    {
+      "id": "monster_attack_cast_speed",
+      "nameTemplate": "Monsters have +{0}% increased Attack and Cast Speed",
+      "bonusQuantity": 12,
+      "bonusPackSize": 8,
+      "min": 20,
+      "max": 30
     }
   ]
 }

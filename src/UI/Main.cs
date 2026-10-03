@@ -17,6 +17,7 @@ public partial class Main : Control
     private CheckBox? _alwaysOnTopCheckBox;
     private BattleViewport? _battleViewport;
     private MapDeviceBar? _mapDeviceBar;
+    private AtlasView? _atlasView;
     private EquipmentView? _equipmentView;
     private GemView? _gemView;
     private Button? _gearNavButton;
@@ -55,6 +56,7 @@ public partial class Main : Control
     public BattleViewport? BattleViewport => _battleViewport;
     public EquipmentView? EquipmentView => _equipmentView;
     public GemView? GemView => _gemView;
+    public AtlasView? AtlasView => _atlasView;
     public Control? MapDeviceMargin => _mapDeviceMargin;
     public Button? ResizeModeButton => _resizeModeButton;
 
@@ -84,6 +86,7 @@ public partial class Main : Control
         _screenCycleButton = GetNodeOrNull<Button>("%ScreenCycleButton");
         _battleViewport = GetNodeOrNull<BattleViewport>("%BattleViewport");
         _mapDeviceBar = GetNodeOrNull<MapDeviceBar>("%MapDeviceBar");
+        _atlasView = GetNodeOrNull<AtlasView>("%AtlasView");
         _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
         _gemView = GetNodeOrNull<GemView>("%GemView");
         _emergencyPortalButton = GetNodeOrNull<Button>("%EmergencyPortalButton");
@@ -162,11 +165,18 @@ public partial class Main : Control
             _mapDeviceBar.OnEmergencyPortalTriggered += OnEmergencyPortalTriggered;
         }
 
+        if (_atlasView != null)
+        {
+            _atlasView.OnMapActivated += (map, mods, rarity) => OnMapActivatedWithMods(map, mods, rarity);
+            _atlasView.OnEmergencyPortalTriggered += OnEmergencyPortalTriggered;
+        }
+
         // 4. Load JSON Database
         Db.LoadAll();
 
-        // 4b. Initialize GemView with skill loadout and database
+        // 4b. Initialize GemView and AtlasView with database and state
         _gemView?.Initialize(Loadout, Db, Player);
+        _atlasView?.Initialize(Db, Player, Ftue);
 
         // 5. Initialize FTUE Seeded Drop Coordinator
         DropCoordinator = new SeededDropCoordinator(Ftue);
@@ -320,6 +330,8 @@ public partial class Main : Control
         // 7. Task 2.3: Auto-load Tier 1 Strand Map into Map Device tray & Golden Pulse
         _mapDeviceBar?.SlotMap(mapDef, "Normal");
         _mapDeviceBar?.SetGoldenPulse(true);
+        _atlasView?.SlotMap(mapDef, null, "Normal");
+        _atlasView?.SetGoldenPulse(true);
 
         GD.Print($"[Main] Character bootstrapped: {archetype.DisplayName}, Life: {Player.MaxLife}, ES: {Player.MaxEnergyShield}, Mana: {Player.MaxMana}");
         GD.Print($"[Main] Equipped Weapon: MainHand={Player.MainHand?.BaseDefinition.Name ?? "None"} ({Player.MainHand?.ComputedMinDamage}-{Player.MainHand?.ComputedMaxDamage} Phys, APS: {Player.MainHand?.ComputedAps}), OffHand={Player.OffHand?.BaseDefinition.Name ?? "None"}, DualWield={Player.IsDualWielding}");
@@ -328,6 +340,11 @@ public partial class Main : Control
     }
 
     private void OnMapActivated(MapDefinition map)
+    {
+        OnMapActivatedWithMods(map, System.Array.Empty<RolledMapModifier>(), "Normal");
+    }
+
+    private void OnMapActivatedWithMods(MapDefinition map, IReadOnlyList<RolledMapModifier>? modifiers, string rarity = "Normal")
     {
         // 1. Advance FTUE Step 1 -> Step 2 (FirstCombatWave)
         if (Ftue.CurrentStep == FtueStep.AwaitingFirstMapActivate)
@@ -338,10 +355,13 @@ public partial class Main : Control
         // 2. Turn off Golden Pulse & set portal active
         _mapDeviceBar?.SetGoldenPulse(false);
         _mapDeviceBar?.SetPortalActive(true);
+        _atlasView?.SetGoldenPulse(false);
+        _atlasView?.SetPortalActive(true);
 
         // 3. Configure BattleViewport with the active map & start CombatEngine
-        var config = new MapRunConfig(map, System.Array.Empty<RolledMapModifier>());
-        _battleViewport?.SetMap(config, progressPercent: 0f, rarity: "Normal");
+        var rolledMods = modifiers ?? System.Array.Empty<RolledMapModifier>();
+        var config = new MapRunConfig(map, rolledMods);
+        _battleViewport?.SetMap(config, progressPercent: 0f, rarity: rarity);
         _battleViewport?.BindPlayer(Player, Loadout);
 
         Engine = new CombatEngine(Player, Loadout, dropCoordinator: DropCoordinator);
@@ -556,6 +576,7 @@ public partial class Main : Control
     {
         Engine?.TriggerEmergencyPortal();
         _mapDeviceBar?.SetPortalActive(false);
+        _atlasView?.SetPortalActive(false);
 
         if (_statusLabel != null)
         {
@@ -620,6 +641,8 @@ public partial class Main : Control
 
         _mapDeviceBar?.SlotMap(mapDef, "Rare");
         _mapDeviceBar?.SetPortalActive(true);
+        _atlasView?.SlotMap(mapDef, rolledMods, "Rare");
+        _atlasView?.SetPortalActive(true);
 
         // Ensure starter skill gems are set in demo mode if empty
         if (Loadout.PrimarySkill.ActiveGem == null)
@@ -700,6 +723,10 @@ public partial class Main : Control
         if (_mapDeviceMargin != null)
         {
             _mapDeviceMargin.Visible = (tab == WorkspaceTab.Atlas);
+            if (tab == WorkspaceTab.Atlas)
+            {
+                _atlasView?.RefreshAvailableMaps();
+            }
         }
 
         // Persistent Combat Viewport: NEVER hide BattleViewport!
@@ -836,6 +863,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.CorridorMonsterLayoutTests.RunAll();
         IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
         IdleExile.Core.Tests.GemSystemTests.RunAll();
+        IdleExile.Core.Tests.AtlasSystemTests.RunAll();
         IdleExile.UI.MainLayoutTests.RunAll(mainInstance);
         GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }

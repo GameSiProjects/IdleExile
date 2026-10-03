@@ -1,0 +1,543 @@
+[gd_scene format=3 uid="uid://at1asv1ew2p3m"]
+
+[ext_resource type="Script" path="res://src/UI/Components/AtlasView.cs" id="1_atlas_view"]
+[ext_resource type="Script" path="res://src/UI/Components/RunicDeviceCanvas.cs" id="2_runic_canvas"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.054902, 0.0588235, 0.0784314, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.22, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tier_pill"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.08, 0.085, 0.11, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.22, 0.28, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_altar_card"]
+bg_color = Color(0.065, 0.07, 0.095, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.2, 0.25, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slotted_plate"]
+bg_color = Color(0.08, 0.085, 0.11, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.65, 0.25, 0.9)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0.85, 0.65, 0.25, 0.15)
+shadow_size = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tier_badge"]
+content_margin_left = 4.0
+content_margin_top = 1.0
+content_margin_right = 4.0
+content_margin_bottom = 1.0
+bg_color = Color(0.12, 0.13, 0.16, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.75, 0.78, 0.85, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_activate_btn"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.2, 0.14, 0.06, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.88, 0.68, 0.28, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.88, 0.68, 0.28, 0.2)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_activate_btn_hover"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.28, 0.2, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.82, 0.38, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_portal_btn"]
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+bg_color = Color(0.06, 0.1, 0.16, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.55, 0.85, 0.85)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_craft_btn"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.12, 0.09, 0.16, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.65, 0.42, 0.88, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_subpanel"]
+bg_color = Color(0.06, 0.065, 0.085, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.16, 0.18, 0.23, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="AtlasView" type="Control"]
+custom_minimum_size = Vector2(0, 390)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_atlas_view")
+
+[node name="AtlasBg" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="AtlasMargin" type="MarginContainer" parent="AtlasBg"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="AtlasLayout" type="VBoxContainer" parent="AtlasBg/AtlasMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TierFilterHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="TierAllBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Toàn bộ bản đồ hiện có trong Crucible"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
+text = "Tất Cả"
+
+[node name="TierT0Btn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "The Endless Hollow (Tier 0) • Cơ chế chống kẹt tài nguyên vĩnh cửu"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
+text = "T0 Vực Sâu"
+
+[node name="TierWhiteBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "White Maps (Tier 1–5) • Bản đồ Sơ cấp"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
+text = "T1–5 Trắng"
+
+[node name="TierYellowBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Yellow Maps (Tier 6–10) • Bản đồ Trung cấp"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
+text = "T6–10 Vàng"
+
+[node name="TierRedBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Red Maps (Tier 11–15) • Bản đồ Cao cấp"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
+text = "T11–15 Đỏ"
+
+[node name="TierPinnacleBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Pinnacle Maps (Tier 16+) • Trận chiến Đỉnh cao"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
+text = "T16+ Đỉnh"
+
+[node name="AltarPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
+custom_minimum_size = Vector2(0, 142)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_altar_card")
+
+[node name="RunicDeviceCanvas" type="Control" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_runic_canvas")
+
+[node name="AltarMargin" type="MarginContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="AltarHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SlottedPlateCard" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox"]
+custom_minimum_size = Vector2(175, 128)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_slotted_plate")
+
+[node name="SlottedPlateMargin" type="MarginContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 5
+
+[node name="SlottedPlateVBox" type="VBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="TopHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin/SlottedPlateVBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SlottedTierBadge" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin/SlottedPlateVBox/TopHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_tier_badge")
+text = "T1"
+
+[node name="MapIconLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin/SlottedPlateVBox/TopHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "🗺️"
+
+[node name="SlottedInfoLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin/SlottedPlateVBox/TopHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 0.72, 0.8, 1)
+theme_override_font_sizes/font_size = 9
+text = "Lv.1 • Normal"
+text_overrun_behavior = 3
+
+[node name="SlottedMapNameLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin/SlottedPlateVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.45, 1)
+theme_override_font_sizes/font_size = 13
+text = "Strand Map"
+text_overrun_behavior = 3
+
+[node name="SlottedBossLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin/SlottedPlateVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.55, 1)
+theme_override_font_sizes/font_size = 10
+text = "👑 Tidal Behemoth"
+text_overrun_behavior = 3
+
+[node name="DeviceStateNotice" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/SlottedPlateCard/SlottedPlateMargin/SlottedPlateVBox"]
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_colors/font_color = Color(0.55, 0.58, 0.68, 1)
+theme_override_font_sizes/font_size = 9
+text = "Crucible Device Altar • Sẵn sàng"
+
+[node name="AltarActionsVBox" type="VBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="ActivateMapBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/AltarActionsVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+tooltip_text = "Kích hoạt cỗ máy Crucible để mở cổng dịch chuyển tới bản đồ đang nạp!"
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
+theme_override_colors/font_hover_color = Color(1, 0.98, 0.7, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBoxFlat_activate_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_activate_btn_hover")
+text = "⚔ KÍCH HOẠT BẢN ĐỒ"
+
+[node name="EmergencyPortalBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/AltarActionsVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+tooltip_text = "Thoát hiểm khẩn cấp về Hideout an toàn ngay lập tức (Phím tắt: Space)"
+theme_override_colors/font_color = Color(0.35, 0.85, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_portal_btn")
+disabled = true
+text = "🌀 Thoát Hiểm Khẩn Cấp (Space)"
+
+[node name="CraftRerollBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/AltarActionsVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+tooltip_text = "Dùng Alchemy/Chaos Orbs ép các dòng thuộc tính ngẫu nhiên (Rare Map)"
+theme_override_colors/font_color = Color(0.85, 0.7, 1, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_craft_btn")
+text = "🎲 Ép Thuộc Tính (Craft / Reroll)"
+
+[node name="InspectorPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
+custom_minimum_size = Vector2(0, 118)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_subpanel")
+
+[node name="InspectorMargin" type="MarginContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="InspectorVBox" type="VBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="MetricsHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox"]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="QtyHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="QtyIcon" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/QtyHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "📦"
+
+[node name="QtyLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/QtyHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "Qty:"
+
+[node name="QtyValueLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/QtyHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "+10%"
+
+[node name="RarityHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="RarityIcon" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/RarityHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "✨"
+
+[node name="RarityLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/RarityHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "Rar:"
+
+[node name="RarityValueLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/RarityHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 10
+text = "+0%"
+
+[node name="PackHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="PackIcon" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/PackHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "👥"
+
+[node name="PackLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/PackHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "Pack:"
+
+[node name="PackSizeValueLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/PackHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 10
+text = "100%"
+
+[node name="MobLvHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+alignment = 2
+
+[node name="MobLvIcon" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/MobLvHBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "☠"
+
+[node name="MobLevelValueLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/MetricsHBox/MobLvHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.88, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "Lv.1"
+
+[node name="ThreatBadgesHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ModifiersScroll" type="ScrollContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ModifiersVBox" type="VBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/ModifiersScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="NoModsLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/InspectorPanel/InspectorMargin/InspectorVBox/ModifiersScroll/ModifiersVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.58, 0.68, 1)
+theme_override_font_sizes/font_size = 10
+text = "Normal Map Slate • 0 Modifiers\nNhấn [🎲 Ép Thuộc Tính] để gia tăng Reward hoặc [⚔ KÍCH HOẠT] để dọn ngay."
+autowrap_mode = 2
+
+[node name="AvailableDrawerPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_subpanel")
+
+[node name="DrawerMargin" type="MarginContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 3
+
+[node name="DrawerVBox" type="VBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="DrawerHeaderHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin/DrawerVBox"]
+layout_mode = 2
+
+[node name="DrawerTitleLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.75, 0.45, 1)
+theme_override_font_sizes/font_size = 10
+text = "KHAY BẢN ĐỒ KHẢ DỤNG (1-CLICK ĐỂ NẠP)"
+
+[node name="AvailableMapsCountLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.55, 0.58, 0.68, 1)
+theme_override_font_sizes/font_size = 9
+text = "Khả dụng: 5 Maps"
+horizontal_alignment = 2
+
+[node name="SlatesScroll" type="ScrollContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin/DrawerVBox"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+vertical_scroll_mode = 0
+
+[node name="MapSlatesHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin/DrawerVBox/SlatesScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
