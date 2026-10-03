@@ -32,6 +32,10 @@ public partial class Main : Control
     private Control? _mapDeviceMargin;
     private readonly WindowController _windowController = new();
 
+#if DEBUG
+    private DiagnosticModal? _diagnosticModal;
+#endif
+
     public enum WorkspaceTab
     {
         Gear,
@@ -144,20 +148,47 @@ public partial class Main : Control
 
         // 5. Initialize FTUE Seeded Drop Coordinator
         DropCoordinator = new SeededDropCoordinator(Ftue);
-        // 6. Run Core Unit Tests only if explicitly requested via CLI argument ('--run-core-tests')
-        if (OS.GetCmdlineArgs().Contains("--run-core-tests") || OS.GetCmdlineUserArgs().Contains("--run-core-tests"))
-        {
-            RunCoreUnitTests(this);
-        }
 
+        // 6. Initialize Macro Footer Telemetry & Diagnostics
         if (_statusLabel != null)
         {
             _statusLabel.Text = "Crucible Online • Ready to Map";
         }
 
+#if DEBUG
         if (_statsLabel != null)
         {
-            _statsLabel.Text = $"Database: {Db.Affixes.Count} Affixes | {Db.WeaponBases.Count} Weapons | {Db.ArmourBases.Count} Armours | {Db.Gems.Count} Gems | {Db.Maps.Count} Maps";
+            _statsLabel.Text = "Auto-Run • Space: Escape [F12: Diag]";
+            _statsLabel.TooltipText = $"Database Registry:\n" +
+                $"• {Db.Affixes.Count} Affixes\n" +
+                $"• {Db.WeaponBases.Count} Weapon Bases\n" +
+                $"• {Db.ArmourBases.Count} Armour Bases\n" +
+                $"• {Db.AccessoryBases.Count} Accessory Bases\n" +
+                $"• {Db.Gems.Count} Skill Gems\n" +
+                $"• {Db.Maps.Count} Maps ({Db.MapModifiers.Count} Modifiers)\n" +
+                $"\nClick or Press F12 to inspect System Diagnostics.";
+
+            _statsLabel.MouseFilter = Control.MouseFilterEnum.Stop;
+            _statsLabel.GuiInput += @ev =>
+            {
+                if (@ev is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Left)
+                {
+                    ToggleDiagnosticModal();
+                }
+            };
+        }
+#else
+        if (_statsLabel != null)
+        {
+            _statsLabel.Text = "Auto-Run • Space: Escape";
+            _statsLabel.TooltipText = "Idle Exile Companion • Auto-Mapping Engine";
+        }
+#endif
+
+        // 7. Run Core Unit Tests only if explicitly requested via CLI argument ('--run-core-tests')
+        if (OS.GetCmdlineArgs().Contains("--run-core-tests") || OS.GetCmdlineUserArgs().Contains("--run-core-tests"))
+        {
+            RunCoreUnitTests(this);
         }
 
         // 7. Check FTUE: If awaiting archetype selection, spawn the 1-click modal overlay
@@ -348,6 +379,7 @@ public partial class Main : Control
                         Engine.Movement.MapLength,
                         Engine.Movement.MapProgressPercent
                     );
+                    _diagnosticModal?.UpdateLiveTelemetry(Engine);
                 }
 #endif
             }
@@ -479,6 +511,18 @@ public partial class Main : Control
             _statusLabel.Text = $"Portal Active • Mapping: {map.Name} (T{map.Tier}) • 30Hz Combat Engine Active";
         }
 
+#if DEBUG
+        if (_statsLabel != null)
+        {
+            _statsLabel.Text = "Auto-Run Active • Space: Emergency [F12: Diag]";
+        }
+#else
+        if (_statsLabel != null)
+        {
+            _statsLabel.Text = "Auto-Run Active • Space: Emergency Portal";
+        }
+#endif
+
         GD.Print($"[Main] Map activated: {map.Name} (T{map.Tier}). CombatEngine 30Hz running.");
     }
 
@@ -491,6 +535,18 @@ public partial class Main : Control
         {
             _statusLabel.Text = "Crucible Online • Safely retreated to Hideout";
         }
+
+#if DEBUG
+        if (_statsLabel != null)
+        {
+            _statsLabel.Text = "Auto-Run • Space: Escape [F12: Diag]";
+        }
+#else
+        if (_statsLabel != null)
+        {
+            _statsLabel.Text = "Auto-Run • Space: Escape";
+        }
+#endif
 
         GD.Print("[Main] Returned to Crucible via Emergency Portal.");
     }
@@ -654,8 +710,38 @@ public partial class Main : Control
                 OnEmergencyPortalTriggered();
                 GetViewport().SetInputAsHandled();
             }
+#if DEBUG
+            else if (keyEvent.Keycode == Key.F12)
+            {
+                ToggleDiagnosticModal();
+                GetViewport().SetInputAsHandled();
+            }
+#endif
         }
     }
+
+#if DEBUG
+    public void ToggleDiagnosticModal()
+    {
+        if (!OS.IsDebugBuild()) return;
+
+        if (_diagnosticModal != null && IsInstanceValid(_diagnosticModal))
+        {
+            _diagnosticModal.Close();
+            _diagnosticModal = null;
+            return;
+        }
+
+        var modalScene = GD.Load<PackedScene>("res://scenes/DiagnosticModal.tscn");
+        if (modalScene != null)
+        {
+            _diagnosticModal = modalScene.Instantiate<DiagnosticModal>();
+            _diagnosticModal.Setup(Db, Player, Engine, _windowController);
+            _diagnosticModal.OnClosed += () => { _diagnosticModal = null; };
+            AddChild(_diagnosticModal);
+        }
+    }
+#endif
 
     private void OnAlwaysOnTopToggled(bool isToggled)
     {

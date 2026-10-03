@@ -1,0 +1,498 @@
+[gd_scene load_steps=8 format=3 uid="uid://d1a8g7n2m4q9k"]
+
+[ext_resource type="Script" path="res://src/UI/Components/DiagnosticModal.cs" id="1_modal"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
+bg_color = Color(0.02, 0.02, 0.03, 0.8)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_window"]
+bg_color = Color(0.0627451, 0.0666667, 0.0862745, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.878431, 0.639216, 0.247059, 0.85)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0, 0, 0, 0.6)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.0823529, 0.0862745, 0.113725, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.180392, 0.192157, 0.239216, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+bg_color = Color(0.12, 0.13, 0.17, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.33, 0.42, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(0.16, 0.18, 0.24, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.878431, 0.639216, 0.247059, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 8.0
+content_margin_top = 3.0
+content_margin_right = 8.0
+content_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_btn"]
+bg_color = Color(0.15, 0.06, 0.06, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.65, 0.2, 0.2, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 1.0
+content_margin_right = 6.0
+content_margin_bottom = 1.0
+
+[node name="DiagnosticModal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_modal")
+
+[node name="Backdrop" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 12
+
+[node name="WindowPanel" type="PanelContainer" parent="Margin"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_window")
+
+[node name="WindowVBox" type="VBoxContainer" parent="Margin/WindowPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="HeaderBar" type="MarginContainer" parent="Margin/WindowPanel/WindowVBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 4
+
+[node name="HeaderHBox" type="HBoxContainer" parent="Margin/WindowPanel/WindowVBox/HeaderBar"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleVBox" type="VBoxContainer" parent="Margin/WindowPanel/WindowVBox/HeaderBar/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="TitleLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/HeaderBar/HeaderHBox/TitleVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.878431, 0.639216, 0.247059, 1)
+theme_override_font_sizes/font_size = 12
+text = "⚙ SYSTEM & DATABASE DIAGNOSTICS"
+
+[node name="SubtitleLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/HeaderBar/HeaderHBox/TitleVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.54, 0.62, 1)
+theme_override_font_sizes/font_size = 10
+text = "Idle Exile • Data Integrity & Runtime Inspector"
+
+[node name="CloseButton" type="Button" parent="Margin/WindowPanel/WindowVBox/HeaderBar/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.3, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_close_btn")
+text = "✕"
+
+[node name="ScrollBody" type="ScrollContainer" parent="Margin/WindowPanel/WindowVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ScrollMargin" type="MarginContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 6
+
+[node name="SectionsVBox" type="VBoxContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="DbCard" type="PanelContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="DbMargin" type="MarginContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="DbVBox" type="VBoxContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DbHeaderLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.85, 0.95, 1)
+theme_override_font_sizes/font_size = 11
+text = "📁 DATABASE REGISTRY (data/*.json)"
+
+[node name="DbGrid" type="GridContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox"]
+layout_mode = 2
+columns = 2
+
+[node name="AffixesKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Item Affixes:"
+
+[node name="AffixesCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "63 affixes"
+
+[node name="WeaponsKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Weapon Bases:"
+
+[node name="WeaponBasesCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "25 bases"
+
+[node name="ArmoursKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Armour Bases:"
+
+[node name="ArmourBasesCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "18 bases"
+
+[node name="AccessoriesKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Accessory Bases:"
+
+[node name="AccessoryBasesCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "12 bases"
+
+[node name="GemsKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Skill Gems:"
+
+[node name="GemsCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "7 gems"
+
+[node name="MapsKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Map Templates:"
+
+[node name="MapsCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "5 maps"
+
+[node name="ModsKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Map Modifiers:"
+
+[node name="ModifiersCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "14 modifiers"
+
+[node name="ClassesKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Starter Archetypes:"
+
+[node name="ArchetypesCountLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/DbCard/DbMargin/DbVBox/DbGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "3 classes"
+
+[node name="EngineCard" type="PanelContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="EngineMargin" type="MarginContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="EngineVBox" type="VBoxContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EngineHeaderLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "⚔ SIMULATION & COMBAT ENGINE"
+
+[node name="EngineGrid" type="GridContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox"]
+layout_mode = 2
+columns = 2
+
+[node name="StateKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Engine State:"
+
+[node name="EngineStateLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "Idle in Hideout"
+
+[node name="TickKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Simulation Tick:"
+
+[node name="TickRateLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "30 Hz (Fixed step)"
+
+[node name="ExileKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Exile World Pos:"
+
+[node name="ExilePosLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "(0, 0)"
+
+[node name="MonstersKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Active Monsters:"
+
+[node name="MonstersLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/EngineCard/EngineMargin/EngineVBox/EngineGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "0 alive"
+
+[node name="SystemCard" type="PanelContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="SystemMargin" type="MarginContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="SystemVBox" type="VBoxContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SystemHeaderLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.7, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "💻 ENVIRONMENT & RUNTIME"
+
+[node name="SystemGrid" type="GridContainer" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox"]
+layout_mode = 2
+columns = 2
+
+[node name="ModeKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox/SystemGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Window Mode:"
+
+[node name="WindowModeLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox/SystemGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "Expanded (440x780)"
+
+[node name="MemKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox/SystemGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Process Memory:"
+
+[node name="MemoryUsageLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox/SystemGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "0 MB"
+
+[node name="VerKey" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox/SystemGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.64, 0.72, 1)
+theme_override_font_sizes/font_size = 10
+text = "• Engine Spec:"
+
+[node name="EngineVersionLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/ScrollBody/ScrollMargin/SectionsVBox/SystemCard/SystemMargin/SystemVBox/SystemGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "Godot 4.7 Mono"
+
+[node name="FooterBar" type="MarginContainer" parent="Margin/WindowPanel/WindowVBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="FooterHBox" type="HBoxContainer" parent="Margin/WindowPanel/WindowVBox/FooterBar"]
+layout_mode = 2
+
+[node name="HintLabel" type="Label" parent="Margin/WindowPanel/WindowVBox/FooterBar/FooterHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.45, 0.48, 0.55, 1)
+theme_override_font_sizes/font_size = 9
+text = "Press F12 / Esc to close • Real-time telemetry"
+
+[node name="DismissButton" type="Button" parent="Margin/WindowPanel/WindowVBox/FooterBar/FooterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.88, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "Đóng / Dismiss"

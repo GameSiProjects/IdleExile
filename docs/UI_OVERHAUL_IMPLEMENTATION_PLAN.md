@@ -78,9 +78,10 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
     3. `SubTabBarContainer` (34px): Thanh điều hướng tab phong cách Segmented Bar tối giản.
     4. `TabWorkspaceContainer` (Size flags: Vertical Expand): Vùng nạp scene các tab tương tác.
     5. `BottomMacroBar` (40px): Nút Emergency Portal màu xanh dạ quang và Telemetry tóm tắt.
-- [ ] **Task 1.2: Triệt tiêu Card Debug (`StatusCard`)**
-  - Đưa thông tin đếm Database (`Db.Affixes.Count...`) vào cửa sổ chẩn đoán hoặc nhãn nhỏ dưới footer.
+- [x] **Task 1.2: Triệt tiêu Card Debug (`StatusCard`)**
+  - Đưa thông tin đếm Database (`Db.Affixes.Count...`) vào cửa sổ chẩn đoán (`DiagnosticModal.tscn` / `F12`) và tooltip nhãn nhỏ dưới footer.
   - Trả lại 100% diện tích chiều dọc cho gameplay và tab workspace.
+  - Tuân thủ nghiêm ngặt Debug Code Policy (AGENTS.md Section 4.4): Gated `#if DEBUG` và `OS.IsDebugBuild()`, bảo đảm zero overhead ở Release builds.
 - [ ] **Task 1.3: Cập nhật `Main.cs` điều khiển hiển thị theo Mode**
   - Bắt tín hiệu `WindowController.OnWindowResized`:
     - Nếu là `Compact`: Ẩn `SubTabBarContainer` và `TabWorkspaceContainer`.

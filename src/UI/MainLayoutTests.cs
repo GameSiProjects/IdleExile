@@ -20,6 +20,7 @@ public static class MainLayoutTests
             TestPersistentBattleViewport(existingMain);
             TestTabNavigation(existingMain);
             TestModeSwitching(existingMain);
+            TestStatusCardEliminationAndDiagnostics(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -39,6 +40,7 @@ public static class MainLayoutTests
         try
         {
             TestFiveTierHierarchy(main);
+            TestStatusCardEliminationAndDiagnostics(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -163,6 +165,57 @@ public static class MainLayoutTests
         // Trigger Compact mode via SwitchWorkspaceTab check
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
         AssertTrue(battleViewport.Visible, "BattleViewport remains visible");
+    }
+
+    /// <summary>
+    /// Verifies Task 1.2: Triệt tiêu Card Debug (StatusCard).
+    /// Asserts that no StatusCard or StatusCardMargin exists to steal vertical gameplay space.
+    /// Confirms database metrics are cleanly routed to footer tooltips and diagnostic modals.
+    /// </summary>
+    private static void TestStatusCardEliminationAndDiagnostics(Main main)
+    {
+        // 1. Confirm complete elimination of legacy StatusCard and StatusCardMargin
+        var statusCard = main.FindChild("StatusCard", recursive: true, owned: false);
+        AssertTrue(statusCard == null, "StatusCard must be completely eliminated (no vertical space consumed)");
+
+        var statusCardMargin = main.FindChild("StatusCardMargin", recursive: true, owned: false);
+        AssertTrue(statusCardMargin == null, "StatusCardMargin must be completely eliminated from the scene hierarchy");
+
+        // 2. Confirm gameplay/workspace owns 100% of expandable vertical space
+        var tabWorkspace = main.GetNodeOrNull<Control>("%TabWorkspaceContainer");
+        AssertNotNull(tabWorkspace, "TabWorkspaceContainer must exist");
+        AssertTrue((tabWorkspace.SizeFlagsVertical & Control.SizeFlags.Expand) != 0, "TabWorkspaceContainer must expand vertically");
+
+        // 3. Confirm footer telemetry contains database information via tooltip/compact label
+        var statsLabel = main.GetNodeOrNull<Label>("%StatsLabel");
+        AssertNotNull(statsLabel, "StatsLabel must exist in macro telemetry footer");
+
+#if DEBUG
+        if (OS.IsDebugBuild())
+        {
+            AssertTrue(!string.IsNullOrEmpty(statsLabel.TooltipText), "StatsLabel must provide database registry info via tooltip");
+            AssertTrue(statsLabel.TooltipText.Contains("Database Registry"), "StatsLabel tooltip must describe Database Registry");
+
+            // 4. Verify DiagnosticModal instantiation and database binding
+            var modalScene = GD.Load<PackedScene>("res://scenes/DiagnosticModal.tscn");
+            AssertNotNull(modalScene, "DiagnosticModal.tscn must exist and load cleanly");
+
+            var modal = modalScene.Instantiate<DiagnosticModal>();
+            AssertNotNull(modal, "DiagnosticModal must instantiate successfully");
+
+            try
+            {
+                modal.Setup(main.Db, main.Player, main.Engine, null);
+                var affixesLabel = modal.GetNodeOrNull<Label>("%AffixesCountLabel");
+                AssertNotNull(affixesLabel, "DiagnosticModal must have %AffixesCountLabel");
+                AssertTrue(affixesLabel.Text.Contains("affixes"), $"Affixes label should mention affixes, was {affixesLabel.Text}");
+            }
+            finally
+            {
+                modal.Free();
+            }
+        }
+#endif
     }
 
     private static void AssertNotNull(object? obj, string message)
