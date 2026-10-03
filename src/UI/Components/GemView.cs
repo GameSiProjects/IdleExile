@@ -5,6 +5,7 @@ using Godot;
 using IdleExile.Core.Models;
 using IdleExile.Core.Services;
 using IdleExile.Core.State;
+using IdleExile.UI;
 
 namespace IdleExile.UI.Components;
 
@@ -541,14 +542,14 @@ public partial class GemView : Control
             _activeSocketBtn.AddThemeStyleboxOverride("normal", style);
             _activeSocketBtn.AddThemeStyleboxOverride("hover", CreateHoverSocketStyle(style, activeBorderColor));
             _activeSocketBtn.TooltipText = $"{gem.Name} (Active Gem)\nElement: {element}\n" +
-                $"{(IsActiveSocketHighlighted ? "✓ Tương thích với Support Gem đang chọn!" : (IsActiveSocketDimmed ? "⚠ Không tương thích với Support Gem đang chọn" : gem.Description))}";
+                $"{(IsActiveSocketHighlighted ? Loc.Tr("UI_GEM_ACTIVE_COMPAT_SELECTED") : (IsActiveSocketDimmed ? Loc.Tr("UI_GEM_ACTIVE_INCOMPAT_SELECTED") : gem.Description))}";
         }
         else
         {
             if (_activeGemIconLabel != null) _activeGemIconLabel.Text = "+";
             if (_activeGemNameLabel != null)
             {
-                _activeGemNameLabel.Text = "CẮM GEM";
+                _activeGemNameLabel.Text = Loc.Tr("UI_GEM_SOCKET_BTN");
                 _activeGemNameLabel.Modulate = new Color(0.55f, 0.58f, 0.65f);
             }
             if (_activeGemTypeLabel != null) _activeGemTypeLabel.Text = "Active Socket";
@@ -562,7 +563,7 @@ public partial class GemView : Control
             );
             _activeSocketBtn.AddThemeStyleboxOverride("normal", style);
             _activeSocketBtn.AddThemeStyleboxOverride("hover", CreateHoverSocketStyle(style, ColorGold));
-            _activeSocketBtn.TooltipText = "Nhấp để chọn Active Skill Gem từ khay bên dưới.";
+            _activeSocketBtn.TooltipText = Loc.Tr("UI_GEM_CLICK_ACTIVE_PROMPT");
         }
     }
 
@@ -608,7 +609,7 @@ public partial class GemView : Control
             btn.AddThemeStyleboxOverride("normal", style);
             btn.AddThemeStyleboxOverride("hover", CreateHoverSocketStyle(style, attrColor));
             btn.TooltipText = $"{gem.Name} (Slot #{index + 1})\n" +
-                $"{(isCompatible ? "✓ Auto-Linked: Tương thích với Active Gem!" : "⚠ Chưa tương thích: Thiếu tag yêu cầu")}\n" +
+                $"{(isCompatible ? Loc.Tr("UI_GEM_COMPATIBLE") : Loc.Tr("UI_GEM_INCOMPATIBLE"))}\n" +
                 $"{gem.Description}";
         }
         else
@@ -629,7 +630,7 @@ public partial class GemView : Control
             );
             btn.AddThemeStyleboxOverride("normal", style);
             btn.AddThemeStyleboxOverride("hover", CreateHoverSocketStyle(style, ColorGold));
-            btn.TooltipText = $"Khe cắm Support #{index + 1} (Trống)\nNhấp để chọn Support Gem lắp vào.";
+            btn.TooltipText = Loc.Format("UI_GEM_SUPPORT_SOCKET_EMPTY", index + 1);
         }
     }
 
@@ -665,9 +666,7 @@ public partial class GemView : Control
                 string sign = morePercent >= 0f ? "+" : "";
                 _metricDamageMultLabel.Text = $"💥 ∏: {dmgMultiplier:F2}x ({sign}{morePercent:F0}%)";
                 _metricDamageMultLabel.Modulate = Colors.White;
-                _metricDamageMultLabel.TooltipText = $"Hệ Số Sát Thương Tổng Hợp: {breakdown.MathRepresentation}\n" +
-                    $"─────────────────────────────────────────────\n" +
-                    $"Công thức: {breakdown.FormulaString}";
+                _metricDamageMultLabel.TooltipText = Loc.Format("UI_GEM_COMPOUND_DMG_TOOLTIP", breakdown.MathRepresentation, breakdown.FormulaString);
             }
 
             if (_metricProjectilesLabel != null)
@@ -836,7 +835,7 @@ public partial class GemView : Control
                 if (isActive)
                 {
                     var breakdown = CurrentSetup.GetDamageMultiplierBreakdown();
-                    _inspectorStatusLabel.Text = $"★ Skill Chủ Lực • {breakdown.MathRepresentation}\nCông thức: {breakdown.FormulaString}";
+                    _inspectorStatusLabel.Text = Loc.Format("UI_GEM_INSPECTOR_ACTIVE", breakdown.MathRepresentation, breakdown.FormulaString);
                     _inspectorStatusLabel.Modulate = new Color(0.45f, 0.85f, 0.55f);
                 }
                 else
@@ -857,14 +856,13 @@ public partial class GemView : Control
                         else
                         {
                             var currentBreakdown = CurrentSetup.GetDamageMultiplierBreakdown();
-                            _inspectorStatusLabel.Text = $"{compat.Reason}\n" +
-                                $"∏(1 + More): Giữ nguyên {currentBreakdown.TotalMultiplier:F2}x (Không kích hoạt do thiếu thẻ)";
+                            _inspectorStatusLabel.Text = Loc.Format("UI_GEM_INSPECTOR_INCOMPAT", compat.Reason, currentBreakdown.TotalMultiplier);
                             _inspectorStatusLabel.Modulate = new Color(0.95f, 0.42f, 0.35f);
                         }
                     }
                     else
                     {
-                        _inspectorStatusLabel.Text = "⚠ Cần cắm Active Gem để kích hoạt hệ số ∏(1 + More Damage).";
+                        _inspectorStatusLabel.Text = Loc.Tr("UI_GEM_NEED_ACTIVE");
                         _inspectorStatusLabel.Modulate = new Color(0.85f, 0.72f, 0.35f);
                     }
                 }
@@ -874,7 +872,7 @@ public partial class GemView : Control
         {
             if (_inspectorGemName != null)
             {
-                _inspectorGemName.Text = "Khay Ngọc Trống";
+                _inspectorGemName.Text = Loc.Tr("UI_GEM_INVENTORY_EMPTY");
                 _inspectorGemName.Modulate = new Color(0.55f, 0.58f, 0.65f);
             }
 
@@ -885,12 +883,12 @@ public partial class GemView : Control
 
             if (_inspectorModifiersLabel != null)
             {
-                _inspectorModifiersLabel.Text = "Trang bị không có socket. Mọi liên kết kỹ năng nằm trực tiếp trong Active Gem.\nChọn một viên ngọc từ khay bên dưới để lắp vào.";
+                _inspectorModifiersLabel.Text = Loc.Tr("UI_GEM_PO2_DECOUPLED_HINT");
             }
 
             if (_inspectorStatusLabel != null)
             {
-                _inspectorStatusLabel.Text = "Tip: Bấm đúp vào ngọc bên dưới để cắm nhanh.";
+                _inspectorStatusLabel.Text = Loc.Tr("UI_GEM_DOUBLECLICK_HINT");
                 _inspectorStatusLabel.Modulate = new Color(0.6f, 0.65f, 0.75f);
             }
         }
@@ -1243,11 +1241,15 @@ public partial class GemView : Control
                     string pctSign = preview.DeltaPercent >= 0 ? "+" : "";
                     _metricDamageMultLabel.Text = $"💥 ∏: {preview.CurrentBreakdown.TotalMultiplier:F2}x ➔ {preview.ProjectedBreakdown.TotalMultiplier:F2}x";
                     _metricDamageMultLabel.Modulate = ColorGold;
-                    _metricDamageMultLabel.TooltipText = $"DỰ BÁO HỆ SỐ SÁT THƯƠNG: ∏(1 + More Damage)\n" +
-                        $"─────────────────────────────────────────────\n" +
-                        $"Hiện tại: {preview.CurrentBreakdown.FormulaString}\n" +
-                        $"Dự phóng: {preview.ProjectedBreakdown.FormulaString}\n" +
-                        $"Thay đổi: {sign}{preview.DeltaMultiplier:F2}x ({pctSign}{preview.DeltaPercent:F0}% More Damage)";
+                    _metricDamageMultLabel.TooltipText = Loc.Format(
+                        "UI_GEM_DAMAGE_FORECAST_TOOLTIP",
+                        preview.CurrentBreakdown.FormulaString,
+                        preview.ProjectedBreakdown.FormulaString,
+                        sign,
+                        preview.DeltaMultiplier,
+                        pctSign,
+                        preview.DeltaPercent
+                    );
                 }
                 return;
             }
@@ -1257,10 +1259,9 @@ public partial class GemView : Control
                 if (_metricDamageMultLabel != null)
                 {
                     var breakdown = setup.GetDamageMultiplierBreakdown();
-                    _metricDamageMultLabel.Text = $"💥 ∏: {breakdown.TotalMultiplier:F2}x (Không đổi)";
+                    _metricDamageMultLabel.Text = Loc.Format("UI_GEM_UNCHANGED", breakdown.TotalMultiplier);
                     _metricDamageMultLabel.Modulate = new Color(0.95f, 0.45f, 0.35f);
-                    _metricDamageMultLabel.TooltipText = $"Support Gem không tương thích với Active Gem hiện tại!\n" +
-                        $"Hệ số ∏(1 + More) không đổi: {breakdown.FormulaString}";
+                    _metricDamageMultLabel.TooltipText = Loc.Format("UI_GEM_INCOMPAT_PREVIEW_TOOLTIP", breakdown.FormulaString);
                 }
                 return;
             }
@@ -1284,11 +1285,11 @@ public partial class GemView : Control
                 string targetDesc = SelectedCandidateGem.Category == "Active"
                     ? "Active Slot"
                     : (SelectedSocketIndex >= 0 ? $"Slot #{SelectedSocketIndex + 1}" : "Next Slot");
-                _socketActionBtn.Text = $"Lắp {targetDesc}";
+                _socketActionBtn.Text = Loc.Format("UI_GEM_SOCKET_TARGET", targetDesc);
             }
             else
             {
-                _socketActionBtn.Text = "Lắp Gem";
+                _socketActionBtn.Text = Loc.Tr("UI_GEM_SOCKET_ACTION");
             }
         }
 
@@ -1299,16 +1300,16 @@ public partial class GemView : Control
             if (SelectedSocketIndex == -1 && setup.ActiveGem != null)
             {
                 canUnsocket = true;
-                _unsocketActionBtn.Text = "Gỡ Active";
+                _unsocketActionBtn.Text = Loc.Tr("UI_GEM_UNSOCKET_ACTIVE");
             }
             else if (SelectedSocketIndex >= 0 && SelectedSocketIndex < setup.SocketedSupports.Count)
             {
                 canUnsocket = true;
-                _unsocketActionBtn.Text = $"Gỡ #{SelectedSocketIndex + 1}";
+                _unsocketActionBtn.Text = Loc.Format("UI_GEM_UNSOCKET_SLOT", SelectedSocketIndex + 1);
             }
             else
             {
-                _unsocketActionBtn.Text = "Gỡ Gem";
+                _unsocketActionBtn.Text = Loc.Tr("UI_GEM_UNSOCKET_ACTION");
             }
             _unsocketActionBtn.Disabled = !canUnsocket;
         }

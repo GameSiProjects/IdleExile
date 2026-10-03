@@ -199,8 +199,16 @@ Tài liệu này theo dõi tiến độ thực hiện các tính năng của **I
   - [x] Smart Tooltip hiển thị trọn vẹn Base Stats vũ khí (Phys Damage, Crit Chance, APS, Base DPS) và định dạng chuẩn Implicit Modifier PoE (`✦ (Implicit)`).
   - [x] Khay Candidate Drawer hỗ trợ trang bị tay phụ (Off-Hand) linh hoạt: Shields, Quivers, và Dual-Wield 1H Weapons.
   - [x] Smart Tooltip hiển thị Delta EHP (▲/▼) và Delta DPS tức thì trong 1.5 giây.
-  - [x] Nút thao tác nhanh: [Mặc Ngay], [Khóa Đồ], [Chuyển Rương].
+  - [x] Nút thao tác nhanh: [Equip], [Lock], [Stash].
   - [x] *Vị trí:* `src/UI/Components/EquipmentView.cs`
+
+- [x] **Task 3.5: Chuẩn Hóa Tiếng Anh & Hệ Thống Godot Localization (`LocalizationService.cs`, `translations.csv`)**
+  - [x] Thiết lập hệ thống đa ngôn ngữ trung tâm chuẩn Godot: `localization/translations.csv` (RFC 4180 format) kết hợp tự động biên dịch sang `translations.en.translation` và `translations.vi.translation`.
+  - [x] Cấu hình `[internationalization]` trong `project.godot` với locale mặc định là `"en"`.
+  - [x] Tạo dịch vụ wrapper `LocalizationService.cs` (`Loc.Tr()`, `Loc.Format()`, `Loc.SetLocale()`).
+  - [x] Chuyển đổi 100% ngôn ngữ hiển thị trong game (UI, Tooltips, Buttons, Modals, Badges) sang tiếng Anh chuẩn ARPG/PoE.
+  - [x] Đảm bảo lớp Core Logic (`src/Core/`) giữ 100% Pure C#, không phụ thuộc vào Godot TranslationServer, dữ liệu trả về chuẩn tiếng Anh.
+  - [x] *Vị trí:* `localization/translations.csv`, `src/UI/LocalizationService.cs`, `src/Core/Services/SmartDeltaFormatter.cs`
 
 ---
 

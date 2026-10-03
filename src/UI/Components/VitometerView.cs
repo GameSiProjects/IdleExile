@@ -562,7 +562,7 @@ public partial class ManaReservationBar : Control
 }
 
 /// <summary>
-/// Controller for Task 2.4: Player Vitometer (Bộ Đo Sinh Mệnh & Phòng Thủ).
+/// Controller for Task 2.4: Player Vitometer (Vitality & Defensive Layers).
 /// Manages the Layered Health Bar (Life + ES + Guard Skill), Mana & Reservation Bar,
 /// and the 5-Slot Quick Flask Rack with Auto-Instill charge tracking.
 /// </summary>

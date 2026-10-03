@@ -130,21 +130,21 @@ theme_override_constants/separation = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.686275, 0.545098, 0.305882, 1)
 theme_override_font_sizes/font_size = 10
-text = "THE CRUCIBLE • THỨC TỈNH"
+text = "THE CRUCIBLE • AWAKENING"
 horizontal_alignment = 1
 
 [node name="TitleLabel" type="Label" parent="MainMargin/ContentVBox/HeaderVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.72, 0.28, 1)
 theme_override_font_sizes/font_size = 17
-text = "CHỌN BẢN THỂ KHỞI NGUYÊN"
+text = "CHOOSE STARTER INCARNATION"
 horizontal_alignment = 1
 
 [node name="SubtitleLabel" type="Label" parent="MainMargin/ContentVBox/HeaderVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
 theme_override_font_sizes/font_size = 11
-text = "Mở cổng Map Tier 1 ngay lập tức • 100% Zero APM"
+text = "Instant Tier 1 Map Portal • 100% Zero APM"
 horizontal_alignment = 1
 
 [node name="CardsVBox" type="VBoxContainer" parent="MainMargin/ContentVBox"]
@@ -194,19 +194,19 @@ text = "JUGGERNAUT"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
 theme_override_font_sizes/font_size = 10
-text = "The Unyielding Colossus • Cận Chiến & Giáp"
+text = "The Unyielding Colossus • Melee & Armour"
 
 [node name="DescLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
 theme_override_font_sizes/font_size = 11
-text = "Máu: 120 | Giáp: 25 | Chém lan Cleave diện rộng"
+text = "Life: 120 | Armour: 25 | Cleave AoE Slash"
 
 [node name="PerkLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.6, 0.4, 1)
 theme_override_font_sizes/font_size = 10
-text = "Đảm bảo rơi: Added Fire Damage Support"
+text = "Guaranteed Drop: Added Fire Damage Support"
 
 [node name="JuggernautBtn" type="Button" parent="MainMargin/ContentVBox/CardsVBox/JuggernautCard/Margin/VBox"]
 unique_name_in_owner = true
@@ -216,7 +216,7 @@ size_flags_vertical = 10
 theme_override_colors/font_color = Color(1, 0.9, 0.9, 1)
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_jugg_btn")
-text = "CHỌN JUGGERNAUT (SỨC MẠNH)"
+text = "SELECT JUGGERNAUT (STRENGTH)"
 
 [node name="ElementalistCard" type="PanelContainer" parent="MainMargin/ContentVBox/CardsVBox"]
 unique_name_in_owner = true
@@ -260,19 +260,19 @@ text = "ELEMENTALIST"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
 theme_override_font_sizes/font_size = 10
-text = "The Primordial Evoker • Phép Thuật & Khiên"
+text = "The Primordial Evoker • Spells & Energy Shield"
 
 [node name="DescLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
 theme_override_font_sizes/font_size = 11
-text = "Máu: 90 | Khiên ES: 45 | Kháng Hỏa: 10% | Cầu lửa Fireball"
+text = "Life: 90 | ES: 45 | Fire Res: 10% | Fireball AoE"
 
 [node name="PerkLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.4, 0.8, 1, 1)
 theme_override_font_sizes/font_size = 10
-text = "Đảm bảo rơi: Ignite Proliferation Support"
+text = "Guaranteed Drop: Ignite Proliferation Support"
 
 [node name="ElementalistBtn" type="Button" parent="MainMargin/ContentVBox/CardsVBox/ElementalistCard/Margin/VBox"]
 unique_name_in_owner = true
@@ -282,7 +282,7 @@ size_flags_vertical = 10
 theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_ele_btn")
-text = "CHỌN ELEMENTALIST (TRÍ TUỆ)"
+text = "SELECT ELEMENTALIST (INTELLIGENCE)"
 
 [node name="DeadeyeCard" type="PanelContainer" parent="MainMargin/ContentVBox/CardsVBox"]
 unique_name_in_owner = true
@@ -325,19 +325,19 @@ text = "DEADEYE"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.75, 1)
 theme_override_font_sizes/font_size = 10
-text = "The Windrunning Marksman • Cung Tên & Né Tránh"
+text = "The Windrunning Marksman • Bow & Evasion"
 
 [node name="DescLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
 theme_override_font_sizes/font_size = 11
-text = "Máu: 105 | Né Tránh: 25% | Mưa tên Split Arrow 3 tia"
+text = "Life: 105 | Evasion: 25% | Split Arrow 3-Way"
 
 [node name="PerkLabel" type="Label" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5, 0.95, 0.65, 1)
 theme_override_font_sizes/font_size = 10
-text = "Đảm bảo rơi: Lesser Multiple Projectiles Support"
+text = "Guaranteed Drop: Lesser Multiple Projectiles Support"
 
 [node name="DeadeyeBtn" type="Button" parent="MainMargin/ContentVBox/CardsVBox/DeadeyeCard/Margin/VBox"]
 unique_name_in_owner = true
@@ -347,11 +347,11 @@ size_flags_vertical = 10
 theme_override_colors/font_color = Color(0.9, 1, 0.9, 1)
 theme_override_font_sizes/font_size = 11
 theme_override_styles/normal = SubResource("StyleBoxFlat_dead_btn")
-text = "CHỌN DEADEYE (NHANH NHẸN)"
+text = "SELECT DEADEYE (DEXTERITY)"
 
 [node name="FooterLabel" type="Label" parent="MainMargin/ContentVBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.47, 0.52, 1)
 theme_override_font_sizes/font_size = 10
-text = "Click 1 lần để chọn và kích hoạt ngay lập tức"
+text = "1-Click to select and immediately activate"
 horizontal_alignment = 1

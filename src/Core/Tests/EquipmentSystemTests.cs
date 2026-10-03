@@ -219,7 +219,7 @@ public static class EquipmentSystemTests
         // 2. Verdict Classification
         var verdict = SmartDeltaFormatter.ClassifyVerdict(delta);
         AssertEqual(DeltaVerdict.Upgrade, verdict, "Strictly better item should be classified as Upgrade");
-        AssertEqual("▲ NÂNG CẤP", SmartDeltaFormatter.VerdictText(verdict), "Verdict text should be ▲ NÂNG CẤP");
+        AssertEqual("▲ UPGRADE", SmartDeltaFormatter.VerdictText(verdict), "Verdict text should be ▲ UPGRADE");
 
         // 3. Resistance Summary
         string resSummary = SmartDeltaFormatter.FormatResistanceSummary(delta);
@@ -251,7 +251,7 @@ public static class EquipmentSystemTests
 
         AssertFalse(item.IsLocked, "Item initially unlocked");
         item.IsLocked = true;
-        AssertTrue(item.IsLocked, "Item successfully locked [Khóa Đồ]");
+        AssertTrue(item.IsLocked, "Item successfully locked [Lock Item]");
     }
 
     // ─────────────────────────────────────────────

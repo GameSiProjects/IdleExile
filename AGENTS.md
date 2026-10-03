@@ -16,6 +16,7 @@ Welcome, Agent! This file outlines the architectural principles, tech stack, con
 2. **Decoupled Gem System (PoE 2 Model):** Equipment has **NO sockets**. Active Gems themselves contain support slots (up to 5 support slots). Support gems are 100% automatically linked (no *Orb of Fusing*).
 3. **No Gold:** Economy is strictly currency-driven (*Scroll of Wisdom, Transmute, Alteration, Chaos, Exalt, Divine, etc.*).
 4. **PoE Mathematical Precision:** Strictly distinguish between additive `Increased/Reduced` and multiplicative `More/Less`. Never conflate them.
+5. **English Display & Godot Localization Standard:** All in-game text must be displayed in English by default. All UI text, tooltips, messages, and labels must be stored in `localization/translations.csv` and resolved via Godot's localization system (`Loc.Tr()` / `Loc.Format()`), allowing seamless multilingual switching without code refactoring. Pure C# core logic (`src/Core/`) must only contain domain-level English text and never depend on Godot nodes.
 
 ---
 
@@ -36,10 +37,15 @@ Welcome, Agent! This file outlines the architectural principles, tech stack, con
 ```
 IdleExile/
 ├── AGENTS.md                         # This guide
-├── project.godot                     # Godot engine config (Window, low processor mode, gl_compat)
+├── project.godot                     # Godot engine config (Window, low processor mode, gl_compat, i18n)
 ├── IdleExile.csproj                  # .NET 8 C# project config
 ├── nuget.config                      # Local Godot NuGet package source configuration
 ├── icon.svg                          # Dark fantasy portal icon
+│
+├── localization/                     # Godot Localization database & compiled binaries
+│   ├── translations.csv              # Master translation table (id, en, vi)
+│   ├── translations.en.translation   # Compiled English translation resource
+│   └── translations.vi.translation   # Compiled Vietnamese translation resource
 │
 ├── data/                             # SOURCE OF TRUTH for all balance & content
 │   ├── affixes.json                  # Prefixes & Suffixes definitions and tier roll ranges
@@ -53,7 +59,7 @@ IdleExile/
 │   ├── 03_combat_and_stats.md        # Damage formulas, defensive layers, ticks
 │   ├── 04_gems_and_passives.md       # PoE 2 gem sockets, skill matrix, passive web
 │   ├── 05_items_and_crafting.md      # Affixes, currency economy, loot filter
-│   └── 06_godot_technical_spec.md   # C# architecture, window profile, offline math
+│   └── 06_godot_technical_spec.md   # C# architecture, window profile, offline math, i18n
 │
 ├── scenes/                           # Godot scene files (.tscn)
 │   └── Main.tscn                     # Main companion UI layout
@@ -70,6 +76,7 @@ IdleExile/
     │   └── State/                    # Player character state, inventory, atlas progress
     │
     └── UI/                           # Godot Node C# Scripts (Views, Tooltips, Controls)
+        ├── LocalizationService.cs    # Godot TranslationServer wrapper (Loc.Tr, Loc.Format, Loc.SetLocale)
         └── Main.cs                   # Top-level window & scene controller
 ```
 
@@ -116,6 +123,15 @@ IdleExile/
   * In Release configuration (`dotnet build -c Release`), all debug code, variables, and allocations are 100% stripped by the compiler, guaranteeing zero binary footprint and zero CPU/GPU overhead.
 * **No Temporary Debug Hacks in Production:** Never commit hardcoded mock coordinates, simulation bypasses, or testing overrides into production simulation loops.
 
+### 4.5. In-Game Language & Localization Architecture (Godot TranslationServer)
+* **Default Language is English (`en`):** All visual labels, buttons, tooltips, modal dialogs, and verdicts MUST default to English.
+* **Godot Localization Integration:**
+  * Master source file is `localization/translations.csv` using RFC 4180 CSV (`id,en,vi`).
+  * Godot compiles this file into `translations.en.translation` and `translations.vi.translation`, registered in `project.godot` under `[internationalization]`.
+  * In presentation code (`src/UI/`), always use `Loc.Tr("KEY")` or `Loc.Format("KEY", args)` (via `IdleExile.UI.Loc`).
+  * In Godot scene files (`scenes/*.tscn`), labels can use either direct English text matching translation keys or explicit translation IDs.
+* **Core Separation:** `src/Core/` must NOT depend on Godot translation APIs. All core records, error strings, and data definitions must be clean, idiomatic English.
+
 ---
 
 ## 5. Development & Build Commands
@@ -143,6 +159,7 @@ dotnet build
 | **GDD Documentation** | Complete | `docs/01_*.md` to `docs/12_*.md` |
 | **Execution Task List** | Tracking | `TASKS.md` |
 | **Project & Engine Setup** | Complete | `project.godot`, `IdleExile.csproj`, `nuget.config` |
+| **Localization & English UI Standard** | Complete | `localization/translations.csv`, `src/UI/LocalizationService.cs` |
 | **JSON Data Pipeline** | Complete | `data/`, `src/Core/Models/`, `DatabaseLoader.cs` |
 | **Damage Calculator (Increased vs More)** | Complete | `src/Core/Services/DamageCalculator.cs` |
 | **Defensive Layers & Player State** | Complete | `src/Core/Services/DefensiveLayers.cs`, `PlayerState.cs` |

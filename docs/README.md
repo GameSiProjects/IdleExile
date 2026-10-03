@@ -43,6 +43,7 @@ Tài liệu thiết kế tổng thể cho dự án **Idle Exile** — một tự
    - Kiến trúc Data-Driven C# (.NET 8) nạp trực tiếp từ JSON Database (`System.Text.Json`).
    - Tách biệt Logic Simulation (Tick Engine 30Hz) và Rendering (Canvas/Control).
    - Thuật toán tính toán Offline Progress (Treo máy khi tắt game) theo Snapshot Record ($O(1)$) siêu tốc bằng C#.
+   - Hệ thống Bản địa hóa & Đa ngôn ngữ (Godot Localization `TranslationServer`, file dịch tập trung `translations.csv` với mặc định 100% tiếng Anh).
 
 7. **[07. Thiết Kế Giao Diện Chiến Đấu (`07_combat_ui_and_viewport.md`)](07_combat_ui_and_viewport.md)**
    - Triết lý UX: Diagnostic Clarity, Visceral Combat Feedback, Low Resource Footprint.

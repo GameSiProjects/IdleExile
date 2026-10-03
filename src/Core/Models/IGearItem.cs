@@ -35,7 +35,7 @@ public interface IGearItem
     /// <summary>Character level required to equip.</summary>
     int ReqLevel { get; }
 
-    /// <summary>Safety lock status [Khóa Đồ] preventing accidental sell or dismantle.</summary>
+    /// <summary>Safety lock status [Lock Item] preventing accidental sell or dismantle.</summary>
     bool IsLocked { get; set; }
 
     /// <summary>Implicit affix text or description.</summary>

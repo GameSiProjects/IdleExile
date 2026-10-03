@@ -436,7 +436,7 @@ public partial class EquipmentView : Control
                 _ => btn.Text
             };
 
-            string itemName = item != null ? item.Name : "(Trống)";
+            string itemName = item != null ? item.Name : "(Empty)";
             if (item != null && item.IsLocked)
             {
                 itemName = $"🔒 {itemName}";
@@ -518,7 +518,7 @@ public partial class EquipmentView : Control
         }
         else
         {
-            label.Text = $"{name}: {val:F0}% (Thiếu)";
+            label.Text = $"{name}: {val:F0}% (Deficit)";
             label.Modulate = new Color(0.95f, 0.45f, 0.35f); // Warning red
         }
     }
@@ -545,7 +545,7 @@ public partial class EquipmentView : Control
         {
             var emptyLabel = new Label
             {
-                Text = "Không có đồ dự phòng cho ô này",
+                Text = "No reserve items for this slot",
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -663,7 +663,7 @@ public partial class EquipmentView : Control
         margin.AddChild(vbox);
         cardBtn.AddChild(margin);
 
-        cardBtn.TooltipText = $"{item.Name} ({item.Rarity})\nClick: Xem chi tiết • Nhấp đúp: Mặc ngay";
+        cardBtn.TooltipText = $"{item.Name} ({item.Rarity})\nClick: Inspect • Double Click: Equip";
         cardBtn.Pressed += () => InspectCandidate(item);
 
         cardBtn.GuiInput += (ev) =>
@@ -689,20 +689,20 @@ public partial class EquipmentView : Control
         {
             DeltaVerdict.Upgrade => (
                 MathF.Abs(delta.DeltaEhp) >= 1f ? $"▲ +{delta.DeltaEhp:F0} EHP"
-                : (MathF.Abs(delta.DeltaDpsPercent) >= 0.1f ? $"▲ +{delta.DeltaDpsPercent:F1}% DPS" : "▲ NÂNG CẤP"),
+                : (MathF.Abs(delta.DeltaDpsPercent) >= 0.1f ? $"▲ +{delta.DeltaDpsPercent:F1}% DPS" : "▲ UPGRADE"),
                 DeltaUpColor
             ),
             DeltaVerdict.Downgrade => (
                 MathF.Abs(delta.DeltaEhp) >= 1f ? $"▼ {delta.DeltaEhp:F0} EHP"
-                : (MathF.Abs(delta.DeltaDpsPercent) >= 0.1f ? $"▼ {delta.DeltaDpsPercent:F1}% DPS" : "▼ HẠ CẤP"),
+                : (MathF.Abs(delta.DeltaDpsPercent) >= 0.1f ? $"▼ {delta.DeltaDpsPercent:F1}% DPS" : "▼ DOWNGRADE"),
                 DeltaDownColor
             ),
             DeltaVerdict.TradeOff => (
                 delta.DeltaDpsPercent > 0 ? "▲ DPS / ▼ EHP" : "▲ EHP / ▼ DPS",
                 DeltaTradeOffColor
             ),
-            DeltaVerdict.Equipped => ("Đang mặc", new Color(0.88f, 0.72f, 0.25f)),
-            _ => ("— Tương đương", DeltaNeutralColor)
+            DeltaVerdict.Equipped => ("Equipped", new Color(0.88f, 0.72f, 0.25f)),
+            _ => ("— Sidegrade", DeltaNeutralColor)
         };
     }
 
@@ -809,8 +809,8 @@ public partial class EquipmentView : Control
         if (_tooltipSubtitleLabel != null)
         {
             _tooltipSubtitleLabel.Text = activeItem is WeaponItemInstance weaponSub
-                ? $"{weaponSub.WeaponClassDisplayName} • {weaponSub.HandRequirementDisplayName} • {weaponSub.Rarity} • ilvl {weaponSub.ItemLevel} • Cấp {weaponSub.ReqLevel}"
-                : $"{activeItem.BaseName} • {activeItem.Rarity} • ilvl {activeItem.ItemLevel} • Cấp {activeItem.ReqLevel}";
+                ? $"{weaponSub.WeaponClassDisplayName} • {weaponSub.HandRequirementDisplayName} • {weaponSub.Rarity} • ilvl {weaponSub.ItemLevel} • Level {weaponSub.ReqLevel}"
+                : $"{activeItem.BaseName} • {activeItem.Rarity} • ilvl {activeItem.ItemLevel} • Level {activeItem.ReqLevel}";
         }
 
         // 2. Right column: base stats, implicit, affixes (smooth scroll / T1-T2 summary)
@@ -842,12 +842,12 @@ public partial class EquipmentView : Control
 
         if (_tooltipTitleLabel != null)
         {
-            _tooltipTitleLabel.Text = $"Ô {SelectedSlot} Trống";
+            _tooltipTitleLabel.Text = $"Empty {SelectedSlot} Slot";
             _tooltipTitleLabel.Modulate = new Color(0.6f, 0.6f, 0.65f);
         }
 
         if (_tooltipSubtitleLabel != null)
-            _tooltipSubtitleLabel.Text = "Chưa trang bị. Chọn đồ dự phòng bên dưới để so sánh và mặc.";
+            _tooltipSubtitleLabel.Text = "Not equipped. Select reserve item below to compare and equip.";
 
         if (_tooltipBaseStatsLabel != null)
             _tooltipBaseStatsLabel.Visible = false;
@@ -857,7 +857,7 @@ public partial class EquipmentView : Control
 
         ClearAffixList();
         if (_affixHeaderLabel != null)
-            _affixHeaderLabel.Text = "KHÔNG CÓ AFFIX";
+            _affixHeaderLabel.Text = "NO AFFIXES";
 
         // Drawer stays pinned (sticky) — show the current baseline so the 140px slot never collapses
         float ehp = Player != null ? EquipmentComparisonService.CalculateEffectiveHealthPool(Player) : 0f;
@@ -865,7 +865,7 @@ public partial class EquipmentView : Control
         var (ehpLine, dpsLine) = SmartDeltaFormatter.FormatEquippedBaseline(ehp, dps);
 
         ApplyVerdict(DeltaVerdict.EmptySlot);
-        ApplyDeltaLine(_deltaEhpLabel, _deltaEhpDetailLabel, ehpLine with { Detail = "Ô trống • chưa có mốc" });
+        ApplyDeltaLine(_deltaEhpLabel, _deltaEhpDetailLabel, ehpLine with { Detail = "Empty slot • no benchmark" });
         ApplyDeltaLine(_deltaDpsLabel, _deltaDpsDetailLabel, dpsLine);
 
         if (_deltaSummaryLabel != null)
@@ -882,15 +882,15 @@ public partial class EquipmentView : Control
         if (item is WeaponItemInstance weapon)
         {
             _tooltipBaseStatsLabel.Text =
-                $"Vật lý {weapon.ComputedMinDamage:F0}-{weapon.ComputedMaxDamage:F0} • {weapon.ComputedAps:F2} APS • " +
-                $"Chí mạng {weapon.ComputedCritChance:F2}% • {weapon.TotalDps:F1} pDPS";
+                $"Phys {weapon.ComputedMinDamage:F0}-{weapon.ComputedMaxDamage:F0} • {weapon.ComputedAps:F2} APS • " +
+                $"Crit {weapon.ComputedCritChance:F2}% • {weapon.TotalDps:F1} pDPS";
             _tooltipBaseStatsLabel.Visible = true;
         }
         else if (item is ArmourItemInstance armour)
         {
             var parts = new List<string>(4);
-            if (armour.LocalArmour > 0f) parts.Add($"Giáp {armour.LocalArmour:F0}");
-            if (armour.LocalEvasion > 0f) parts.Add($"Né {armour.LocalEvasion:F0}");
+            if (armour.LocalArmour > 0f) parts.Add($"Armour {armour.LocalArmour:F0}");
+            if (armour.LocalEvasion > 0f) parts.Add($"Evasion {armour.LocalEvasion:F0}");
             if (armour.LocalEnergyShield > 0f) parts.Add($"ES {armour.LocalEnergyShield:F0}");
             if (armour.LocalBlockChance > 0f) parts.Add($"Block {armour.LocalBlockChance:F0}%");
             _tooltipBaseStatsLabel.Text = string.Join(" • ", parts) + (armour.Quality > 0 ? $" (Q +{armour.Quality}%)" : "");
@@ -933,7 +933,7 @@ public partial class EquipmentView : Control
 
         if (summary.Lines.Count == 0 && ShowHighTierAffixesOnly && summary.PrefixCount + summary.SuffixCount > 0)
         {
-            var none = new Label { Text = "Không có dòng T1/T2 trên món đồ này." };
+            var none = new Label { Text = "No T1/T2 affixes on this item." };
             none.AddThemeFontSizeOverride("font_size", 8);
             none.AddThemeColorOverride("font_color", new Color(0.55f, 0.57f, 0.62f));
             _tooltipAffixListVBox.AddChild(none);
@@ -987,7 +987,7 @@ public partial class EquipmentView : Control
 
         if (_deltaSummaryLabel != null)
         {
-            _deltaSummaryLabel.Text = "Res: đang mặc";
+            _deltaSummaryLabel.Text = "Res: equipped";
             _deltaSummaryLabel.TooltipText = string.Empty;
             _deltaSummaryLabel.Modulate = DeltaNeutralColor;
         }
@@ -1128,7 +1128,7 @@ public partial class EquipmentView : Control
         if (_equipButton != null)
         {
             _equipButton.Disabled = (item == null || isEquipped);
-            _equipButton.Text = isEquipped ? "Đã Mặc" : "Mặc Ngay";
+            _equipButton.Text = isEquipped ? "Equipped" : "Equip";
         }
 
         if (_lockButton != null)
@@ -1136,12 +1136,12 @@ public partial class EquipmentView : Control
             _lockButton.Disabled = (item == null);
             if (item != null)
             {
-                _lockButton.Text = item.IsLocked ? "🔓 Mở Khóa" : "🔒 Khóa Đồ";
+                _lockButton.Text = item.IsLocked ? "🔓 Unlock" : "🔒 Lock";
                 _lockButton.Modulate = item.IsLocked ? new Color(1.15f, 0.95f, 0.55f) : Colors.White;
             }
             else
             {
-                _lockButton.Text = "🔒 Khóa Đồ";
+                _lockButton.Text = "🔒 Lock";
                 _lockButton.Modulate = Colors.White;
             }
         }
@@ -1149,7 +1149,7 @@ public partial class EquipmentView : Control
         if (_stashButton != null)
         {
             _stashButton.Disabled = (item == null || item.IsLocked);
-            _stashButton.Text = isEquipped ? "Tháo Đồ" : "Cất Rương";
+            _stashButton.Text = isEquipped ? "Unequip" : "Stash";
         }
     }
 

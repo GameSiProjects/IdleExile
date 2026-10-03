@@ -190,55 +190,55 @@ theme_override_constants/separation = 3
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Toàn bộ bản đồ hiện có trong Crucible"
+tooltip_text = "All available maps in the Crucible"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
-text = "Tất Cả"
+text = "All"
 
 [node name="TierT0Btn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "The Endless Hollow (Tier 0) • Cơ chế chống kẹt tài nguyên vĩnh cửu"
+tooltip_text = "The Endless Hollow (Tier 0) • Failsafe infinite resource map"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
-text = "T0 Vực Sâu"
+text = "T0 Hollow"
 
 [node name="TierWhiteBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "White Maps (Tier 1–5) • Bản đồ Sơ cấp"
+tooltip_text = "White Maps (Tier 1–5) • Entry Level"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
-text = "T1–5 Trắng"
+text = "T1–5 White"
 
 [node name="TierYellowBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Yellow Maps (Tier 6–10) • Bản đồ Trung cấp"
+tooltip_text = "Yellow Maps (Tier 6–10) • Mid-tier Atlas"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
-text = "T6–10 Vàng"
+text = "T6–10 Yellow"
 
 [node name="TierRedBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Red Maps (Tier 11–15) • Bản đồ Cao cấp"
+tooltip_text = "Red Maps (Tier 11–15) • Endgame Atlas"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
-text = "T11–15 Đỏ"
+text = "T11–15 Red"
 
 [node name="TierPinnacleBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/TierFilterHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Pinnacle Maps (Tier 16+) • Trận chiến Đỉnh cao"
+tooltip_text = "Pinnacle Maps (Tier 16+) • Apex Encounters"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
-text = "T16+ Đỉnh"
+text = "T16+ Pinnacle"
 
 [node name="AltarPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
 custom_minimum_size = Vector2(0, 142)
@@ -324,7 +324,7 @@ layout_mode = 2
 size_flags_vertical = 10
 theme_override_colors/font_color = Color(0.55, 0.58, 0.68, 1)
 theme_override_font_sizes/font_size = 9
-text = "Crucible Device Altar • Sẵn sàng"
+text = "Crucible Device Altar • Ready"
 
 [node name="AltarActionsVBox" type="VBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox"]
 layout_mode = 2
@@ -336,34 +336,34 @@ alignment = 1
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
-tooltip_text = "Kích hoạt cỗ máy Crucible để mở cổng dịch chuyển tới bản đồ đang nạp!"
+tooltip_text = "Activate Crucible Device to open portal to slotted map!"
 theme_override_colors/font_color = Color(1, 0.9, 0.5, 1)
 theme_override_colors/font_hover_color = Color(1, 0.98, 0.7, 1)
 theme_override_font_sizes/font_size = 12
 theme_override_styles/normal = SubResource("StyleBoxFlat_activate_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_activate_btn_hover")
-text = "⚔ KÍCH HOẠT BẢN ĐỒ"
+text = "⚔ ACTIVATE MAP"
 
 [node name="EmergencyPortalBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/AltarActionsVBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
-tooltip_text = "Thoát hiểm khẩn cấp về Hideout an toàn ngay lập tức (Phím tắt: Space)"
+tooltip_text = "Instant emergency escape to safe Hideout (Hotkey: Space)"
 theme_override_colors/font_color = Color(0.35, 0.85, 0.95, 1)
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_portal_btn")
 disabled = true
-text = "🌀 Thoát Hiểm Khẩn Cấp (Space)"
+text = "🌀 Emergency Escape (Space)"
 
 [node name="CraftRerollBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox/AltarActionsVBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 26)
 layout_mode = 2
-tooltip_text = "Dùng Alchemy/Chaos Orbs ép các dòng thuộc tính ngẫu nhiên (Rare Map)"
+tooltip_text = "Use Alchemy/Chaos Orbs to reroll map affixes (Rare Map)"
 theme_override_colors/font_color = Color(0.85, 0.7, 1, 1)
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_craft_btn")
-text = "🎲 Ép Thuộc Tính (Craft / Reroll)"
+text = "🎲 Craft Affixes (Reroll)"
 
 [node name="InspectorPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
 custom_minimum_size = Vector2(0, 118)
@@ -494,7 +494,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.58, 0.68, 1)
 theme_override_font_sizes/font_size = 10
-text = "Normal Map Slate • 0 Modifiers\nNhấn [🎲 Ép Thuộc Tính] để gia tăng Reward hoặc [⚔ KÍCH HOẠT] để dọn ngay."
+text = "Normal Map Slate • 0 Modifiers\nClick [🎲 Craft Affixes] to increase rewards or [⚔ ACTIVATE] to clear immediately."
 autowrap_mode = 2
 
 [node name="AvailableDrawerPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
@@ -520,7 +520,7 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.75, 0.45, 1)
 theme_override_font_sizes/font_size = 10
-text = "KHAY BẢN ĐỒ KHẢ DỤNG (1-CLICK ĐỂ NẠP)"
+text = "AVAILABLE MAP SLATES (1-CLICK TO SLOT)"
 
 [node name="AvailableMapsCountLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
 unique_name_in_owner = true
@@ -528,7 +528,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.55, 0.58, 0.68, 1)
 theme_override_font_sizes/font_size = 9
-text = "Khả dụng: 5 Maps"
+text = "Available: 5 Maps"
 horizontal_alignment = 2
 
 [node name="SlatesScroll" type="ScrollContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AvailableDrawerPanel/DrawerMargin/DrawerVBox"]

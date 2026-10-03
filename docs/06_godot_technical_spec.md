@@ -21,9 +21,13 @@ Tài liệu này đặc tả kiến trúc kỹ thuật của **Idle Exile** trê
 
 ```
 IdleExile/
-├── project.godot                     # Cấu hình Godot Engine
+├── project.godot                     # Cấu hình Godot Engine (Cửa sổ, gl_compat, i18n)
 ├── IdleExile.csproj                  # Project file C# (.NET 8)
-├── docs/                             # Tài liệu Game Design
+├── localization/                     # Hệ thống Bản địa hóa (Godot Localization)
+│   ├── translations.csv              # Bảng chuỗi dịch tập trung (id, en, vi)
+│   ├── translations.en.translation   # File binary dịch tiếng Anh (mặc định)
+│   └── translations.vi.translation   # File binary dịch tiếng Việt
+├── docs/                             # Tài liệu Game Design & Kỹ thuật
 ├── data/                             # Dữ liệu JSON gốc (Source of Truth)
 │   ├── affixes.json                  # Bảng tra cứu Prefix / Suffix
 │   ├── base_items.json               # Các phôi đồ cơ bản
@@ -40,7 +44,8 @@ IdleExile/
     │   │   └── PassiveNode.cs
     │   ├── Services/                 # Dịch vụ nạp dữ liệu & tiện ích
     │   │   ├── DatabaseLoader.cs     # Nạp JSON bằng System.Text.Json
-    │   │   └── DamageCalculator.cs   # Công thức Increased vs More
+    │   │   ├── DamageCalculator.cs   # Công thức Increased vs More
+    │   │   └── SmartDeltaFormatter.cs# Định dạng so sánh chỉ số chuẩn tiếng Anh
     │   ├── Simulation/               # Vòng lặp chiến đấu nhịp
     │   │   ├── TickManager.cs        # 30 Ticks / giây (~33.33ms)
     │   │   ├── CombatEngine.cs
@@ -51,10 +56,11 @@ IdleExile/
     │       └── AtlasProgress.cs
     │
     └── UI/                           # Godot C# Scripts gắn vào Scene Nodes
+        ├── LocalizationService.cs    # Wrapper Godot TranslationServer (Loc.Tr, Loc.Format)
         ├── WindowController.cs       # Always-on-top, quản lý cửa sổ mini
         ├── BattleViewport.cs         # Vẽ combat 2D tối giản
         ├── Tooltips/                 # Hover tooltip hiển thị đồ chuẩn PoE
-        └── Tabs/                     # InventoryTab, GearTab, AtlasTab, TreeTab
+        └── Components/               # EquipmentView, GemView, AtlasView, VitometerView
 ```
 
 ---
@@ -274,3 +280,53 @@ Nhằm đảm bảo trải nghiệm người chơi luôn sạch sẽ, bảo mậ
      ```
 3. **Kiểm Tra Build:**
    * Bản Release biên dịch qua `dotnet build -c Release` sẽ tự động loại bỏ 100% mã debug khỏi file binary, không tiêu tốn RAM hay chu kỳ CPU.
+
+---
+
+## 8. Kiến Trúc Đa Ngôn Ngữ & Bản Địa Hóa (Localization System - Godot TranslationServer)
+
+Nhằm đáp ứng yêu cầu vận hành chuẩn quốc tế (ngôn ngữ hiển thị mặc định 100% tiếng Anh) đồng thời sẵn sàng mở rộng hỗ trợ tiếng Việt và các ngôn ngữ khác trong tương lai mà không cần tái cấu trúc mã nguồn:
+
+### 8.1. Cơ Sở Dữ Liệu Chuỗi Dịch (`localization/translations.csv`)
+* Toàn bộ chuỗi giao diện người dùng, tooltip, huy hiệu so sánh (Delta Badges), thông báo hệ thống được quản lý tập trung trong file `localization/translations.csv` tuân thủ chuẩn RFC 4180.
+* Cấu trúc bảng dịch 3 cột: `id,en,vi`:
+  ```csv
+  id,en,vi
+  UI_EQUIP,"Equip","Mặc Ngay"
+  UI_EQUIPPED,"Equipped","Đã Mặc"
+  UI_UNEQUIP,"Unequip","Tháo Đồ"
+  UI_VERDICT_UPGRADE,"▲ UPGRADE","▲ NÂNG CẤP"
+  UI_GEM_PO2_DECOUPLED_HINT,"Equipment has no sockets. All skill links reside directly inside Active Gems.\nSelect a gem from inventory below to socket.","Trang bị không có socket. Mọi liên kết kỹ năng nằm trực tiếp trong Active Gem.\nChọn một viên ngọc từ khay bên dưới để lắp vào."
+  ```
+
+### 8.2. Cấu Hình Tự Động Biên Dịch Trong `project.godot`
+* Godot Engine tự động nhận diện `translations.csv` và biên dịch thành các tài nguyên nhị phân tối ưu:
+  * `res://localization/translations.en.translation`
+  * `res://localization/translations.vi.translation`
+* Khai báo trong `project.godot`:
+  ```ini
+  [internationalization]
+  locale/translations=PackedStringArray("res://localization/translations.en.translation", "res://localization/translations.vi.translation")
+  locale/fallback="en"
+  ```
+* Mặc định ngôn ngữ khởi động và fallback của hệ thống luôn là tiếng Anh (`"en"`).
+
+### 8.3. Dịch Vụ C# Localization (`src/UI/LocalizationService.cs`)
+* Cung cấp API tĩnh tiện lợi, hiệu năng cao bao bọc `Godot.TranslationServer`:
+  ```csharp
+  // Dịch chuỗi tĩnh:
+  string text = Loc.Tr("UI_EQUIP"); // "Equip" (en) hoặc "Mặc Ngay" (vi)
+
+  // Định dạng chuỗi tham số động:
+  string msg = Loc.Format("UI_GEM_SUPPORT_SOCKET_EMPTY", index + 1);
+
+  // Đổi ngôn ngữ thời gian thực (Runtime Switch):
+  Loc.SetLocale("vi"); // hoặc Loc.SetLocale("en");
+  ```
+
+### 8.4. Nguyên Tắc Phân Tách Giữa Core Logic và Presentation UI
+1. **Lớp Core (`src/Core/`):**
+   - Giữ sạch 100% C# thuần túy, tuyệt đối KHÔNG gọi hoặc phụ thuộc vào API Godot `TranslationServer`.
+   - Các mô hình dữ liệu (Weapon classes, Affix names, Compatibility reason, Delta verdict constants) lưu trữ trực tiếp bằng thuật ngữ tiếng Anh chuẩn ARPG/PoE (`One-Handed Sword`, `▲ UPGRADE`, `Compatible`).
+2. **Lớp Presentation UI (`src/UI/`):**
+   - Chịu trách nhiệm hiển thị và phân giải đa ngôn ngữ qua `Loc.Tr()` hoặc gán trực tiếp ID dịch trên các Node UI trong Scene (`.tscn`).

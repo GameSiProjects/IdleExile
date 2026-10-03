@@ -8,7 +8,7 @@ using IdleExile.Core.State;
 namespace IdleExile.Core.Tests;
 
 /// <summary>
-/// Comprehensive unit tests for Task 2.7: Bố Trí Cụm Quái Tuần Tự Dọc Hành Lang (CorridorMonsterLayout).
+/// Comprehensive unit tests for Task 2.7: Sequential Corridor Monster Layout (CorridorMonsterLayout).
 /// Validates:
 /// 1. Canonical Sequential Pack Order (Pack 1 -> Pack 2 -> League Encounter -> Pack 3 -> Pack 4 -> Boss).
 /// 2. Vanguard Formations (Horizontal Line & V-Shape Wedge).

@@ -108,11 +108,11 @@ public static class SmartDeltaFormatter
 
     public static string VerdictText(DeltaVerdict verdict) => verdict switch
     {
-        DeltaVerdict.Upgrade => "▲ NÂNG CẤP",
-        DeltaVerdict.Downgrade => "▼ HẠ CẤP",
-        DeltaVerdict.TradeOff => "◆ ĐÁNH ĐỔI",
-        DeltaVerdict.Equipped => "● ĐANG MẶC",
-        _ => "○ Ô TRỐNG"
+        DeltaVerdict.Upgrade => "▲ UPGRADE",
+        DeltaVerdict.Downgrade => "▼ DOWNGRADE",
+        DeltaVerdict.TradeOff => "◆ TRADEOFF",
+        DeltaVerdict.Equipped => "● EQUIPPED",
+        _ => "○ EMPTY"
     };
 
     // ─────────────────────────────────────────────
@@ -154,8 +154,8 @@ public static class SmartDeltaFormatter
     /// </summary>
     public static (DeltaLine Ehp, DeltaLine Dps) FormatEquippedBaseline(float currentEhp, float currentDps)
     {
-        var ehp = new DeltaLine(DeltaDirection.Neutral, $"● {currentEhp.ToString("N0", Inv)} EHP", "Mốc so sánh hiện tại");
-        var dps = new DeltaLine(DeltaDirection.Neutral, $"● {currentDps.ToString("N1", Inv)} DPS", "Chọn đồ dự phòng để so sánh");
+        var ehp = new DeltaLine(DeltaDirection.Neutral, $"● {currentEhp.ToString("N0", Inv)} EHP", "Current benchmark");
+        var dps = new DeltaLine(DeltaDirection.Neutral, $"● {currentDps.ToString("N1", Inv)} DPS", "Select reserve item to compare");
         return (ehp, dps);
     }
 
@@ -172,7 +172,7 @@ public static class SmartDeltaFormatter
         AppendRes(parts, "Light", result.DeltaLightningRes);
         AppendRes(parts, "Chaos", result.DeltaChaosRes);
 
-        return parts.Count > 0 ? "Res: " + string.Join(" • ", parts) : "Res: không đổi";
+        return parts.Count > 0 ? "Res: " + string.Join(" • ", parts) : "Res: unchanged";
     }
 
     // ─────────────────────────────────────────────
@@ -212,7 +212,7 @@ public static class SmartDeltaFormatter
         if (summary == null) throw new ArgumentNullException(nameof(summary));
 
         int total = summary.PrefixCount + summary.SuffixCount;
-        if (total == 0) return "KHÔNG CÓ AFFIX";
+        if (total == 0) return "NO AFFIXES";
 
         string header = $"{total} MODS • {summary.PrefixCount}P/{summary.SuffixCount}S";
         return summary.HighTierCount > 0 ? $"{header} • ★ T1-T2 ×{summary.HighTierCount}" : header;

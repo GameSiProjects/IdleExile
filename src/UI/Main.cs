@@ -785,8 +785,8 @@ public partial class Main : Control
         {
             _resizeModeButton.Text = isExpanded ? "⤡ Min" : "⤢ Expand";
             _resizeModeButton.TooltipText = isExpanded
-                ? "Thu nhỏ Compact (440x380) - Neo đáy thanh Taskbar"
-                : "Phóng to Expanded (440x780) - Mở rộng Theorycrafting";
+                ? Tr("UI_WINDOW_COMPACT_TOOLTIP")
+                : Tr("UI_WINDOW_EXPANDED_TOOLTIP");
         }
     }
 

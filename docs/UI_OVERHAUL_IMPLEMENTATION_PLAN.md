@@ -146,8 +146,14 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 ### 🟣 Phase 4: Tab Bản Đồ & Hàng Đợi Tự Động (`scenes/AtlasView.tscn`)
 > **Mục tiêu:** Hợp nhất Cỗ máy bản đồ (Map Device), danh sách Map Tiers (T1–T16+) và khay hàng đợi tự động chạy map (Map Queue 10 slots).
 
+- [x] **Task 4.0: Chuẩn Hóa Ngôn Ngữ Tiếng Anh & Tích Hợp Godot Localization**
+  - Chuyển đổi 100% ngôn ngữ hiển thị trong game sang tiếng Anh chuẩn ARPG quốc tế (Titlebar, Tab Navigation, EquipmentView, GemView, AtlasView, StarterSelectionModal, DiagnosticModal, Tooltips, Action Buttons, Delta Badges).
+  - Thiết lập cơ sở dữ liệu dịch thuật tập trung `localization/translations.csv` (RFC 4180) được tự động biên dịch sang các tài nguyên nhị phân `translations.en.translation` và `translations.vi.translation`.
+  - Cấu hình `[internationalization]` trong `project.godot` với locale mặc định `"en"`, sẵn sàng chuyển đổi runtime tức thì qua `Loc.SetLocale("vi")`.
+  - Tạo dịch vụ `LocalizationService.cs` (`IdleExile.UI.Loc`) cung cấp `Loc.Tr()` và `Loc.Format()` cho toàn bộ các presentation controllers.
+  - Đảm bảo lớp Core Logic (`src/Core/`) giữ 100% Pure C#, không phụ thuộc vào Godot TranslationServer, toàn bộ thuật ngữ nghiệp vụ chuẩn tiếng Anh.
 - [x] **Task 4.1: Xây dựng Scene `AtlasView.tscn` và Controller `AtlasView.cs`**
-  - Khay kích hoạt Map Device ở trung tâm với vòng xoay cổ ngữ (`RunicDeviceCanvas`), bệ nạp bản đồ (`SlottedPlateCard`), hiệu ứng Golden Pulse và nút `[⚔ KÍCH HOẠT BẢN ĐỒ]`.
+  - Khay kích hoạt Map Device ở trung tâm với vòng xoay cổ ngữ (`RunicDeviceCanvas`), bệ nạp bản đồ (`SlottedPlateCard`), hiệu ứng Golden Pulse và nút `[⚔ ACTIVATE MAP]`.
   - Hiển thị đầy đủ Map Modifiers (Quantity, Pack Size, Mod nguy hiểm Reflect/-Max Res/No Leech) với hệ thống Threat Badges trực quan và khay duyệt Map Slates khả dụng (T0–T16+).
   - Tích hợp liền mạch vào `Main.tscn` và `Main.cs`: Bấm nút `[🗺 Atlas]` chuyển đổi ngay lập tức sang `AtlasView`, duy trì persistent combat viewport.
   - Vượt qua 100% bài kiểm thử tự động `AtlasSystemTests` và `TestAtlasViewIntegration` trong `MainLayoutTests`.
@@ -191,6 +197,7 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 | Tiêu Chí | Ngưỡng Yêu Cầu |
 | :--- | :--- |
 | **Không Che Sàn Đấu** | Combat Viewport duy trì 100% hiển thị ở mọi Tab trong Expanded Mode. |
+| **Chuẩn Ngôn Ngữ & i18n** | Ngôn ngữ mặc định 100% tiếng Anh; toàn bộ text quản lý qua Godot Localization (`translations.csv`, `Loc.Tr`) sẵn sàng chuyển ngữ tức thì. |
 | **Hiệu Năng & CPU** | Tiêu thụ < 1.0% CPU trên Windows ở chế độ treo nền (Low Processor Mode). |
 | **Bộ Nhớ RAM** | Tổng dung lượng RAM duy trì ổn định dưới 150MB. |
 | **Độ Sạch Bản Build** | Tuyệt đối 0 cảnh báo (0 Warnings), 0 lỗi (0 Errors) khi chạy `dotnet build`. |

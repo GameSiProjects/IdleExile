@@ -106,20 +106,20 @@ public static class WeaponDisplayExtensions
 {
     public static string GetDisplayName(this WeaponClass wc) => wc switch
     {
-        WeaponClass.OneHandedSword => "Kiếm Một Tay (1H Sword)",
-        WeaponClass.OneHandedAxe => "Rìu Một Tay (1H Axe)",
-        WeaponClass.OneHandedMace => "Chùy Một Tay (1H Mace)",
-        WeaponClass.Claw => "Vuốt (Claw)",
-        WeaponClass.Dagger => "Dao Găm (Dagger)",
-        WeaponClass.Wand => "Đũa Phép (Wand)",
-        WeaponClass.Sceptre => "Pháp Trượng (Sceptre)",
-        WeaponClass.TwoHandedSword => "Đại Kiếm (2H Sword)",
-        WeaponClass.TwoHandedAxe => "Đại Rìu (2H Axe)",
-        WeaponClass.TwoHandedMace => "Đại Chùy (2H Mace)",
-        WeaponClass.Bow => "Cung (Bow)",
-        WeaponClass.Staff => "Quyền Trượng (Staff)",
-        WeaponClass.Shield => "Khiên (Shield)",
-        WeaponClass.Quiver => "Ống Tên (Quiver)",
+        WeaponClass.OneHandedSword => "One-Handed Sword",
+        WeaponClass.OneHandedAxe => "One-Handed Axe",
+        WeaponClass.OneHandedMace => "One-Handed Mace",
+        WeaponClass.Claw => "Claw",
+        WeaponClass.Dagger => "Dagger",
+        WeaponClass.Wand => "Wand",
+        WeaponClass.Sceptre => "Sceptre",
+        WeaponClass.TwoHandedSword => "Two-Handed Sword",
+        WeaponClass.TwoHandedAxe => "Two-Handed Axe",
+        WeaponClass.TwoHandedMace => "Two-Handed Mace",
+        WeaponClass.Bow => "Bow",
+        WeaponClass.Staff => "Staff",
+        WeaponClass.Shield => "Shield",
+        WeaponClass.Quiver => "Quiver",
         _ => wc.ToString()
     };
 
@@ -163,9 +163,9 @@ public static class WeaponDisplayExtensions
 
     public static string GetDisplayName(this HandSlotRequirement req) => req switch
     {
-        HandSlotRequirement.OneHanded => "Một Tay (1-Handed)",
-        HandSlotRequirement.TwoHanded => "Hai Tay (2-Handed)",
-        HandSlotRequirement.OffHandOnly => "Tay Phụ (Off-Hand Only)",
+        HandSlotRequirement.OneHanded => "1-Handed",
+        HandSlotRequirement.TwoHanded => "2-Handed",
+        HandSlotRequirement.OffHandOnly => "Off-Hand Only",
         _ => req.ToString()
     };
 }

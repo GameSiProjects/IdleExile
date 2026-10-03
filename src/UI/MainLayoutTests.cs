@@ -252,7 +252,7 @@ public static class MainLayoutTests
     }
 
     /// <summary>
-    /// Verifies Task 1.2: Triệt tiêu Card Debug (StatusCard).
+    /// Verifies Task 1.2: Elimination of Debug Card (StatusCard).
     /// Asserts that no StatusCard or StatusCardMargin exists to steal vertical gameplay space.
     /// Confirms database metrics are cleanly routed to footer tooltips and diagnostic modals.
     /// </summary>
@@ -406,12 +406,12 @@ public static class MainLayoutTests
     }
 
     /// <summary>
-    /// Verifies Task 2.2: Smart Tooltip Delta dạng Sticky Drawer (140px).
+    /// Verifies Task 2.2: Smart Tooltip Delta Sticky Drawer (140px).
     /// Conforms to docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md:
     /// - Sticky Drawer positioned right under the Doll with fixed height 140px.
     /// - Clip contents enabled to prevent layout expansion.
     /// - 2 decisive headline rows: ▲/▼ EHP and ▲/▼ DPS with font size 14.
-    /// - DeltaVerdictLabel shows instant verdict badge (▲ NÂNG CẤP, ▼ HẠ CẤP, etc.).
+    /// - DeltaVerdictLabel shows instant verdict badge (▲ UPGRADE, ▼ DOWNGRADE, etc.).
     /// - AffixFilterToggle button toggles between full list and T1/T2 summary.
     /// - Smooth wheel scrolling capability in AffixScroll.
     /// - Live comparison updates when inspecting candidate items.
@@ -483,10 +483,10 @@ public static class MainLayoutTests
     }
 
     /// <summary>
-    /// Verifies Task 2.3: Thanh Action Buttons & Candidate Drawer Mini (60px).
+    /// Verifies Task 2.3: Action Buttons & Candidate Drawer Mini (60px).
     /// Conforms to docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md:
     /// - ActionCandidateSection has fixed height budget 60px with ClipContents enabled.
-    /// - 1-Click Action Buttons: [Mặc Ngay] (Green), [Khóa Đồ] (Amber), [Cất Rương] (Blue).
+    /// - 1-Click Action Buttons: [Equip] (Green), [Lock] (Amber), [Stash] (Blue).
     /// - Candidate Drawer provides horizontal smooth scrolling for items matching selected slot.
     /// - Fast 1.5s comparison candidate cards with dynamic EHP/DPS delta badges.
     /// - 1-click candidate inspection and 1-click / double-click equip actions.
@@ -543,7 +543,7 @@ public static class MainLayoutTests
             AssertTrue(equipView.InspectedItem?.InstanceId == candidate.InstanceId,
                 "Inspecting candidate must update InspectedItem");
             AssertFalse(equipBtn.Disabled, "EquipButton should be enabled when candidate is inspected");
-            AssertTrue(equipBtn.Text == "Mặc Ngay", "EquipButton text should say 'Mặc Ngay'");
+            AssertTrue(equipBtn.Text == "Equip", "EquipButton text should say 'Equip'");
 
             // 1-Click Lock Toggle
             bool initialLock = candidate.IsLocked;
@@ -560,9 +560,9 @@ public static class MainLayoutTests
             AssertTrue(main.Player?.Gear.GetItem(GearSlot.BodyArmour)?.InstanceId == candidate.InstanceId,
                 "EquipButton must equip the inspected candidate item into player gear");
             AssertTrue(equipBtn.Disabled, "EquipButton must be disabled when item is equipped");
-            AssertTrue(equipBtn.Text == "Đã Mặc", "EquipButton text must say 'Đã Mặc'");
+            AssertTrue(equipBtn.Text == "Equipped", "EquipButton text must say 'Equipped'");
             AssertFalse(stashBtn.Disabled, "StashButton must be enabled for equipped item");
-            AssertTrue(stashBtn.Text == "Tháo Đồ", "StashButton text must say 'Tháo Đồ' for equipped item");
+            AssertTrue(stashBtn.Text == "Unequip", "StashButton text must say 'Unequip' for equipped item");
 
             // 1-Click Unequip / Stash
             stashBtn.EmitSignal(Button.SignalName.Pressed);

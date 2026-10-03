@@ -370,7 +370,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -402,7 +402,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -429,7 +429,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -456,7 +456,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -488,7 +488,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -515,7 +515,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(52, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -547,7 +547,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -574,7 +574,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -601,7 +601,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -628,7 +628,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(46, 10)
 layout_mode = 2
 theme_override_font_sizes/font_size = 7
-text = "(Trống)"
+text = "(Empty)"
 horizontal_alignment = 1
 clip_text = true
 
@@ -807,7 +807,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
 theme_override_font_sizes/font_size = 10
-text = "▲ NÂNG CẤP"
+text = "▲ UPGRADE"
 horizontal_alignment = 2
 
 [node name="TooltipSubtitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
@@ -815,7 +815,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
 theme_override_font_sizes/font_size = 8
-text = "Astral Plate • Rare • ilvl 84 • Cấp 68"
+text = "Astral Plate • Rare • ilvl 84 • Level 68"
 clip_text = true
 text_overrun_behavior = 3
 
@@ -906,7 +906,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(44, 14)
 layout_mode = 2
 focus_mode = 0
-tooltip_text = "Chỉ hiển thị các dòng Affix bậc cao (Tier 1 / Tier 2)"
+tooltip_text = "Filter High-Tier Affixes only (Tier 1 / Tier 2)"
 theme_override_colors/font_color = Color(0.75, 0.77, 0.82, 1)
 theme_override_colors/font_pressed_color = Color(1, 0.88, 0.5, 1)
 theme_override_font_sizes/font_size = 8
@@ -933,7 +933,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
 theme_override_font_sizes/font_size = 8
-text = "Giáp: 1,120 (Quality +20%)"
+text = "Armour: 1,120 (Quality +20%)"
 autowrap_mode = 3
 
 [node name="TooltipImplicitLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
@@ -978,7 +978,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_action_equip")
 theme_override_styles/hover = SubResource("StyleBoxFlat_action_equip_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_action_equip_pressed")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_action_equip_disabled")
-text = "Mặc Ngay"
+text = "Equip"
 
 [node name="LockButton" type="Button" parent="MainPanel/RootMargin/MainVBox/ActionCandidateSection/ActionButtonsHBox"]
 unique_name_in_owner = true
@@ -994,7 +994,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_action_lock")
 theme_override_styles/hover = SubResource("StyleBoxFlat_action_lock_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_action_lock_pressed")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_action_lock_disabled")
-text = "🔒 Khóa Đồ"
+text = "🔒 Lock"
 
 [node name="StashButton" type="Button" parent="MainPanel/RootMargin/MainVBox/ActionCandidateSection/ActionButtonsHBox"]
 unique_name_in_owner = true
@@ -1010,7 +1010,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_action_stash")
 theme_override_styles/hover = SubResource("StyleBoxFlat_action_stash_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_action_stash_pressed")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_action_stash_disabled")
-text = "Cất Rương"
+text = "Stash"
 
 [node name="CandidateDrawerPanel" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/ActionCandidateSection"]
 unique_name_in_owner = true
@@ -1060,27 +1060,27 @@ theme_override_constants/separation = 8
 layout_mode = 2
 theme_override_colors/font_color = Color(0.88, 0.72, 0.25, 1)
 theme_override_font_sizes/font_size = 14
-text = "HƯỚNG DẪN HỆ THỐNG TRANG BỊ"
+text = "EQUIPMENT SYSTEM GUIDE"
 
 [node name="HelpText" type="RichTextLabel" parent="HelpOverlay/HelpMargin/HelpVBox"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/normal_font_size = 10
 bbcode_enabled = true
-text = "[color=#F3C044]1. Không Có Socket Trên Đồ (PoE 2):[/color]
-Toàn bộ Support Gems nằm trên Active Gem. Nhặt trang bị là mặc ngay lập tức mà không sợ mất liên kết 6-link!
+text = "[color=#F3C044]1. No Sockets on Equipment (PoE 2):[/color]
+All Support Gems are socketed inside Active Gems. Loot and equip gear instantly without breaking 6-links!
 
-[color=#F3C044]2. Thuộc Tính Mềm (Phương Án C):[/color]
-Mọi trang bị chỉ yêu cầu Cấp độ Nhân vật. Không bao giờ bị khóa đồ vì thiếu Dex hay Str.
+[color=#F3C044]2. Soft Attributes (Approach C):[/color]
+All equipment only requires Character Level. Never locked out of gear due to missing Dex or Str.
 • 10 Str: +5 Life, +2% Armour
 • 10 Dex: +20 Accuracy, +2% Evasion
 • 10 Int: +5 Mana, +2% Energy Shield
 
-[color=#F3C044]3. Smart Tooltip (So sánh trong 1.5s):[/color]
-Bảng Delta hiển thị tức thì chênh lệch EHP (▲/▼) và DPS (▲/▼) giúp bạn ra quyết định nhanh nhất."
+[color=#F3C044]3. Smart Tooltip (Fast 1.5s Comparison):[/color]
+Delta display shows instantaneous EHP (▲/▼) and DPS (▲/▼) changes for rapid theorycrafting decisions."
 
 [node name="HelpCloseButton" type="Button" parent="HelpOverlay/HelpMargin/HelpVBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
-text = "Đóng Hướng Dẫn"
+text = "Close Guide"

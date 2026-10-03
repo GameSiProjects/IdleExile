@@ -80,7 +80,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: false,
                 MatchingTags: Array.Empty<string>(),
                 MissingRequiredTags: supportGem?.RequiredTags ?? Array.Empty<string>(),
-                Reason: "Chưa có Active Gem trong khay kỹ năng.",
+                Reason: "No Active Gem in skill socket.",
                 MoreDamagePercent: 0f,
                 LessDamagePercent: 0f,
                 ManaMultiplier: 100f
@@ -93,7 +93,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: false,
                 MatchingTags: Array.Empty<string>(),
                 MissingRequiredTags: Array.Empty<string>(),
-                Reason: "Ngọc được chọn không phải là Support Gem hợp lệ.",
+                Reason: "Selected gem is not a valid Support Gem.",
                 MoreDamagePercent: 0f,
                 LessDamagePercent: 0f,
                 ManaMultiplier: 100f
@@ -111,7 +111,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: true,
                 MatchingTags: activeGem.Tags ?? Array.Empty<string>(),
                 MissingRequiredTags: Array.Empty<string>(),
-                Reason: "Universal Support: Không giới hạn thẻ kỹ năng.",
+                Reason: "Universal Support: Compatible with all skills.",
                 MoreDamagePercent: morePercent,
                 LessDamagePercent: lessPercent,
                 ManaMultiplier: manaMultiplier
@@ -125,7 +125,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: false,
                 MatchingTags: Array.Empty<string>(),
                 MissingRequiredTags: supportGem.RequiredTags,
-                Reason: $"Active Gem [{activeGem.Name}] không có thẻ kỹ năng nào.",
+                Reason: $"Active Gem [{activeGem.Name}] has no skill tags.",
                 MoreDamagePercent: 0f,
                 LessDamagePercent: 0f,
                 ManaMultiplier: manaMultiplier
@@ -149,7 +149,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: false,
                 MatchingTags: matchingTags,
                 MissingRequiredTags: new[] { "melee" },
-                Reason: $"Không tương thích: Yêu cầu thẻ [melee] (Kỹ năng [{activeGem.Name}] không phải cận chiến).",
+                Reason: $"Incompatible: Requires [melee] tag (Skill [{activeGem.Name}] is not melee).",
                 MoreDamagePercent: 0f,
                 LessDamagePercent: 0f,
                 ManaMultiplier: manaMultiplier
@@ -164,7 +164,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: false,
                 MatchingTags: matchingTags,
                 MissingRequiredTags: new[] { "projectile" },
-                Reason: $"Không tương thích: Yêu cầu thẻ [projectile] (Kỹ năng [{activeGem.Name}] không có đạn đạo).",
+                Reason: $"Incompatible: Requires [projectile] tag (Skill [{activeGem.Name}] has no projectiles).",
                 MoreDamagePercent: 0f,
                 LessDamagePercent: 0f,
                 ManaMultiplier: manaMultiplier
@@ -179,7 +179,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: false,
                 MatchingTags: matchingTags,
                 MissingRequiredTags: new[] { "aoe" },
-                Reason: $"Không tương thích: Yêu cầu thẻ [aoe] (Kỹ năng [{activeGem.Name}] không có sát thương diện rộng).",
+                Reason: $"Incompatible: Requires [aoe] tag (Skill [{activeGem.Name}] has no area of effect).",
                 MoreDamagePercent: 0f,
                 LessDamagePercent: 0f,
                 ManaMultiplier: manaMultiplier
@@ -194,7 +194,7 @@ public static class GemCompatibilityValidator
                 IsCompatible: true,
                 MatchingTags: matchingTags,
                 MissingRequiredTags: missingTags,
-                Reason: $"✓ Tương thích: Chia sẻ thẻ [{tagList}] với [{activeGem.Name}].",
+                Reason: $"✓ Compatible: Shares [{tagList}] tag with [{activeGem.Name}].",
                 MoreDamagePercent: morePercent,
                 LessDamagePercent: lessPercent,
                 ManaMultiplier: manaMultiplier
@@ -206,7 +206,7 @@ public static class GemCompatibilityValidator
             IsCompatible: false,
             MatchingTags: Array.Empty<string>(),
             MissingRequiredTags: missingTags,
-            Reason: $"⚠ Không tương thích: Cần ít nhất một thẻ trong [{requiredList}] trên Active Gem.",
+            Reason: $"⚠ Incompatible: Requires at least one tag in [{requiredList}] on Active Gem.",
             MoreDamagePercent: 0f,
             LessDamagePercent: 0f,
             ManaMultiplier: manaMultiplier

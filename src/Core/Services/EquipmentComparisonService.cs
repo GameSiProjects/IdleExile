@@ -90,7 +90,7 @@ public static class EquipmentComparisonService
         float deltaDps = projectedDps - currentDps;
         float deltaDpsPercent = currentDps > 0.001f ? (deltaDps / currentDps) * 100f : 0f;
 
-        // 5. Upgrade determination & contextual notes (Vietnamese concise tags)
+        // 5. Upgrade determination & contextual notes (concise tags)
         bool isUpgrade = (deltaEhp >= 0f && deltaDps >= 0f) ||
                          (deltaDps > 0f && deltaEhp > -40f) ||
                          (deltaEhp > 150f && deltaDps > -5f);
@@ -98,22 +98,22 @@ public static class EquipmentComparisonService
         var notes = new List<string>();
 
         if (deltaEhp >= 100f)
-            notes.Add($"▲ +{deltaEhp:F0} EHP (Tăng máu và giáp mạnh)");
+            notes.Add($"▲ +{deltaEhp:F0} EHP (Significant defense gain)");
         else if (deltaEhp > 0f)
             notes.Add($"▲ +{deltaEhp:F0} EHP");
         else if (deltaEhp <= -100f)
-            notes.Add($"▼ -{MathF.Abs(deltaEhp):F0} EHP (Lưu ý giảm sức bền)");
+            notes.Add($"▼ -{MathF.Abs(deltaEhp):F0} EHP (Noticeable defense loss)");
         else if (deltaEhp < 0f)
             notes.Add($"▼ -{MathF.Abs(deltaEhp):F0} EHP");
 
         if (deltaDpsPercent >= 5f)
-            notes.Add($"▲ +{deltaDpsPercent:F1}% DPS (Sát thương tăng mạnh)");
+            notes.Add($"▲ +{deltaDpsPercent:F1}% DPS (Substantial damage gain)");
         else if (deltaDpsPercent > 0.5f)
             notes.Add($"▲ +{deltaDpsPercent:F1}% DPS");
         else if (deltaDpsPercent <= -5f)
             notes.Add($"▼ -{MathF.Abs(deltaDpsPercent):F1}% DPS");
 
-        if (deltaFireRes > 0f) notes.Add($"▲ +{deltaFireRes:F0}% Fire Res (Thừa kháng an toàn)");
+        if (deltaFireRes > 0f) notes.Add($"▲ +{deltaFireRes:F0}% Fire Res (Safe overcap)");
         else if (deltaFireRes < 0f) notes.Add($"▼ -{MathF.Abs(deltaFireRes):F0}% Fire Res");
 
         if (deltaColdRes > 0f) notes.Add($"▲ +{deltaColdRes:F0}% Cold Res");
@@ -123,7 +123,7 @@ public static class EquipmentComparisonService
         else if (deltaLightRes < 0f) notes.Add($"▼ -{MathF.Abs(deltaLightRes):F0}% Light Res");
 
         if (deltaChaosRes < 0f)
-            notes.Add($"▼ -{MathF.Abs(deltaChaosRes):F0}% Chaos Res (Lưu ý tụt kháng độc)");
+            notes.Add($"▼ -{MathF.Abs(deltaChaosRes):F0}% Chaos Res (Watch chaos vulnerability)");
         else if (deltaChaosRes > 0f)
             notes.Add($"▲ +{deltaChaosRes:F0}% Chaos Res");
 

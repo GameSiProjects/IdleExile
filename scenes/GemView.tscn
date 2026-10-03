@@ -240,7 +240,7 @@ theme_override_constants/separation = 3
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Slot 1: Kỹ Năng Chính (Primary DPS) • Xả chiêu liên tục dọn bản đồ"
+tooltip_text = "Slot 1: Primary Skill (Primary DPS) • Continuous map clearing"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
@@ -252,7 +252,7 @@ text = "⚔ Primary"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Slot 2: Kỹ Năng Thứ Hai (Secondary / Cooldown) • Tự động xả chiêu khi gặp Rare/Boss"
+tooltip_text = "Slot 2: Secondary Skill (Cooldown) • Auto-cast against Rares & Bosses"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
@@ -263,7 +263,7 @@ text = "⚡ Secondary"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Slot 3: Kỹ Năng Tự Động Kích Hoạt (Trigger / Guard) • Bật khi dính sát thương"
+tooltip_text = "Slot 3: Trigger Skill (Trigger / Guard) • Activates on taking damage"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
@@ -274,7 +274,7 @@ text = "🛡 Trigger"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Slot 4: Hào Quang Phòng Ngự (Aura Reservoir I)"
+tooltip_text = "Slot 4: Defensive Aura (Aura Reservoir I)"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
@@ -285,7 +285,7 @@ text = "✨ Aura I"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Slot 5: Hào Quang Tấn Công (Aura Reservoir II)"
+tooltip_text = "Slot 5: Offensive Aura (Aura Reservoir II)"
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_slot_tab")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_slot_tab_pressed")
@@ -711,7 +711,7 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
-text = "Khay Ngọc Kỹ Năng"
+text = "Skill Gem Inventory"
 
 [node name="InspectorCategoryBadge" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox/InspectorHeaderHBox"]
 unique_name_in_owner = true
@@ -741,7 +741,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.82, 0.9, 1)
 theme_override_font_sizes/font_size = 9
-text = "Trang bị không có socket. Mọi liên kết kỹ năng nằm trực tiếp trong Active Gem."
+text = "Equipment has no sockets. All skill links reside directly inside Active Gems."
 autowrap_mode = 2
 
 [node name="InspectorStatusLabel" type="Label" parent="GemViewBg/GemViewMargin/GemViewLayout/GemInspectorDrawer/InspectorMargin/InspectorVBox"]
@@ -749,7 +749,7 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.85, 0.55, 1)
 theme_override_font_sizes/font_size = 9
-text = "Tip: Bấm đúp vào ngọc bên dưới để cắm nhanh."
+text = "Tip: Double click a gem below to socket quickly."
 
 [node name="CandidateSectionVBox" type="VBoxContainer" parent="GemViewBg/GemViewMargin/GemViewLayout"]
 layout_mode = 2
@@ -764,18 +764,18 @@ theme_override_constants/separation = 4
 [node name="FilterAllBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Hiển thị tất cả ngọc"
+tooltip_text = "Show all gems"
 theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_filter_btn_pressed")
 toggle_mode = true
 button_pressed = true
-text = "Tất Cả"
+text = "All"
 
 [node name="FilterActiveBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Chỉ lọc Active Gems"
+tooltip_text = "Filter Active Gems only"
 theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_filter_btn_pressed")
@@ -785,7 +785,7 @@ text = "Active"
 [node name="FilterSupportBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Chỉ lọc Support Gems"
+tooltip_text = "Filter Support Gems only"
 theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_filter_btn_pressed")
@@ -799,22 +799,22 @@ size_flags_horizontal = 3
 [node name="SocketActionBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Cắm viên ngọc đang chọn vào khay"
+tooltip_text = "Socket selected gem into loadout"
 theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = SubResource("StyleBoxFlat_action_equip")
 theme_override_styles/hover = SubResource("StyleBoxFlat_action_equip_hover")
 disabled = true
-text = "Lắp Gem"
+text = "Socket Gem"
 
 [node name="UnsocketActionBtn" type="Button" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox/CandidateActionHBox"]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Gỡ ngọc khỏi khay socket đang chọn"
+tooltip_text = "Unsocket gem from selected slot"
 theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = SubResource("StyleBoxFlat_action_unsocket")
 theme_override_styles/hover = SubResource("StyleBoxFlat_action_unsocket_hover")
 disabled = true
-text = "Gỡ Gem"
+text = "Unsocket"
 
 [node name="CandidateScroll" type="ScrollContainer" parent="GemViewBg/GemViewMargin/GemViewLayout/CandidateSectionVBox"]
 unique_name_in_owner = true

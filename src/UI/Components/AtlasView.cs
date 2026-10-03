@@ -255,12 +255,12 @@ public partial class AtlasView : Control
         {
             if (isActive)
             {
-                _activateMapBtn.Text = "🌀 CỔNG ĐANG MỞ (PORTAL ACTIVE)";
+                _activateMapBtn.Text = "🌀 PORTAL ACTIVE";
                 _activateMapBtn.Disabled = true;
             }
             else
             {
-                _activateMapBtn.Text = "⚔ KÍCH HOẠT BẢN ĐỒ";
+                _activateMapBtn.Text = "⚔ ACTIVATE MAP";
                 _activateMapBtn.Disabled = (SlottedMap == null);
             }
         }
@@ -330,7 +330,7 @@ public partial class AtlasView : Control
 
         if (_availableMapsCountLabel != null)
         {
-            _availableMapsCountLabel.Text = $"Khả dụng: {mapsToDisplay.Count} Maps";
+            _availableMapsCountLabel.Text = $"Available: {mapsToDisplay.Count} Maps";
         }
 
         UpdateMapCardSelections();
@@ -370,9 +370,9 @@ public partial class AtlasView : Control
         if (SlottedMap == null)
         {
             if (_slottedTierBadge != null) _slottedTierBadge.Text = "T-";
-            if (_slottedMapNameLabel != null) _slottedMapNameLabel.Text = "Không có bản đồ";
-            if (_slottedBossLabel != null) _slottedBossLabel.Text = "Chọn bản đồ từ khay bên dưới";
-            if (_slottedInfoLabel != null) _slottedInfoLabel.Text = "Crucible Device Trống";
+            if (_slottedMapNameLabel != null) _slottedMapNameLabel.Text = "No Map Slotted";
+            if (_slottedBossLabel != null) _slottedBossLabel.Text = "Select a map slate from below";
+            if (_slottedInfoLabel != null) _slottedInfoLabel.Text = "Crucible Device Empty";
             return;
         }
 
@@ -441,13 +441,13 @@ public partial class AtlasView : Control
 
         if (_slottedBossLabel != null)
         {
-            _slottedBossLabel.Text = !string.IsNullOrEmpty(map.BossName) ? $"👑 {map.BossName}" : "⚔ Đàn Quái Vô Danh";
+            _slottedBossLabel.Text = !string.IsNullOrEmpty(map.BossName) ? $"👑 {map.BossName}" : "⚔ Unknown Pack";
         }
 
         if (_slottedInfoLabel != null)
         {
-            string rarityText = map.IsFailSafe ? "Bản Đồ Vô Tận (T0 Fail-Safe)" : $"{SlottedRarity} Map Slate";
-            _slottedInfoLabel.Text = $"Quái Cấp {map.MonsterLevel} • {rarityText}";
+            string rarityText = map.IsFailSafe ? "Endless Void Map (T0 Fail-Safe)" : $"{SlottedRarity} Map Slate";
+            _slottedInfoLabel.Text = $"Monster Level {map.MonsterLevel} • {rarityText}";
         }
     }
 
@@ -493,7 +493,7 @@ public partial class AtlasView : Control
         {
             var safeLabel = new Label
             {
-                Text = "🛡️ Khu Vực An Toàn (Không có Mod Nguy Hiểm)",
+                Text = "🛡️ Safe Zone (No Dangerous Mods)",
                 Modulate = new Color(0.45f, 0.85f, 0.55f, 0.85f),
                 VerticalAlignment = VerticalAlignment.Center
             };
@@ -658,7 +658,7 @@ public partial class AtlasView : Control
             SlotMap(map, rarity: "Normal");
         };
 
-        btn.TooltipText = $"{map.Name} (Tier {map.Tier})\nMonster Level: {map.MonsterLevel}\nBoss: {map.BossName ?? "None"}\nBase Quantity: +{map.BaseQuantity}%\nBase Pack Size: +{map.BasePackSize}%\n\nNhấp để nạp vào Cỗ Máy Bản Đồ.";
+        btn.TooltipText = $"{map.Name} (Tier {map.Tier})\nMonster Level: {map.MonsterLevel}\nBoss: {map.BossName ?? "None"}\nBase Quantity: +{map.BaseQuantity}%\nBase Pack Size: +{map.BasePackSize}%\n\nClick to slot into Map Device.";
 
         return btn;
     }
