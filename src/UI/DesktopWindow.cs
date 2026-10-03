@@ -23,6 +23,7 @@ public class DesktopWindow
     private Vector2I _windowSize;
     private int _currentScreen = 0;
 
+    public Window? Window => _window;
     public Vector2I WindowSize => _windowSize;
 
     /// <summary>

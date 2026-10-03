@@ -25,6 +25,8 @@ public partial class EquipmentView : Control
     public event Action<IGearItem>? OnItemLockToggled;
     public event Action<GearSlot, IGearItem>? OnItemStashed;
 
+    public void RequestClose() => OnCloseRequested?.Invoke();
+
     // ─────────────────────────────────────────────
     //  State
     // ─────────────────────────────────────────────

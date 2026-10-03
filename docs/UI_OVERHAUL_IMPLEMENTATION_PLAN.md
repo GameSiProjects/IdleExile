@@ -82,7 +82,7 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
   - Đưa thông tin đếm Database (`Db.Affixes.Count...`) vào cửa sổ chẩn đoán (`DiagnosticModal.tscn` / `F12`) và tooltip nhãn nhỏ dưới footer.
   - Trả lại 100% diện tích chiều dọc cho gameplay và tab workspace.
   - Tuân thủ nghiêm ngặt Debug Code Policy (AGENTS.md Section 4.4): Gated `#if DEBUG` và `OS.IsDebugBuild()`, bảo đảm zero overhead ở Release builds.
-- [ ] **Task 1.3: Cập nhật `Main.cs` điều khiển hiển thị theo Mode**
+- [x] **Task 1.3: Cập nhật `Main.cs` điều khiển hiển thị theo Mode**
   - Bắt tín hiệu `WindowController.OnWindowResized`:
     - Nếu là `Compact`: Ẩn `SubTabBarContainer` và `TabWorkspaceContainer`.
     - Nếu là `Expanded`: Hiện đầy đủ và phục hồi tab gần nhất.

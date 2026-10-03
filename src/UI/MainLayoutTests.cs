@@ -151,20 +151,91 @@ public static class MainLayoutTests
         AssertTrue(mapMargin?.Visible ?? false, "MapDeviceMargin should be visible on Atlas tab");
     }
 
+    /// <summary>
+    /// Verifies Task 1.3: Window Mode Display Controller in Main.cs.
+    /// Tests transitions between Compact Mode (440x380) and Expanded Mode (440x780):
+    /// 1. Initial State (Expanded): SubTabBarContainer and TabWorkspaceContainer visible.
+    /// 2. Active Tab selection (Atlas) preserved in Expanded Mode.
+    /// 3. Compact Mode: SubTabBarContainer and TabWorkspaceContainer hidden.
+    /// 4. BattleViewport is persistent and NEVER hidden in any mode (Core Objective #1).
+    /// 5. Resize button reflects correct state (⤡ Min vs ⤢ Expand).
+    /// 6. Re-expansion restores the previous active tab without data loss.
+    /// 7. Selecting a tab while in Compact Mode automatically expands the window upward.
+    /// 8. Closing EquipmentView shrinks back to Compact Mode.
+    /// </summary>
     private static void TestModeSwitching(Main main)
     {
-        var subTabBar = main.GetNodeOrNull<Control>("%SubTabBarContainer");
-        var tabWorkspace = main.GetNodeOrNull<Control>("%TabWorkspaceContainer");
-        var battleViewport = main.GetNodeOrNull<BattleViewport>("%BattleViewport");
+        var subTabBar = main.SubTabBarContainer;
+        var tabWorkspace = main.TabWorkspaceContainer;
+        var battleViewport = main.BattleViewport;
+        var resizeBtn = main.ResizeModeButton;
+        var windowController = main.WindowController;
 
-        // In expanded mode, both are visible
         AssertNotNull(subTabBar, "SubTabBarContainer must exist");
         AssertNotNull(tabWorkspace, "TabWorkspaceContainer must exist");
         AssertNotNull(battleViewport, "BattleViewport must exist");
+        AssertNotNull(resizeBtn, "ResizeModeButton must exist");
+        AssertNotNull(windowController, "WindowController must exist");
 
-        // Trigger Compact mode via SwitchWorkspaceTab check
-        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
+        // 1. Initial State should be Expanded Mode
+        AssertTrue(windowController.IsExpanded, "Initial window state should be Expanded");
+        AssertTrue(subTabBar.Visible, "SubTabBarContainer should be visible in Expanded mode");
+        AssertTrue(tabWorkspace.Visible, "TabWorkspaceContainer should be visible in Expanded mode");
+        AssertTrue(battleViewport.Visible, "BattleViewport must be visible in Expanded mode");
+        AssertTrue(resizeBtn.Text.Contains("Min"), $"Resize button should indicate Min/Collapse when expanded, was: {resizeBtn.Text}");
+
+        // 2. Select Atlas Tab in Expanded Mode
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Atlas);
+        AssertTrue(main.ActiveTab == Main.WorkspaceTab.Atlas, "ActiveTab should be Atlas");
+        AssertTrue(main.MapDeviceMargin?.Visible ?? false, "MapDeviceMargin should be visible for Atlas tab");
+        AssertFalse(main.EquipmentView?.Visible ?? false, "EquipmentView should be hidden for Atlas tab");
         AssertTrue(battleViewport.Visible, "BattleViewport remains visible");
+
+        // 3. Switch to Compact Mode
+        windowController.ShrinkWindow(keepBottom: true);
+        AssertFalse(windowController.IsExpanded, "WindowController should report not expanded (Compact)");
+        AssertFalse(subTabBar.Visible, "SubTabBarContainer must be hidden in Compact mode");
+        AssertFalse(tabWorkspace.Visible, "TabWorkspaceContainer must be hidden in Compact mode");
+        AssertTrue(battleViewport.Visible, "BattleViewport must remain PERSISTENTLY visible in Compact mode!");
+        AssertTrue(resizeBtn.Text.Contains("Expand"), $"Resize button should indicate Expand when compact, was: {resizeBtn.Text}");
+        AssertTrue(main.ActiveTab == Main.WorkspaceTab.Atlas, "ActiveTab should remain preserved as Atlas in memory");
+
+        // 4. Re-expand to Expanded Mode -> Verifies active tab restoration
+        windowController.ExpandWindow(keepBottom: true);
+        AssertTrue(windowController.IsExpanded, "WindowController should report expanded");
+        AssertTrue(subTabBar.Visible, "SubTabBarContainer must be restored to visible");
+        AssertTrue(tabWorkspace.Visible, "TabWorkspaceContainer must be restored to visible");
+        AssertTrue(battleViewport.Visible, "BattleViewport must remain visible");
+        AssertTrue(resizeBtn.Text.Contains("Min"), $"Resize button should indicate Min/Collapse when expanded, was: {resizeBtn.Text}");
+        AssertTrue(main.ActiveTab == Main.WorkspaceTab.Atlas, "ActiveTab should still be Atlas");
+        AssertTrue(main.MapDeviceMargin?.Visible ?? false, "MapDeviceMargin should be restored to visible because Atlas was active");
+        AssertFalse(main.EquipmentView?.Visible ?? false, "EquipmentView should remain hidden");
+
+        // 5. Test Auto-Expand when switching tab while in Compact Mode
+        windowController.ShrinkWindow(keepBottom: true);
+        AssertFalse(windowController.IsExpanded, "Should be in Compact mode");
+        AssertFalse(subTabBar.Visible, "SubTabBarContainer hidden in Compact mode");
+        AssertFalse(tabWorkspace.Visible, "TabWorkspaceContainer hidden in Compact mode");
+
+        // Switching to Gear Tab while compact -> should auto-expand upward!
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
+        AssertTrue(windowController.IsExpanded, "SwitchWorkspaceTab should auto-expand window when called in Compact mode");
+        AssertTrue(subTabBar.Visible, "SubTabBarContainer should be visible after auto-expand");
+        AssertTrue(tabWorkspace.Visible, "TabWorkspaceContainer should be visible after auto-expand");
+        AssertTrue(main.EquipmentView?.Visible ?? false, "EquipmentView should be visible for Gear tab");
+        AssertFalse(main.MapDeviceMargin?.Visible ?? false, "MapDeviceMargin should be hidden for Gear tab");
+        AssertTrue(battleViewport.Visible, "BattleViewport must remain visible");
+
+        // 6. Test EquipmentView close button -> Shrinks back to Compact Mode
+        main.EquipmentView?.RequestClose();
+        AssertFalse(windowController.IsExpanded, "Closing EquipmentView should shrink window to Compact Mode");
+        AssertFalse(subTabBar.Visible, "SubTabBarContainer hidden in Compact mode");
+        AssertFalse(tabWorkspace.Visible, "TabWorkspaceContainer hidden in Compact mode");
+        AssertTrue(battleViewport.Visible, "BattleViewport remains visible in Compact mode");
+
+        // Clean up state: return to Expanded Mode for subsequent tests/operations
+        windowController.ExpandWindow(keepBottom: true);
+        AssertTrue(windowController.IsExpanded, "Restored to Expanded mode for subsequent operations");
     }
 
     /// <summary>
@@ -218,7 +289,7 @@ public static class MainLayoutTests
 #endif
     }
 
-    private static void AssertNotNull(object? obj, string message)
+    private static void AssertNotNull([System.Diagnostics.CodeAnalysis.NotNull] object? obj, string message)
     {
         if (obj == null) throw new Exception($"Assertion Failed: {message} (Object was null)");
     }

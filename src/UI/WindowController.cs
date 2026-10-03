@@ -48,6 +48,8 @@ public partial class WindowController : Node
     public bool IsDragging { get; private set; } = false;
     public Vector2I DragOffset { get; private set; } = Vector2I.Zero;
 
+    private bool _isInternalResizing = false;
+
     public void Setup(Window window)
     {
         if (window != null)
@@ -60,10 +62,34 @@ public partial class WindowController : Node
                 resizable: true
             );
 
+            window.SizeChanged += OnNativeWindowSizeChanged;
+
             // Activate Low Processor Usage Mode to consume < 1% CPU when idle in background
             OS.LowProcessorUsageMode = true;
             OS.LowProcessorUsageModeSleepUsec = 6900;
         }
+    }
+
+    private void OnNativeWindowSizeChanged()
+    {
+        if (_isInternalResizing) return;
+
+        var window = _desktopWindow.Window ?? (IsInsideTree() ? GetWindow() : null);
+        if (window == null) return;
+
+        var newSize = window.Size;
+        if (newSize == WindowSize) return;
+
+        WindowResolutionMode inferredMode = newSize.Y < 580 ? WindowResolutionMode.Compact : WindowResolutionMode.Expanded;
+        if (newSize.X >= 700)
+        {
+            inferredMode = WindowResolutionMode.Wide;
+        }
+
+        CurrentMode = inferredMode;
+        WindowSize = newSize;
+        EmitSignal(SignalName.WindowResized, newSize, IsExpanded);
+        EmitSignal(SignalName.WindowModeChanged, (int)inferredMode);
     }
 
     public void ToggleExpand(bool keepBottom = true)
@@ -116,9 +142,20 @@ public partial class WindowController : Node
 
     public void SetWindowResolution(Vector2I newSize, bool keepBottom = true)
     {
-        WindowSize = newSize;
-        _desktopWindow.SetWindowSize(newSize, keepBottom);
-        EmitSignal(SignalName.WindowResized, newSize, IsExpanded);
+        _isInternalResizing = true;
+        try
+        {
+            WindowSize = newSize;
+            CurrentMode = newSize.Y < 580
+                ? WindowResolutionMode.Compact
+                : (newSize.X >= 700 ? WindowResolutionMode.Wide : WindowResolutionMode.Expanded);
+            _desktopWindow.SetWindowSize(newSize, keepBottom);
+            EmitSignal(SignalName.WindowResized, newSize, IsExpanded);
+        }
+        finally
+        {
+            _isInternalResizing = false;
+        }
     }
 
     public void PositionAboveTaskbar(int screen = -1, WindowDockPosition? dock = null)

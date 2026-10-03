@@ -47,6 +47,15 @@ public partial class Main : Control
 
     private WorkspaceTab _activeTab = WorkspaceTab.Gear;
 
+    public WindowController WindowController => _windowController;
+    public WorkspaceTab ActiveTab => _activeTab;
+    public Control? SubTabBarContainer => _subTabBarContainer;
+    public Control? TabWorkspaceContainer => _tabWorkspaceContainer;
+    public BattleViewport? BattleViewport => _battleViewport;
+    public EquipmentView? EquipmentView => _equipmentView;
+    public Control? MapDeviceMargin => _mapDeviceMargin;
+    public Button? ResizeModeButton => _resizeModeButton;
+
     public DatabaseLoader Db { get; } = new();
     public PlayerState Player { get; } = new();
     public SkillLoadout Loadout { get; } = new();
@@ -114,7 +123,14 @@ public partial class Main : Control
             _emergencyPortalButton.Pressed += OnEmergencyPortalTriggered;
         }
 
-        // Wire Tab Navigation
+        // Wire Tab Navigation with exclusive ButtonGroup
+        var tabGroup = new ButtonGroup();
+        if (_tabGearBtn != null) _tabGearBtn.ButtonGroup = tabGroup;
+        if (_tabSkillsBtn != null) _tabSkillsBtn.ButtonGroup = tabGroup;
+        if (_tabAtlasBtn != null) _tabAtlasBtn.ButtonGroup = tabGroup;
+        if (_tabPassivesBtn != null) _tabPassivesBtn.ButtonGroup = tabGroup;
+        if (_tabStashBtn != null) _tabStashBtn.ButtonGroup = tabGroup;
+
         if (_tabGearBtn != null) _tabGearBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Gear);
         if (_tabSkillsBtn != null) _tabSkillsBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Skills);
         if (_tabAtlasBtn != null) _tabAtlasBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Atlas);
@@ -185,7 +201,10 @@ public partial class Main : Control
         }
 #endif
 
-        // 7. Run Core Unit Tests only if explicitly requested via CLI argument ('--run-core-tests')
+        // 7. Synchronize initial layout presentation with WindowController mode
+        OnWindowResized(_windowController.WindowSize, _windowController.IsExpanded);
+
+        // 8. Run Core Unit Tests only if explicitly requested via CLI argument ('--run-core-tests')
         if (OS.GetCmdlineArgs().Contains("--run-core-tests") || OS.GetCmdlineUserArgs().Contains("--run-core-tests"))
         {
             RunCoreUnitTests(this);
@@ -599,6 +618,7 @@ public partial class Main : Control
     /// <summary>
     /// Switches the active view inside TabWorkspaceContainer.
     /// In accordance with Core Objective #1, BattleViewport is persistent and NEVER hidden.
+    /// If currently in Compact Mode, automatically expands the window upward.
     /// </summary>
     public void SwitchWorkspaceTab(WorkspaceTab tab)
     {
@@ -608,8 +628,18 @@ public partial class Main : Control
         if (!_windowController.IsExpanded)
         {
             _windowController.ExpandWindow(keepBottom: true);
+            return;
         }
 
+        ApplyTabVisibility(tab);
+    }
+
+    /// <summary>
+    /// Applies segmented tab button states and switches child view visibility in TabWorkspaceContainer.
+    /// In accordance with Core Objective #1, BattleViewport is persistent and NEVER hidden.
+    /// </summary>
+    public void ApplyTabVisibility(WorkspaceTab tab)
+    {
         // Update segmented tab button states
         if (_tabGearBtn != null) _tabGearBtn.ButtonPressed = (tab == WorkspaceTab.Gear);
         if (_tabSkillsBtn != null) _tabSkillsBtn.ButtonPressed = (tab == WorkspaceTab.Skills);
@@ -677,10 +707,10 @@ public partial class Main : Control
 
         if (isExpanded)
         {
-            SwitchWorkspaceTab(_activeTab);
+            ApplyTabVisibility(_activeTab);
         }
 
-        GD.Print($"[Main] Window resized: {newSize.X}x{newSize.Y} (Expanded: {isExpanded})");
+        GD.Print($"[Main] Window resized: {newSize.X}x{newSize.Y} (Expanded: {isExpanded}, ActiveTab: {_activeTab})");
     }
 
     private void UpdateResizeButtonText(bool isExpanded)
@@ -696,9 +726,8 @@ public partial class Main : Control
 
     private void OnEquipmentClosed()
     {
-        if (_equipmentView != null) _equipmentView.Visible = false;
-        if (_tabGearBtn != null) _tabGearBtn.ButtonPressed = false;
-        if (_battleViewport != null) _battleViewport.Visible = true;
+        // When equipment view is closed via [X], shrink window back to Compact Mode
+        _windowController.ShrinkWindow(keepBottom: true);
     }
 
     public override void _UnhandledInput(InputEvent @event)
