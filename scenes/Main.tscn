@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://c1x8v6p1y2m3k"]
+[gd_scene load_steps=15 format=3 uid="uid://c1x8v6p1y2m3k"]
 
 [ext_resource type="Script" path="res://src/UI/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/BattleViewport.tscn" id="2_battle_viewport"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/GemView.tscn" id="5_gem_view"]
 [ext_resource type="PackedScene" path="res://scenes/AtlasView.tscn" id="6_atlas_view"]
 [ext_resource type="PackedScene" path="res://scenes/PassiveTreeView.tscn" id="7_passive_tree_view"]
+[ext_resource type="PackedScene" path="res://scenes/StashView.tscn" id="8_stash_view"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
 bg_color = Color(0.0627451, 0.0666667, 0.0862745, 1)
@@ -348,6 +349,12 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="PassiveTreeView" parent="MainLayout/TabWorkspaceContainer" instance=ExtResource("7_passive_tree_view")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StashView" parent="MainLayout/TabWorkspaceContainer" instance=ExtResource("8_stash_view")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2

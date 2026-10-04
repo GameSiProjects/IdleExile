@@ -1,0 +1,162 @@
+[
+  {
+    "id": "scroll_of_wisdom",
+    "name": "Scroll of Wisdom",
+    "iconGlyph": "📜",
+    "colorHex": "#AA9E82",
+    "tier": 1,
+    "maxStackSize": 5000,
+    "description": "Identifies an unidentified item.",
+    "category": "Basic"
+  },
+  {
+    "id": "portal_scroll",
+    "name": "Portal Scroll",
+    "iconGlyph": "🌀",
+    "colorHex": "#3498DB",
+    "tier": 1,
+    "maxStackSize": 5000,
+    "description": "Opens a portal back to town.",
+    "category": "Basic"
+  },
+  {
+    "id": "orb_of_transmutation",
+    "name": "Orb of Transmutation",
+    "iconGlyph": "⚪",
+    "colorHex": "#5DADE2",
+    "tier": 1,
+    "maxStackSize": 5000,
+    "description": "Upgrades a normal item to a magic item.",
+    "category": "Basic"
+  },
+  {
+    "id": "orb_of_augmentation",
+    "name": "Orb of Augmentation",
+    "iconGlyph": "🔹",
+    "colorHex": "#85C1E9",
+    "tier": 1,
+    "maxStackSize": 5000,
+    "description": "Enchants a magic item with a new random modifier.",
+    "category": "Basic"
+  },
+  {
+    "id": "orb_of_alteration",
+    "name": "Orb of Alteration",
+    "iconGlyph": "🔵",
+    "colorHex": "#2980B9",
+    "tier": 1,
+    "maxStackSize": 5000,
+    "description": "Reforges a magic item with new random modifiers.",
+    "category": "Basic"
+  },
+  {
+    "id": "regal_orb",
+    "name": "Regal Orb",
+    "iconGlyph": "👑",
+    "colorHex": "#AF6025",
+    "tier": 2,
+    "maxStackSize": 5000,
+    "description": "Upgrades a magic item to a rare item, adding one modifier.",
+    "category": "Reforging"
+  },
+  {
+    "id": "orb_of_alchemy",
+    "name": "Orb of Alchemy",
+    "iconGlyph": "🟡",
+    "colorHex": "#F1C40F",
+    "tier": 2,
+    "maxStackSize": 5000,
+    "description": "Upgrades a normal item to a rare item with 4-6 random modifiers.",
+    "category": "Reforging"
+  },
+  {
+    "id": "chaos_orb",
+    "name": "Chaos Orb",
+    "iconGlyph": "🪙",
+    "colorHex": "#E67E22",
+    "tier": 3,
+    "maxStackSize": 5000,
+    "description": "Reforges a rare item with new random modifiers.",
+    "category": "Reforging"
+  },
+  {
+    "id": "exalted_orb",
+    "name": "Exalted Orb",
+    "iconGlyph": "⚜️",
+    "colorHex": "#D4AC0D",
+    "tier": 4,
+    "maxStackSize": 5000,
+    "description": "Enchants a rare item with a new random modifier.",
+    "category": "HighValue"
+  },
+  {
+    "id": "divine_orb",
+    "name": "Divine Orb",
+    "iconGlyph": "💎",
+    "colorHex": "#E8D882",
+    "tier": 4,
+    "maxStackSize": 5000,
+    "description": "Randomises the numeric values of all random modifiers on an item.",
+    "category": "HighValue"
+  },
+  {
+    "id": "orb_of_scouring",
+    "name": "Orb of Scouring",
+    "iconGlyph": "⚪",
+    "colorHex": "#BDC3C7",
+    "tier": 2,
+    "maxStackSize": 5000,
+    "description": "Removes all modifiers from an item, returning it to normal.",
+    "category": "Reforging"
+  },
+  {
+    "id": "jewellers_orb",
+    "name": "Jeweller's Orb",
+    "iconGlyph": "🔘",
+    "colorHex": "#95A5A6",
+    "tier": 2,
+    "maxStackSize": 5000,
+    "description": "Expands the number of support slots on an Active Gem (up to 5 slots).",
+    "category": "Socketing"
+  },
+  {
+    "id": "chromatic_orb",
+    "name": "Chromatic Orb",
+    "iconGlyph": "🌈",
+    "colorHex": "#E056FD",
+    "tier": 1,
+    "maxStackSize": 5000,
+    "description": "Reforges the attribute alignment of support slots on an Active Gem.",
+    "category": "Socketing"
+  },
+  {
+    "id": "orb_of_regret",
+    "name": "Orb of Regret",
+    "iconGlyph": "📖",
+    "colorHex": "#99A3A4",
+    "tier": 2,
+    "maxStackSize": 5000,
+    "description": "Grants one passive skill respec point.",
+    "category": "Basic"
+  },
+  {
+    "id": "vaal_orb",
+    "name": "Vaal Orb",
+    "iconGlyph": "🩸",
+    "colorHex": "#C0392B",
+    "tier": 4,
+    "maxStackSize": 5000,
+    "description": "Corrupts an item or gem, modifying it unpredictably.",
+    "category": "HighValue"
+  },
+  {
+    "id": "mirror_of_kalandra",
+    "name": "Mirror of Kalandra",
+    "iconGlyph": "🪞",
+    "colorHex": "#F9E79F",
+    "tier": 5,
+    "maxStackSize": 5000,
+    "description": "Creates a mirrored, unmodifiable duplicate of a non-unique item.",
+    "category": "HighValue"
+  }
+]

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
@@ -21,6 +22,7 @@ public partial class Main : Control
     private EquipmentView? _equipmentView;
     private GemView? _gemView;
     private PassiveTreeView? _passiveTreeView;
+    private StashView? _stashView;
     private Button? _gearNavButton;
     private Button? _resizeModeButton;
     private Button? _screenCycleButton;
@@ -59,6 +61,7 @@ public partial class Main : Control
     public GemView? GemView => _gemView;
     public AtlasView? AtlasView => _atlasView;
     public PassiveTreeView? PassiveTreeView => _passiveTreeView;
+    public StashView? StashView => _stashView;
     public Control? MapDeviceMargin => _mapDeviceMargin;
     public Button? ResizeModeButton => _resizeModeButton;
 
@@ -93,6 +96,7 @@ public partial class Main : Control
         _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
         _gemView = GetNodeOrNull<GemView>("%GemView");
         _passiveTreeView = GetNodeOrNull<PassiveTreeView>("%PassiveTreeView");
+        _stashView = GetNodeOrNull<StashView>("%StashView");
         _emergencyPortalButton = GetNodeOrNull<Button>("%EmergencyPortalButton");
         _subTabBarContainer = GetNodeOrNull<Control>("%SubTabBarContainer");
         _tabWorkspaceContainer = GetNodeOrNull<Control>("%TabWorkspaceContainer");
@@ -178,10 +182,30 @@ public partial class Main : Control
         // 4. Load JSON Database
         Db.LoadAll();
 
-        // 4b. Initialize GemView, AtlasView, and PassiveTreeView with database and state
+        // 4b. Initialize GemView, AtlasView, PassiveTreeView, and StashView with database and state
         _gemView?.Initialize(Loadout, Db, Player);
         _atlasView?.Initialize(Db, Player, MapQueue, Ftue);
         _passiveTreeView?.Initialize(Player, Db);
+        _stashView?.Initialize(
+            Player,
+            Db,
+            MapQueue,
+            Engine,
+            () => _equipmentView?.CandidateItems ?? Enumerable.Empty<IGearItem>());
+
+        if (_stashView != null)
+        {
+            _stashView.OnMapActivated += (map, mods, rarity) => OnMapActivatedWithMods(map, mods, rarity);
+        }
+
+        if (_equipmentView != null)
+        {
+            _equipmentView.OnItemStashed += (slot, item) =>
+            {
+                Player.Stash.DepositGear(item);
+                _stashView?.RefreshView();
+            };
+        }
 
         if (_passiveTreeView?.TreeState != null)
         {
@@ -528,7 +552,27 @@ public partial class Main : Control
         {
             _battleViewport?.ShowLootToast($"Dropped: {drop.DisplayName}", new Color(drop.ColorHex));
 
-            if (drop.Type == LootDropType.Equipment)
+            if (drop.Type == LootDropType.Currency)
+            {
+                if (drop.Id.EndsWith("_fossil", StringComparison.OrdinalIgnoreCase))
+                {
+                    Player.Stash.DepositFossil(drop.Id, drop.Quantity);
+                }
+                else
+                {
+                    Player.Stash.DepositCurrency(drop.Id, drop.Quantity);
+                }
+                _stashView?.RefreshView();
+            }
+            else if (drop.Type == LootDropType.Map)
+            {
+                if (Db.Maps.TryGetValue(drop.Id, out var mapDef))
+                {
+                    Player.Stash.DepositMap(mapDef, drop.Quantity, drop.Rarity.ToString());
+                }
+                _stashView?.RefreshView();
+            }
+            else if (drop.Type == LootDropType.Equipment)
             {
                 // Route equipment drop into candidate drawer for instant comparison
                 if (Db.ArmourBases.TryGetValue("astral_plate", out var sampleArmourDef))
@@ -800,15 +844,19 @@ public partial class Main : Control
             }
         }
 
+        if (_stashView != null)
+        {
+            _stashView.Visible = (tab == WorkspaceTab.Stash);
+            if (tab == WorkspaceTab.Stash)
+            {
+                _stashView.RefreshView();
+            }
+        }
+
         // Persistent Combat Viewport: NEVER hide BattleViewport!
         if (_battleViewport != null)
         {
             _battleViewport.Visible = true;
-        }
-
-        if (tab != WorkspaceTab.Gear && tab != WorkspaceTab.Atlas && tab != WorkspaceTab.Skills && tab != WorkspaceTab.Passives && _statusLabel != null)
-        {
-            _statusLabel.Text = $"{tab} Tab coming in upcoming phase!";
         }
     }
 
@@ -936,6 +984,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.GemSystemTests.RunAll();
         IdleExile.Core.Tests.AtlasSystemTests.RunAll();
         IdleExile.Core.Tests.PassiveTreeSystemTests.RunAll();
+        IdleExile.Core.Tests.AffinityStashTests.RunAllTests();
         IdleExile.UI.MainLayoutTests.RunAll(mainInstance);
         GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }

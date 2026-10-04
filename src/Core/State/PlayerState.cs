@@ -248,6 +248,9 @@ public sealed class PlayerState : ICombatEntity
     /// <summary>Map slates available in the player's possession.</summary>
     public List<string> MapInventory { get; } = new();
 
+    /// <summary>Specialized 4-tab Affinity Stash (Currency, Gear, Maps, Fossils) for player storage.</summary>
+    public AffinityStashState Stash { get; } = new();
+
     /// <summary>Fired when player state is bootstrapped from an archetype.</summary>
     public event Action<StarterArchetypeDefinition>? OnBootstrapped;
 

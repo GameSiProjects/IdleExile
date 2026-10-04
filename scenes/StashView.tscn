@@ -1,0 +1,473 @@
+[gd_scene format=3 uid="uid://st4shv1ew7p9k"]
+
+[ext_resource type="Script" path="res://src/UI/Components/StashView.cs" id="1_stash_view"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.0470588, 0.0509804, 0.0666667, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.22, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header_panel"]
+bg_color = Color(0.0666667, 0.0705882, 0.0941176, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.20, 0.26, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_normal"]
+bg_color = Color(0.08, 0.085, 0.11, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.24, 0.3, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tab_pressed"]
+bg_color = Color(0.16, 0.14, 0.08, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.65, 0.25, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+shadow_color = Color(0.85, 0.65, 0.25, 0.15)
+shadow_size = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dump_btn"]
+bg_color = Color(0.18, 0.13, 0.06, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.9, 0.7, 0.25, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+shadow_color = Color(0.9, 0.7, 0.25, 0.2)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dump_btn_hover"]
+bg_color = Color(0.25, 0.18, 0.08, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.82, 0.35, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_filter_btn"]
+bg_color = Color(0.075, 0.08, 0.1, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.22, 0.28, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 5.0
+content_margin_top = 1.0
+content_margin_right = 5.0
+content_margin_bottom = 1.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_inspector_panel"]
+bg_color = Color(0.06, 0.065, 0.085, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.2, 0.26, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 4.0
+content_margin_right = 6.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_footer_panel"]
+bg_color = Color(0.04, 0.045, 0.06, 0.95)
+border_width_top = 1
+border_color = Color(0.16, 0.18, 0.24, 0.8)
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+
+[node name="StashView" type="PanelContainer"]
+custom_minimum_size = Vector2(420, 390)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+script = ExtResource("1_stash_view")
+
+[node name="MainVBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeaderPanel" type="PanelContainer" parent="MainVBox"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_header_panel")
+
+[node name="HeaderHBox" type="HBoxContainer" parent="MainVBox/HeaderPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TabCurrencyBtn" type="Button" parent="MainVBox/HeaderPanel/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+toggle_mode = true
+button_pressed = true
+text = "💰 Currency"
+
+[node name="TabGearBtn" type="Button" parent="MainVBox/HeaderPanel/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+toggle_mode = true
+text = "🛡 Gear"
+
+[node name="TabMapsBtn" type="Button" parent="MainVBox/HeaderPanel/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+toggle_mode = true
+text = "🗺 Maps"
+
+[node name="TabFossilsBtn" type="Button" parent="MainVBox/HeaderPanel/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+toggle_mode = true
+text = "⛏ Fossils"
+
+[node name="DumpAllButton" type="Button" parent="MainVBox/HeaderPanel/HeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 26)
+layout_mode = 2
+tooltip_text = "Deposit all backpack currencies, maps, and gear into affinity tabs."
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_dump_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_dump_btn_hover")
+text = "⚡ Dump"
+
+[node name="DumpStatusLabel" type="Label" parent="MainVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 10
+text = "✦ Affinity Stash Ready"
+horizontal_alignment = 1
+
+[node name="TabContentMargin" type="MarginContainer" parent="MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="CurrencyPanel" type="VBoxContainer" parent="MainVBox/TabContentMargin"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="CurrencyScroll" type="ScrollContainer" parent="MainVBox/TabContentMargin/CurrencyPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="CurrencyGrid" type="GridContainer" parent="MainVBox/TabContentMargin/CurrencyPanel/CurrencyScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 4
+
+[node name="CurrencyInspectorPanel" type="PanelContainer" parent="MainVBox/TabContentMargin/CurrencyPanel"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_inspector_panel")
+
+[node name="CurrencyInspectorLabel" type="Label" parent="MainVBox/TabContentMargin/CurrencyPanel/CurrencyInspectorPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Select a currency to view crafting function."
+vertical_alignment = 1
+text_overrun_behavior = 3
+
+[node name="GearPanel" type="VBoxContainer" parent="MainVBox/TabContentMargin"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="GearFilterHBox" type="HBoxContainer" parent="MainVBox/TabContentMargin/GearPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="GearFilterAllBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "All"
+
+[node name="GearFilterWeaponsBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "Weapons"
+
+[node name="GearFilterArmourBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "Armour"
+
+[node name="GearFilterJewelBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "Jewellery"
+
+[node name="GearFilterLockedBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "🔒 Locked"
+
+[node name="GearCountLabel" type="Label" parent="MainVBox/TabContentMargin/GearPanel/GearFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Stored: 0 / 60"
+horizontal_alignment = 2
+
+[node name="GearScroll" type="ScrollContainer" parent="MainVBox/TabContentMargin/GearPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="GearItemList" type="VBoxContainer" parent="MainVBox/TabContentMargin/GearPanel/GearScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 2
+
+[node name="GearInspectorPanel" type="PanelContainer" parent="MainVBox/TabContentMargin/GearPanel"]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_inspector_panel")
+
+[node name="GearInspectorVBox" type="VBoxContainer" parent="MainVBox/TabContentMargin/GearPanel/GearInspectorPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="GearInspectorNameLabel" type="Label" parent="MainVBox/TabContentMargin/GearPanel/GearInspectorPanel/GearInspectorVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "No gear selected"
+
+[node name="GearInspectorStatsLabel" type="Label" parent="MainVBox/TabContentMargin/GearPanel/GearInspectorPanel/GearInspectorVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.8, 0.9, 1)
+theme_override_font_sizes/font_size = 9
+text_overrun_behavior = 3
+
+[node name="GearActionHBox" type="HBoxContainer" parent="MainVBox/TabContentMargin/GearPanel/GearInspectorPanel/GearInspectorVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GearEquipBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearInspectorPanel/GearInspectorVBox/GearActionHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Equip"
+
+[node name="GearLockBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearInspectorPanel/GearInspectorVBox/GearActionHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Lock"
+
+[node name="GearVendorBtn" type="Button" parent="MainVBox/TabContentMargin/GearPanel/GearInspectorPanel/GearInspectorVBox/GearActionHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Vendor"
+
+[node name="MapsPanel" type="VBoxContainer" parent="MainVBox/TabContentMargin"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="MapsFilterHBox" type="HBoxContainer" parent="MainVBox/TabContentMargin/MapsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MapFilterAllBtn" type="Button" parent="MainVBox/TabContentMargin/MapsPanel/MapsFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "All Tiers"
+
+[node name="MapFilterWhiteBtn" type="Button" parent="MainVBox/TabContentMargin/MapsPanel/MapsFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "White (T1-5)"
+
+[node name="MapFilterYellowBtn" type="Button" parent="MainVBox/TabContentMargin/MapsPanel/MapsFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "Yellow (T6-10)"
+
+[node name="MapFilterRedBtn" type="Button" parent="MainVBox/TabContentMargin/MapsPanel/MapsFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_filter_btn")
+text = "Red (T11-16)"
+
+[node name="MapCountLabel" type="Label" parent="MainVBox/TabContentMargin/MapsPanel/MapsFilterHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "Maps: 0"
+horizontal_alignment = 2
+
+[node name="MapsScroll" type="ScrollContainer" parent="MainVBox/TabContentMargin/MapsPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="MapsListContainer" type="VBoxContainer" parent="MainVBox/TabContentMargin/MapsPanel/MapsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 2
+
+[node name="FossilsPanel" type="VBoxContainer" parent="MainVBox/TabContentMargin"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="FossilsScroll" type="ScrollContainer" parent="MainVBox/TabContentMargin/FossilsPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="FossilsGrid" type="GridContainer" parent="MainVBox/TabContentMargin/FossilsPanel/FossilsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 2
+
+[node name="FooterPanel" type="PanelContainer" parent="MainVBox"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_footer_panel")
+
+[node name="SummaryLabel" type="Label" parent="MainVBox/FooterPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+text = "💰 0 Currencies | 🛡 0 Gear | 🗺 0 Maps | ⛏ 0 Fossils"
+horizontal_alignment = 1
+vertical_alignment = 1

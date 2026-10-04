@@ -178,9 +178,16 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
   - Khay tổng hợp chỉ số nội tại (`StatsSummaryDrawer`): Bấm `[📊 Stats]` để liệt kê toàn bộ các dòng tăng cường và Keystones đã kích hoạt.
   - Tích hợp 100% vào `Main.tscn` và `Main.cs`: Bấm nút `[🌳 Tree]` trên Sub-Tab Bar hiển thị `PassiveTreeView` tức thì trong khi `BattleViewport` vẫn duy trì 100% hiển thị liên tục (Persistent Combat Viewport); đồng bộ chỉ số sát thương nội tại vào `CombatEngine.PassiveStats`.
   - Vượt qua 100% các bài kiểm thử tự động `PassiveTreeSystemTests` và `TestPassiveTreeViewIntegration` trong `MainLayoutTests`.
-- [ ] **Task 5.2: Tab Rương Đồ Chuyên Dụng (Affinity Stash View)**
-  - Phân loại 4 ngăn tủ chuyên biệt: *Currency Tab, Gear Tab, Map Tab, Fossil Tab*.
-  - Bộ nút chuyển đồ nhanh 1-Click: Tự động dọn sạch hòm đồ sau mỗi chuyến map.
+- [x] **Task 5.2: Tab Rương Đồ Chuyên Dụng (Affinity Stash View)**
+  - Phân loại 4 ngăn tủ chuyên biệt: *Currency Tab, Gear Tab, Map Tab, Fossil Tab* (`scenes/StashView.tscn`, `src/UI/Components/StashView.cs`).
+  - Hệ thống dữ liệu nguồn sự thật JSON: `data/currencies.json` (16 loại Currency Orbs chuẩn PoE) và `data/fossils.json` (7 loại Hóa thạch Abyssal từ GDD 4.2).
+  - Kiến trúc Pure C# Core: `CurrencyDefinition.cs`, `FossilDefinition.cs`, `StashedMapSlate.cs`, `AffinityDumpResult.cs`, và `AffinityStashState.cs` quản lý xếp chồng tự động (5,000+ items/stack), lưu trữ trang bị (60 slots), phân loại bản đồ theo tier, và lưu trữ hóa thạch cho Bàn Chế Tạo (Crafting Anvil).
+  - Tích hợp 1-Click Affinity Dump (`[⚡ Dump]`): Tự động quét toàn bộ tiền tệ, map slates và trang bị rớt trong túi đồ người chơi để cất gọn gàng vào các ngăn chuyên dụng tương ứng kèm thông báo telemetry thời gian thực.
+  - Tích hợp thao tác nhanh 1-Click:
+    - *Gear Tab*: 1-Click `[Equip]` đổi đồ trực tiếp vào doll nhân vật, `[Lock/Unlock]` chống bán nhầm, và `[Vendor]` bán đồ lấy Currency.
+    - *Map Tab*: 1-Click `[+ Queue]` nạp bản đồ vào MapQueueManager (10 slots) và `[⚔ Activate]` kích hoạt chạy map ngay lập tức.
+  - Tích hợp Persistent Combat Viewport: Bấm tab `[📦 Stash]` hiển thị StashView tức thì trong khi `BattleViewport` vẫn duy trì 100% hiển thị liên tục nửa trên màn hình.
+  - Vượt qua 100% bài kiểm thử tự động `AffinityStashTests` (5 test suites) và `TestStashViewIntegration` trong `MainLayoutTests`.
 
 ---
 

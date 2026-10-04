@@ -31,6 +31,7 @@ public static class MainLayoutTests
             TestGemViewIntegration(existingMain);
             TestAtlasViewIntegration(existingMain);
             TestPassiveTreeViewIntegration(existingMain);
+            TestStashViewIntegration(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -56,6 +57,7 @@ public static class MainLayoutTests
             TestGemViewIntegration(main);
             TestAtlasViewIntegration(main);
             TestPassiveTreeViewIntegration(main);
+            TestStashViewIntegration(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -989,6 +991,118 @@ public static class MainLayoutTests
         AssertEqual(0, treeState.SpentPoints, "All allocated points should be refunded after respec");
         AssertFalse(treeState.IsAllocated("witch_spell_1"), "witch_spell_1 should be unallocated after respec");
         AssertEqual(4, treeState.AvailablePoints, "All 4 points must be available after respec");
+
+        // Switch back to Gear tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
+    }
+
+    private static void TestStashViewIntegration(Main main)
+    {
+        GD.Print("[Tests] Verifying Task 5.2: StashView node hierarchy, 4 affinity tabs, and 1-Click Dump...");
+
+        var stashView = main.StashView;
+        AssertNotNull(stashView, "StashView must exist in Main");
+
+        var tabCurrencyBtn = stashView.GetNodeOrNull<Button>("%TabCurrencyBtn");
+        var tabGearBtn = stashView.GetNodeOrNull<Button>("%TabGearBtn");
+        var tabMapsBtn = stashView.GetNodeOrNull<Button>("%TabMapsBtn");
+        var tabFossilsBtn = stashView.GetNodeOrNull<Button>("%TabFossilsBtn");
+        var dumpAllBtn = stashView.GetNodeOrNull<Button>("%DumpAllButton");
+        var dumpStatusLabel = stashView.GetNodeOrNull<Label>("%DumpStatusLabel");
+        var summaryLabel = stashView.GetNodeOrNull<Label>("%SummaryLabel");
+
+        AssertNotNull(tabCurrencyBtn, "TabCurrencyBtn must exist");
+        AssertNotNull(tabGearBtn, "TabGearBtn must exist");
+        AssertNotNull(tabMapsBtn, "TabMapsBtn must exist");
+        AssertNotNull(tabFossilsBtn, "TabFossilsBtn must exist");
+        AssertNotNull(dumpAllBtn, "DumpAllButton must exist");
+        AssertNotNull(dumpStatusLabel, "DumpStatusLabel must exist");
+        AssertNotNull(summaryLabel, "SummaryLabel must exist");
+
+        var currencyPanel = stashView.GetNodeOrNull<Control>("%CurrencyPanel");
+        var gearPanel = stashView.GetNodeOrNull<Control>("%GearPanel");
+        var mapsPanel = stashView.GetNodeOrNull<Control>("%MapsPanel");
+        var fossilsPanel = stashView.GetNodeOrNull<Control>("%FossilsPanel");
+
+        AssertNotNull(currencyPanel, "CurrencyPanel must exist");
+        AssertNotNull(gearPanel, "GearPanel must exist");
+        AssertNotNull(mapsPanel, "MapsPanel must exist");
+        AssertNotNull(fossilsPanel, "FossilsPanel must exist");
+
+        // 2. Persistent Viewport check when switching to Stash Tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Stash);
+        AssertTrue(stashView.Visible, "StashView must be visible when on Stash tab");
+        AssertTrue(main.BattleViewport?.Visible ?? false, "BattleViewport must remain 100% visible on Stash tab (Persistent Viewport)");
+        AssertFalse(main.EquipmentView?.Visible ?? false, "EquipmentView must be hidden on Stash tab");
+        AssertFalse(main.PassiveTreeView?.Visible ?? false, "PassiveTreeView must be hidden on Stash tab");
+
+        // 3. Sub-Tab Switching
+        stashView.SwitchTab(StashTabType.Currency);
+        AssertTrue(currencyPanel.Visible, "CurrencyPanel must be visible");
+        AssertFalse(gearPanel.Visible, "GearPanel must be hidden");
+
+        stashView.SwitchTab(StashTabType.Gear);
+        AssertTrue(gearPanel.Visible, "GearPanel must be visible");
+        AssertFalse(currencyPanel.Visible, "CurrencyPanel must be hidden");
+
+        stashView.SwitchTab(StashTabType.Maps);
+        AssertTrue(mapsPanel.Visible, "MapsPanel must be visible");
+        AssertFalse(gearPanel.Visible, "GearPanel must be hidden");
+
+        stashView.SwitchTab(StashTabType.Fossils);
+        AssertTrue(fossilsPanel.Visible, "FossilsPanel must be visible");
+        AssertFalse(mapsPanel.Visible, "MapsPanel must be hidden");
+
+        // 4. Currency Deposit & Summary
+        main.Player.Stash.DepositCurrency("chaos_orb", 10);
+        main.Player.Stash.DepositCurrency("divine_orb", 1);
+        stashView.RefreshView();
+        AssertTrue(summaryLabel.Text.Contains("Currencies") || summaryLabel.Text.Contains("Tiền tệ"),
+            $"SummaryLabel must display currency count, was '{summaryLabel.Text}'");
+
+        // 5. Gear Stash & Filtering
+        stashView.SwitchTab(StashTabType.Gear);
+        if (main.Db.WeaponBases.Count > 0)
+        {
+            var swordDef = main.Db.WeaponBases.Values.First();
+            var weapon = new WeaponItemInstance(swordDef, "Rare", 0, 50) { CustomName = "Stashed Blade" };
+            main.Player.Stash.DepositGear(weapon);
+            stashView.RefreshView();
+            stashView.SetGearFilter("Weapons");
+            var gearItemList = stashView.GetNodeOrNull<VBoxContainer>("%GearItemList");
+            AssertNotNull(gearItemList, "GearItemList must exist");
+            AssertTrue(gearItemList.GetChildCount() > 0, "GearItemList must show deposited weapon");
+        }
+
+        // 6. Map Stash & Activation Hook
+        stashView.SwitchTab(StashTabType.Maps);
+        if (main.Db.Maps.TryGetValue("strand", out var strandDef))
+        {
+            main.Player.Stash.DepositMap(strandDef, 2, "Normal");
+            stashView.RefreshView();
+            var mapsList = stashView.GetNodeOrNull<VBoxContainer>("%MapsListContainer");
+            AssertNotNull(mapsList, "MapsListContainer must exist");
+            AssertTrue(mapsList.GetChildCount() > 0, "MapsListContainer must show Strand map");
+        }
+
+        // 7. Fossils Stash
+        stashView.SwitchTab(StashTabType.Fossils);
+        main.Player.Stash.DepositFossil("pristine_fossil", 4);
+        stashView.RefreshView();
+        var fossilsGrid = stashView.GetNodeOrNull<GridContainer>("%FossilsGrid");
+        AssertNotNull(fossilsGrid, "FossilsGrid must exist");
+        AssertTrue(fossilsGrid.GetChildCount() == 7, $"FossilsGrid must display all 7 Abyssal fossils, got {fossilsGrid.GetChildCount()}");
+
+        // 8. 1-Click Dump Button
+        main.Player.Currencies["scroll_of_wisdom"] = 25;
+        main.Player.MapInventory.Add("strand");
+        stashView.OnDumpAllPressed();
+
+        AssertEqual(0, main.Player.Currencies.Count, "Player backpack currencies must be empty after 1-Click Dump");
+        AssertEqual(0, main.Player.MapInventory.Count, "Player backpack maps must be empty after 1-Click Dump");
+        AssertTrue(main.Player.Stash.GetCurrencyCount("scroll_of_wisdom") >= 25, "Stash must receive dumped scrolls");
+        AssertTrue(dumpStatusLabel.Text.Contains("Deposited") || dumpStatusLabel.Text.Contains("cất"),
+            $"DumpStatusLabel should show success message, was '{dumpStatusLabel.Text}'");
 
         // Switch back to Gear tab
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);

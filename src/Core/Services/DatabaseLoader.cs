@@ -22,6 +22,8 @@ public class DatabaseLoader
     public Dictionary<string, MapDefinition> Maps { get; private set; } = new();
     public List<MapModifierDefinition> MapModifiers { get; private set; } = new();
     public PassiveTreeDefinition? PassiveTree { get; private set; }
+    public Dictionary<string, CurrencyDefinition> Currencies { get; private set; } = new();
+    public Dictionary<string, FossilDefinition> Fossils { get; private set; } = new();
 
     public void LoadAll()
     {
@@ -32,8 +34,10 @@ public class DatabaseLoader
         LoadGems();
         LoadMaps();
         LoadPassiveTree();
+        LoadCurrencies();
+        LoadFossils();
         ValidateWeaponBases();
-        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps, PassiveTree: {PassiveTree?.Nodes.Count ?? 0} nodes.");
+        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps, {Currencies.Count} currencies, {Fossils.Count} fossils, PassiveTree: {PassiveTree?.Nodes.Count ?? 0} nodes.");
     }
 
     private void LoadAffixes()
@@ -143,6 +147,32 @@ public class DatabaseLoader
         {
             GD.PrintErr($"[DatabaseLoader] Failed to parse res://data/passive_tree.json: {ex.Message}");
         }
+    }
+
+    private void LoadCurrencies()
+    {
+        string json = FileAccess.GetFileAsString("res://data/currencies.json");
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            GD.PrintErr("[DatabaseLoader] Could not read res://data/currencies.json");
+            return;
+        }
+
+        var list = JsonSerializer.Deserialize<List<CurrencyDefinition>>(json, JsonOptions);
+        Currencies = list?.ToDictionary(c => c.Id) ?? new();
+    }
+
+    private void LoadFossils()
+    {
+        string json = FileAccess.GetFileAsString("res://data/fossils.json");
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            GD.PrintErr("[DatabaseLoader] Could not read res://data/fossils.json");
+            return;
+        }
+
+        var list = JsonSerializer.Deserialize<List<FossilDefinition>>(json, JsonOptions);
+        Fossils = list?.ToDictionary(f => f.Id) ?? new();
     }
 
     private void ValidateWeaponBases()

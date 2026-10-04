@@ -1,0 +1,72 @@
+[
+  {
+    "id": "pristine_fossil",
+    "name": "Pristine Fossil",
+    "iconGlyph": "🩸",
+    "colorHex": "#E74C3C",
+    "primaryBonus": "More Life modifiers (10x)",
+    "blockedGroup": "No Defence modifiers (0x)",
+    "description": "More Life modifiers (10x weight); blocks Armour, Evasion, and Energy Shield modifiers entirely.",
+    "maxStackSize": 5000
+  },
+  {
+    "id": "metallic_fossil",
+    "name": "Metallic Fossil",
+    "iconGlyph": "⚡",
+    "colorHex": "#F1C40F",
+    "primaryBonus": "More Lightning modifiers (10x)",
+    "blockedGroup": "No Physical modifiers (0x)",
+    "description": "More Lightning damage and resistance modifiers (10x weight); blocks Physical modifiers entirely.",
+    "maxStackSize": 5000
+  },
+  {
+    "id": "scorched_fossil",
+    "name": "Scorched Fossil",
+    "iconGlyph": "🔥",
+    "colorHex": "#E67E22",
+    "primaryBonus": "More Fire modifiers (10x)",
+    "blockedGroup": "No Cold modifiers (0x)",
+    "description": "More Fire damage and resistance modifiers (10x weight); blocks Cold modifiers entirely.",
+    "maxStackSize": 5000
+  },
+  {
+    "id": "frigid_fossil",
+    "name": "Frigid Fossil",
+    "iconGlyph": "❄️",
+    "colorHex": "#3498DB",
+    "primaryBonus": "More Cold modifiers (10x)",
+    "blockedGroup": "No Fire modifiers (0x)",
+    "description": "More Cold damage and resistance modifiers (10x weight); blocks Fire modifiers entirely.",
+    "maxStackSize": 5000
+  },
+  {
+    "id": "dense_fossil",
+    "name": "Dense Fossil",
+    "iconGlyph": "🛡️",
+    "colorHex": "#95A5A6",
+    "primaryBonus": "More Defence modifiers (10x)",
+    "blockedGroup": "No Life modifiers (0x)",
+    "description": "More Armour, Evasion, and Energy Shield modifiers (10x weight); blocks Life modifiers entirely.",
+    "maxStackSize": 5000
+  },
+  {
+    "id": "corroded_fossil",
+    "name": "Corroded Fossil",
+    "iconGlyph": "☠️",
+    "colorHex": "#8E44AD",
+    "primaryBonus": "More Chaos & Physical modifiers (5x)",
+    "blockedGroup": "No Elemental modifiers (0x)",
+    "description": "Blocks Elemental modifiers (Fire, Cold, Lightning); enhances Chaos and Physical crafts.",
+    "maxStackSize": 5000
+  },
+  {
+    "id": "sanctified_fossil",
+    "name": "Sanctified Fossil",
+    "iconGlyph": "✨",
+    "colorHex": "#F39C12",
+    "primaryBonus": "High-Tier rolls favored (5x)",
+    "blockedGroup": "Low-tier rolls suppressed",
+    "description": "Modifiers roll higher tiers more frequently; suppresses low tier rolls.",
+    "maxStackSize": 5000
+  }
+]
