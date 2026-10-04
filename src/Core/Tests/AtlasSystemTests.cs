@@ -22,6 +22,7 @@ public static class AtlasSystemTests
         TestRiskVsRewardCalculations();
         TestThreatBadgeEvaluations();
         TestTierCategorization();
+        MapQueueTests.RunAll();
 
         Console.WriteLine("[Tests] All AtlasSystemTests PASSED successfully!");
     }

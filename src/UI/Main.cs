@@ -64,6 +64,7 @@ public partial class Main : Control
     public PlayerState Player { get; } = new();
     public SkillLoadout Loadout { get; } = new();
     public FtueManager Ftue { get; } = new();
+    public MapQueueManager MapQueue { get; } = new();
     public SeededDropCoordinator DropCoordinator { get; private set; } = null!;
     public CombatEngine? Engine { get; private set; }
 
@@ -176,7 +177,15 @@ public partial class Main : Control
 
         // 4b. Initialize GemView and AtlasView with database and state
         _gemView?.Initialize(Loadout, Db, Player);
-        _atlasView?.Initialize(Db, Player, Ftue);
+        _atlasView?.Initialize(Db, Player, MapQueue, Ftue);
+
+        MapQueue.OnCountdownTick += seconds =>
+        {
+            if (_statusLabel != null && MapQueue.IsCountdownActive)
+            {
+                _statusLabel.Text = $"Map Cleared! Loot window • Next map launching in {seconds:F1}s... [Queue: {MapQueue.Count}]";
+            }
+        };
 
         // 5. Initialize FTUE Seeded Drop Coordinator
         DropCoordinator = new SeededDropCoordinator(Ftue);
@@ -549,6 +558,30 @@ public partial class Main : Control
             }
         };
 
+        Engine.OnMapCompleted += args =>
+        {
+            GD.Print($"[Main] Map cleared: {args.Config.Map.Name} (T{args.Config.Map.Tier}) in {args.ClearTimeSeconds:F1}s! Monsters slain: {args.TotalMonstersKilled}");
+
+            if (MapQueue.AutoAdvanceEnabled && (MapQueue.Count > 0 || MapQueue.ContinuousRunEnabled))
+            {
+                MapQueue.StartCountdown(3.0f);
+                if (_statusLabel != null)
+                {
+                    _statusLabel.Text = $"Map Cleared! Loot window • Next map in 3.0s... [Queue: {MapQueue.Count}]";
+                }
+                _battleViewport?.ShowLootToast($"Map Cleared! Next map in 3s... ({MapQueue.Count} queued)", new Color(1.0f, 0.85f, 0.35f));
+            }
+            else
+            {
+                _mapDeviceBar?.SetPortalActive(false);
+                _atlasView?.SetPortalActive(false);
+                if (_statusLabel != null)
+                {
+                    _statusLabel.Text = "Crucible Online • Map Completed! Ready for next map";
+                }
+            }
+        };
+
         Engine.StartMap(config);
 
         // 4. Update status display
@@ -574,6 +607,7 @@ public partial class Main : Control
 
     private void OnEmergencyPortalTriggered()
     {
+        MapQueue.CancelCountdown();
         Engine?.TriggerEmergencyPortal();
         _mapDeviceBar?.SetPortalActive(false);
         _atlasView?.SetPortalActive(false);
@@ -601,6 +635,14 @@ public partial class Main : Control
     public override void _Process(double delta)
     {
         Engine?.Update((float)delta);
+
+        if (MapQueue.UpdateTick((float)delta, out var nextMap) && nextMap != null)
+        {
+            GD.Print($"[Main] Auto-launching next queued map: {nextMap.Map.Name} (T{nextMap.Map.Tier} {nextMap.Rarity})");
+            _atlasView?.SlotMap(nextMap.Map, nextMap.Modifiers, nextMap.Rarity);
+            _mapDeviceBar?.SlotMap(nextMap.Map, nextMap.Rarity);
+            OnMapActivatedWithMods(nextMap.Map, nextMap.Modifiers, nextMap.Rarity);
+        }
     }
 
     private void InitializeDemoViewport()

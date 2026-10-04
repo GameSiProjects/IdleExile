@@ -83,6 +83,21 @@ public partial class AtlasView : Control
     private VBoxContainer? _modifiersVBox;
     private Label? _noModsLabel;
 
+    // Map Queue Tray Nodes (Task 4.2)
+    public MapQueueManager? QueueManager { get; private set; }
+    private PanelContainer? _mapQueuePanel;
+    private Label? _queueTitleLabel;
+    private Label? _queueCountdownLabel;
+    private Button? _queueFastForwardBtn;
+    private Button? _queueCancelCountdownBtn;
+    private CheckBox? _queueAutoAdvanceCheck;
+    private CheckBox? _queueContinuousCheck;
+    private Button? _queueEnqueueBtn;
+    private Button? _queueClearBtn;
+    private HBoxContainer? _queueSlotsHBox;
+    private Control? _queueSpacer;
+    private readonly Button[] _queueSlotButtons = new Button[MapQueueManager.MaxCapacity];
+
     // Available Slates Drawer
     private HBoxContainer? _mapSlatesHBox;
     private Label? _availableMapsCountLabel;
@@ -138,11 +153,73 @@ public partial class AtlasView : Control
         _modifiersVBox = GetNodeOrNull<VBoxContainer>("%ModifiersVBox");
         _noModsLabel = GetNodeOrNull<Label>("%NoModsLabel");
 
-        // 4. Bind Available Slates Shelf
+        // 4. Bind Map Queue Tray Nodes (Task 4.2)
+        _mapQueuePanel = GetNodeOrNull<PanelContainer>("%MapQueuePanel");
+        _queueTitleLabel = GetNodeOrNull<Label>("%QueueTitleLabel");
+        _queueCountdownLabel = GetNodeOrNull<Label>("%QueueCountdownLabel");
+        _queueFastForwardBtn = GetNodeOrNull<Button>("%QueueFastForwardBtn");
+        _queueCancelCountdownBtn = GetNodeOrNull<Button>("%QueueCancelCountdownBtn");
+        _queueAutoAdvanceCheck = GetNodeOrNull<CheckBox>("%QueueAutoAdvanceCheck");
+        _queueContinuousCheck = GetNodeOrNull<CheckBox>("%QueueContinuousCheck");
+        _queueEnqueueBtn = GetNodeOrNull<Button>("%QueueEnqueueBtn");
+        _queueClearBtn = GetNodeOrNull<Button>("%QueueClearBtn");
+        _queueSlotsHBox = GetNodeOrNull<HBoxContainer>("%QueueSlotsHBox");
+        _queueSpacer = GetNodeOrNull<Control>("%QueueSpacer");
+
+        if (_queueEnqueueBtn != null)
+        {
+            _queueEnqueueBtn.Pressed += EnqueueCurrentSlottedMap;
+        }
+
+        if (_queueClearBtn != null)
+        {
+            _queueClearBtn.Pressed += () => QueueManager?.Clear();
+        }
+
+        if (_queueAutoAdvanceCheck != null)
+        {
+            _queueAutoAdvanceCheck.Toggled += toggled =>
+            {
+                if (QueueManager != null) QueueManager.AutoAdvanceEnabled = toggled;
+            };
+        }
+
+        if (_queueContinuousCheck != null)
+        {
+            _queueContinuousCheck.Toggled += toggled =>
+            {
+                if (QueueManager != null) QueueManager.ContinuousRunEnabled = toggled;
+            };
+        }
+
+        if (_queueFastForwardBtn != null)
+        {
+            _queueFastForwardBtn.Pressed += () => QueueManager?.FastForwardCountdown();
+        }
+
+        if (_queueCancelCountdownBtn != null)
+        {
+            _queueCancelCountdownBtn.Pressed += () => QueueManager?.CancelCountdown();
+        }
+
+        // Instantiate 10 queue slot buttons
+        if (_queueSlotsHBox != null)
+        {
+            for (int i = 0; i < MapQueueManager.MaxCapacity; i++)
+            {
+                int slotIdx = i;
+                var slotBtn = CreateQueueSlotButton(slotIdx);
+                _queueSlotButtons[slotIdx] = slotBtn;
+                _queueSlotsHBox.AddChild(slotBtn);
+            }
+        }
+
+        // 5. Bind Available Slates Shelf
         _mapSlatesHBox = GetNodeOrNull<HBoxContainer>("%MapSlatesHBox");
         _availableMapsCountLabel = GetNodeOrNull<Label>("%AvailableMapsCountLabel");
 
         UpdateTierFilterButtonStyles();
+        UpdateQueueDisplay();
     }
 
     public override void _UnhandledKeyInput(InputEvent @event)
@@ -162,11 +239,59 @@ public partial class AtlasView : Control
     /// </summary>
     public void Initialize(DatabaseLoader db, PlayerState player, FtueManager? ftue = null)
     {
+        Initialize(db, player, null, ftue);
+    }
+
+    /// <summary>
+    /// Initializes the AtlasView controller with system database, player state, and MapQueueManager.
+    /// </summary>
+    public void Initialize(DatabaseLoader db, PlayerState player, MapQueueManager? queueManager, FtueManager? ftue = null)
+    {
         Database = db ?? throw new ArgumentNullException(nameof(db));
         Player = player ?? throw new ArgumentNullException(nameof(player));
         Ftue = ftue;
 
+        QueueManager = queueManager ?? new MapQueueManager();
+        QueueManager.OnQueueChanged += UpdateQueueDisplay;
+        QueueManager.OnCountdownStarted += seconds => ShowCountdownUI(seconds);
+        QueueManager.OnCountdownTick += seconds => UpdateCountdownUI(seconds);
+        QueueManager.OnCountdownCancelled += HideCountdownUI;
+        QueueManager.OnMapQueueAdvanced += item =>
+        {
+            HideCountdownUI();
+            SlotMap(item.Map, item.Modifiers, item.Rarity);
+        };
+
+        if (_queueAutoAdvanceCheck != null)
+        {
+            _queueAutoAdvanceCheck.ButtonPressed = QueueManager.AutoAdvanceEnabled;
+        }
+
+        if (_queueContinuousCheck != null)
+        {
+            _queueContinuousCheck.ButtonPressed = QueueManager.ContinuousRunEnabled;
+        }
+
+        QueueManager.ContinuousRunFallbackProvider = () =>
+        {
+            if (Player != null && Player.MapInventory.Count > 0 && Database != null)
+            {
+                var mapId = Player.MapInventory[0];
+                if (Database.Maps.TryGetValue(mapId, out var invMap))
+                {
+                    Player.MapInventory.RemoveAt(0);
+                    return new MapQueueItem(0, invMap, Array.Empty<RolledMapModifier>(), "Normal");
+                }
+            }
+            if (Database != null && Database.Maps.TryGetValue("endless_hollow", out var hollowDef))
+            {
+                return new MapQueueItem(0, hollowDef, Array.Empty<RolledMapModifier>(), "Normal");
+            }
+            return null;
+        };
+
         RefreshAvailableMaps();
+        UpdateQueueDisplay();
 
         // If no map is currently slotted, slot starter Strand or first available map
         if (SlottedMap == null)
@@ -633,6 +758,37 @@ public partial class AtlasView : Control
         };
         mobLvLabel.AddThemeFontSizeOverride("font_size", 9);
         topHBox.AddChild(mobLvLabel);
+
+        var qBtn = new Button
+        {
+            Text = "+Q",
+            TooltipText = $"Add {map.Name} to Map Queue",
+            FocusMode = FocusModeEnum.None
+        };
+        qBtn.AddThemeFontSizeOverride("font_size", 9);
+        var qStyle = new StyleBoxFlat
+        {
+            BgColor = new Color(0.12f, 0.14f, 0.18f, 0.95f),
+            BorderWidthLeft = 1,
+            BorderWidthTop = 1,
+            BorderWidthRight = 1,
+            BorderWidthBottom = 1,
+            BorderColor = new Color(0.35f, 0.45f, 0.65f, 0.85f),
+            CornerRadiusTopLeft = 2,
+            CornerRadiusTopRight = 2,
+            CornerRadiusBottomRight = 2,
+            CornerRadiusBottomLeft = 2,
+            ContentMarginLeft = 3,
+            ContentMarginRight = 3,
+            ContentMarginTop = 0,
+            ContentMarginBottom = 0
+        };
+        qBtn.AddThemeStyleboxOverride("normal", qStyle);
+        qBtn.Pressed += () =>
+        {
+            EnqueueMap(map, rarity: "Normal");
+        };
+        topHBox.AddChild(qBtn);
         vbox.AddChild(topHBox);
 
         var nameLabel = new Label
@@ -739,10 +895,251 @@ public partial class AtlasView : Control
         btn.Modulate = isSelected ? new Color(1.0f, 0.90f, 0.45f) : new Color(0.75f, 0.78f, 0.85f);
     }
 
+    private Button CreateQueueSlotButton(int slotIndex)
+    {
+        var btn = new Button
+        {
+            CustomMinimumSize = new Vector2(36, 32),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            FocusMode = FocusModeEnum.None,
+            ToggleMode = false
+        };
+
+        var vbox = new VBoxContainer
+        {
+            Name = "VBoxContainer"
+        };
+        vbox.AddThemeConstantOverride("separation", 0);
+        vbox.MouseFilter = MouseFilterEnum.Ignore;
+
+        var topLabel = new Label
+        {
+            Name = "TopLabel",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        topLabel.AddThemeFontSizeOverride("font_size", 9);
+        vbox.AddChild(topLabel);
+
+        var bottomLabel = new Label
+        {
+            Name = "BottomLabel",
+            HorizontalAlignment = HorizontalAlignment.Center,
+            MouseFilter = MouseFilterEnum.Ignore
+        };
+        bottomLabel.AddThemeFontSizeOverride("font_size", 9);
+        vbox.AddChild(bottomLabel);
+
+        btn.AddChild(vbox);
+
+        btn.Pressed += () =>
+        {
+            if (QueueManager != null)
+            {
+                var item = QueueManager.GetSlot(slotIndex);
+                if (item != null)
+                {
+                    SlotMap(item.Map, item.Modifiers, item.Rarity);
+                }
+                else
+                {
+                    EnqueueCurrentSlottedMap();
+                }
+            }
+        };
+
+        btn.GuiInput += @event =>
+        {
+            if (@event is InputEventMouseButton mb && mb.Pressed && mb.ButtonIndex == MouseButton.Right)
+            {
+                if (QueueManager != null && QueueManager.GetSlot(slotIndex) != null)
+                {
+                    QueueManager.RemoveAt(slotIndex);
+                    GetViewport()?.SetInputAsHandled();
+                }
+            }
+        };
+
+        return btn;
+    }
+
+    public void UpdateQueueDisplay()
+    {
+        int count = QueueManager?.Count ?? 0;
+        if (_queueTitleLabel != null)
+        {
+            _queueTitleLabel.Text = $"MAP QUEUE ({count}/10)";
+        }
+
+        if (_queueEnqueueBtn != null)
+        {
+            _queueEnqueueBtn.Disabled = (QueueManager?.IsFull ?? false) || SlottedMap == null;
+        }
+
+        if (_queueClearBtn != null)
+        {
+            _queueClearBtn.Disabled = (count == 0);
+        }
+
+        for (int i = 0; i < MapQueueManager.MaxCapacity; i++)
+        {
+            var btn = _queueSlotButtons[i];
+            if (btn == null) continue;
+
+            var topLabel = btn.GetNodeOrNull<Label>("VBoxContainer/TopLabel") ?? btn.FindChild("TopLabel", recursive: true, owned: false) as Label;
+            var bottomLabel = btn.GetNodeOrNull<Label>("VBoxContainer/BottomLabel") ?? btn.FindChild("BottomLabel", recursive: true, owned: false) as Label;
+
+            var item = QueueManager?.GetSlot(i);
+            if (item != null)
+            {
+                var style = new StyleBoxFlat
+                {
+                    BgColor = new Color(0.10f, 0.11f, 0.14f, 0.95f),
+                    BorderWidthLeft = (i == 0 && (QueueManager?.IsCountdownActive ?? false)) ? 2 : 1,
+                    BorderWidthTop = (i == 0 && (QueueManager?.IsCountdownActive ?? false)) ? 2 : 1,
+                    BorderWidthRight = (i == 0 && (QueueManager?.IsCountdownActive ?? false)) ? 2 : 1,
+                    BorderWidthBottom = (i == 0 && (QueueManager?.IsCountdownActive ?? false)) ? 2 : 1,
+                    CornerRadiusTopLeft = 3,
+                    CornerRadiusTopRight = 3,
+                    CornerRadiusBottomRight = 3,
+                    CornerRadiusBottomLeft = 3,
+                    ContentMarginLeft = 2,
+                    ContentMarginRight = 2,
+                    ContentMarginTop = 1,
+                    ContentMarginBottom = 1
+                };
+
+                Color rarityColor = item.Rarity.ToLowerInvariant() switch
+                {
+                    "rare" => new Color(1.0f, 0.85f, 0.35f),
+                    "magic" => new Color(0.45f, 0.75f, 1.0f),
+                    "corrupted" => new Color(0.95f, 0.28f, 0.45f),
+                    _ => new Color(0.75f, 0.78f, 0.85f)
+                };
+
+                if (i == 0 && (QueueManager?.IsCountdownActive ?? false))
+                {
+                    style.BorderColor = new Color(1f, 0.9f, 0.4f, 1f);
+                    style.ShadowColor = new Color(1f, 0.85f, 0.3f, 0.3f);
+                    style.ShadowSize = 3;
+                }
+                else
+                {
+                    style.BorderColor = rarityColor;
+                }
+
+                btn.AddThemeStyleboxOverride("normal", style);
+
+                if (topLabel != null)
+                {
+                    topLabel.Text = $"T{item.Tier}";
+                    topLabel.Modulate = item.Tier == 0 ? new Color(0.35f, 0.95f, 0.95f) : rarityColor;
+                }
+
+                if (bottomLabel != null)
+                {
+                    string shortName = item.Map.Name.Length > 4 ? item.Map.Name.Substring(0, 3) : item.Map.Name;
+                    bottomLabel.Text = shortName;
+                    bottomLabel.Modulate = new Color(0.85f, 0.88f, 0.92f);
+                }
+
+                btn.TooltipText = $"Slot #{i + 1}: {item.Map.Name} (T{item.Tier} {item.Rarity})\nQuantity: +{item.TotalQuantity}% | Pack: +{item.TotalPackSize}%\nAffixes: {item.Modifiers.Count}\n\n• Left-Click: Inspect on Altar\n• Right-Click: Remove from Queue";
+            }
+            else
+            {
+                var emptyStyle = new StyleBoxFlat
+                {
+                    BgColor = new Color(0.06f, 0.065f, 0.085f, 0.85f),
+                    BorderWidthLeft = 1,
+                    BorderWidthTop = 1,
+                    BorderWidthRight = 1,
+                    BorderWidthBottom = 1,
+                    BorderColor = new Color(0.18f, 0.20f, 0.25f, 0.7f),
+                    CornerRadiusTopLeft = 3,
+                    CornerRadiusTopRight = 3,
+                    CornerRadiusBottomRight = 3,
+                    CornerRadiusBottomLeft = 3,
+                    ContentMarginLeft = 2,
+                    ContentMarginRight = 2,
+                    ContentMarginTop = 1,
+                    ContentMarginBottom = 1
+                };
+                btn.AddThemeStyleboxOverride("normal", emptyStyle);
+
+                if (topLabel != null)
+                {
+                    topLabel.Text = $"#{i + 1}";
+                    topLabel.Modulate = new Color(0.45f, 0.48f, 0.55f);
+                }
+
+                if (bottomLabel != null)
+                {
+                    bottomLabel.Text = "+";
+                    bottomLabel.Modulate = new Color(0.35f, 0.38f, 0.45f);
+                }
+
+                btn.TooltipText = $"Slot #{i + 1} (Empty)\nClick to enqueue current slotted map, or click [+Q] on a map card below.";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Enqueues the currently slotted map with its current rolled modifiers and rarity.
+    /// </summary>
+    public void EnqueueCurrentSlottedMap()
+    {
+        if (SlottedMap == null || QueueManager == null || QueueManager.IsFull) return;
+
+        QueueManager.Enqueue(SlottedMap, SlottedModifiers, SlottedRarity);
+    }
+
+    /// <summary>
+    /// Enqueues a specific map into the queue.
+    /// </summary>
+    public void EnqueueMap(MapDefinition map, IReadOnlyList<RolledMapModifier>? modifiers = null, string rarity = "Normal")
+    {
+        if (map == null || QueueManager == null || QueueManager.IsFull) return;
+
+        QueueManager.Enqueue(map, modifiers, rarity);
+    }
+
+    public void ShowCountdownUI(float seconds)
+    {
+        if (_queueCountdownLabel != null)
+        {
+            _queueCountdownLabel.Text = $"⏳ Next in {seconds:F1}s...";
+            _queueCountdownLabel.Visible = true;
+        }
+        if (_queueFastForwardBtn != null) _queueFastForwardBtn.Visible = true;
+        if (_queueCancelCountdownBtn != null) _queueCancelCountdownBtn.Visible = true;
+        if (_queueSpacer != null) _queueSpacer.Visible = false;
+
+        UpdateQueueDisplay();
+    }
+
+    public void UpdateCountdownUI(float seconds)
+    {
+        if (_queueCountdownLabel != null)
+        {
+            _queueCountdownLabel.Text = $"⏳ Next in {seconds:F1}s...";
+        }
+    }
+
+    public void HideCountdownUI()
+    {
+        if (_queueCountdownLabel != null) _queueCountdownLabel.Visible = false;
+        if (_queueFastForwardBtn != null) _queueFastForwardBtn.Visible = false;
+        if (_queueCancelCountdownBtn != null) _queueCancelCountdownBtn.Visible = false;
+        if (_queueSpacer != null) _queueSpacer.Visible = true;
+
+        UpdateQueueDisplay();
+    }
+
     private void OnActivatePressed()
     {
         if (IsPortalActive || SlottedMap == null) return;
 
+        QueueManager?.CancelCountdown();
         SetGoldenPulse(false);
         SetPortalActive(true);
         OnMapActivated?.Invoke(SlottedMap, SlottedModifiers, SlottedRarity);

@@ -151,6 +151,22 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_queue_btn"]
+content_margin_left = 5.0
+content_margin_top = 2.0
+content_margin_right = 5.0
+content_margin_bottom = 2.0
+bg_color = Color(0.09, 0.095, 0.13, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.28, 0.35, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [node name="AtlasView" type="Control"]
 custom_minimum_size = Vector2(0, 390)
 layout_mode = 3
@@ -364,6 +380,101 @@ theme_override_colors/font_color = Color(0.85, 0.7, 1, 1)
 theme_override_font_sizes/font_size = 10
 theme_override_styles/normal = SubResource("StyleBoxFlat_craft_btn")
 text = "🎲 Craft Affixes (Reroll)"
+
+[node name="MapQueuePanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 62)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_subpanel")
+
+[node name="QueueMargin" type="MarginContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 3
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 3
+
+[node name="QueueVBox" type="VBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="QueueHeaderHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="QueueTitleLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.8, 0.45, 1)
+theme_override_font_sizes/font_size = 10
+text = "MAP QUEUE (0/10)"
+
+[node name="QueueCountdownLabel" type="Label" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "⏳ Next in 3.0s..."
+
+[node name="QueueFastForwardBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_queue_btn")
+text = "▶ Run"
+
+[node name="QueueCancelCountdownBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_queue_btn")
+text = "✕"
+
+[node name="QueueSpacer" type="Control" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="QueueAutoAdvanceCheck" type="CheckBox" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Automatically launch next queued map after 3-second delay (Zero APM)"
+theme_override_font_sizes/font_size = 9
+button_pressed = true
+text = "Auto (3s)"
+
+[node name="QueueContinuousCheck" type="CheckBox" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "When queue is empty, auto-sustain by falling back to Endless Hollow (T0) or stash maps"
+theme_override_font_sizes/font_size = 9
+text = "Continuous"
+
+[node name="QueueEnqueueBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Enqueue current slotted map (with its current rolled modifiers)"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_queue_btn")
+text = "+ Enqueue"
+
+[node name="QueueClearBtn" type="Button" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox/QueueHeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Clear all queued maps"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_queue_btn")
+text = "Clear"
+
+[node name="QueueSlotsHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+theme_override_constants/separation = 4
 
 [node name="InspectorPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
 custom_minimum_size = Vector2(0, 118)

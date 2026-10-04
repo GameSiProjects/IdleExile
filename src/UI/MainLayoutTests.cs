@@ -823,6 +823,59 @@ public static class MainLayoutTests
         AssertTrue(emergencyFired, "OnEmergencyPortalTriggered event must fire when Emergency button is pressed");
         AssertFalse(atlasView.IsPortalActive, "IsPortalActive must be false after emergency retreat");
 
+        // 8. Test Task 4.2: Map Queue UI Integration (10 Slots & Automation)
+        GD.Print("[Tests] Verifying Task 4.2: Map Queue 10-slot tray, countdown UI, and controls...");
+        var queuePanel = atlasView.GetNodeOrNull<PanelContainer>("%MapQueuePanel");
+        AssertNotNull(queuePanel, "MapQueuePanel must exist in AtlasView");
+
+        var queueTitle = atlasView.GetNodeOrNull<Label>("%QueueTitleLabel");
+        AssertNotNull(queueTitle, "QueueTitleLabel must exist");
+        AssertTrue(queueTitle.Text.Contains("MAP QUEUE"), $"QueueTitleLabel must contain 'MAP QUEUE', was '{queueTitle.Text}'");
+
+        var queueAutoAdvance = atlasView.GetNodeOrNull<CheckBox>("%QueueAutoAdvanceCheck");
+        AssertNotNull(queueAutoAdvance, "QueueAutoAdvanceCheck must exist");
+        AssertTrue(queueAutoAdvance.ButtonPressed, "QueueAutoAdvanceCheck must be enabled by default");
+
+        var queueContinuous = atlasView.GetNodeOrNull<CheckBox>("%QueueContinuousCheck");
+        AssertNotNull(queueContinuous, "QueueContinuousCheck must exist");
+
+        var queueEnqueueBtn = atlasView.GetNodeOrNull<Button>("%QueueEnqueueBtn");
+        AssertNotNull(queueEnqueueBtn, "QueueEnqueueBtn must exist");
+
+        var queueClearBtn = atlasView.GetNodeOrNull<Button>("%QueueClearBtn");
+        AssertNotNull(queueClearBtn, "QueueClearBtn must exist");
+
+        var queueSlotsHBox = atlasView.GetNodeOrNull<HBoxContainer>("%QueueSlotsHBox");
+        AssertNotNull(queueSlotsHBox, "QueueSlotsHBox must exist");
+        AssertEqual(10, queueSlotsHBox.GetChildCount(), "QueueSlotsHBox must contain exactly 10 slot buttons");
+
+        // Enqueue current map
+        atlasView.SlotMap(testMap, rolledMods, "Rare");
+        queueEnqueueBtn.EmitSignal(Button.SignalName.Pressed);
+        AssertEqual(1, atlasView.QueueManager?.Count, "Queue count must be 1 after enqueuing slotted map");
+        AssertTrue(queueTitle.Text.Contains("1/10"), $"QueueTitleLabel must update to 1/10, was '{queueTitle.Text}'");
+
+        // Slot 0 should reflect Tier 1
+        var slot0Btn = queueSlotsHBox.GetChild<Button>(0);
+        var slot0TopLabel = slot0Btn.GetNodeOrNull<Label>("VBoxContainer/TopLabel") ?? slot0Btn.FindChild("TopLabel", recursive: true, owned: false) as Label;
+        AssertNotNull(slot0TopLabel, "Slot 0 top label must exist");
+        AssertEqual("T1", slot0TopLabel.Text, "Slot 0 top label must show 'T1'");
+
+        // Test Countdown UI toggling
+        var countdownLabel = atlasView.GetNodeOrNull<Label>("%QueueCountdownLabel");
+        AssertNotNull(countdownLabel, "QueueCountdownLabel must exist");
+        atlasView.ShowCountdownUI(3.0f);
+        AssertTrue(countdownLabel.Visible, "QueueCountdownLabel must be visible during countdown");
+        AssertTrue(countdownLabel.Text.Contains("3.0s"), $"Countdown text must display remaining seconds, was '{countdownLabel.Text}'");
+
+        atlasView.HideCountdownUI();
+        AssertFalse(countdownLabel.Visible, "QueueCountdownLabel must be hidden when countdown stops");
+
+        // Clear Queue
+        queueClearBtn.EmitSignal(Button.SignalName.Pressed);
+        AssertEqual(0, atlasView.QueueManager?.Count, "Queue count must be 0 after clicking Clear");
+        AssertTrue(queueTitle.Text.Contains("0/10"), $"QueueTitleLabel must update to 0/10 after clear, was '{queueTitle.Text}'");
+
         // Switch back to Gear tab
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
     }

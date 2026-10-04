@@ -30,14 +30,12 @@ window/stretch/aspect="expand"
 
 project/assembly_name="IdleExile"
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://localization/translations.en.translation", "res://localization/translations.vi.translation")
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.0666667, 0.0705882, 0.0862745, 1)
-
-[internationalization]
-
-locale/translations=PackedStringArray("res://localization/translations.en.translation", "res://localization/translations.vi.translation")
-locale/fallback="en"
-

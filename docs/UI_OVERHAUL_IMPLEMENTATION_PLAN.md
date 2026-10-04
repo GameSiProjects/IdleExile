@@ -157,9 +157,12 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
   - Hiển thị đầy đủ Map Modifiers (Quantity, Pack Size, Mod nguy hiểm Reflect/-Max Res/No Leech) với hệ thống Threat Badges trực quan và khay duyệt Map Slates khả dụng (T0–T16+).
   - Tích hợp liền mạch vào `Main.tscn` và `Main.cs`: Bấm nút `[🗺 Atlas]` chuyển đổi ngay lập tức sang `AtlasView`, duy trì persistent combat viewport.
   - Vượt qua 100% bài kiểm thử tự động `AtlasSystemTests` và `TestAtlasViewIntegration` trong `MainLayoutTests`.
-- [ ] **Task 4.2: Tích hợp Hàng Đợi Map Queue (10 Slots - Task 5.2 GDD)**
-  - Khay 10 ô chứa sẵn bản đồ đã roll affixes.
-  - Tự động kích hoạt map tiếp theo sau 3 giây delay khi hoàn thành map cũ, mang lại trải nghiệm **True Zero-APM Endless Mapping**.
+- [x] **Task 4.2: Tích hợp Hàng Đợi Map Queue (10 Slots - Task 5.2 GDD)**
+  - Xây dựng mô hình dữ liệu thuần C# `MapQueueItem.cs` và `MapQueueConfig.cs` lưu trữ bản đồ, affixes tùy biến, rarity và chỉ số yield.
+  - Xây dựng bộ điều phối hàng đợi thuần C# `MapQueueManager.cs` hỗ trợ tối đa 10 slots hàng đợi FIFO, nạp bản đồ (`Enqueue`), hủy theo ô (`RemoveAt`), tráo đổi vị trí (`Swap`), đếm ngược an toàn 3.0s (`StartCountdown` / `UpdateTick`) và cơ chế Continuous Run fallback (*The Endless Hollow T0*).
+  - Tích hợp khay 10 ô Map Queue (`MapQueuePanel`, `QueueSlotsHBox`) vào `AtlasView.tscn` và `AtlasView.cs`: Hiển thị rõ trạng thái ô trống/đầy, viền màu Rarity, badge Tier, nút `+Q` trên thẻ map, nút `[+ Enqueue]` nạp map đang soi, nút `[Clear]` và thanh đếm ngược tự động chạy (`⏳ Next in 3.0s... [▶ Run] [✕]`).
+  - Tích hợp vòng lặp điều phối trong `Main.cs`: Bắt sự kiện `Engine.OnMapCompleted` để kích hoạt đếm ngược 3 giây nhặt đồ qua Loot Filter, sau đó tự động nạp và kích hoạt map tiếp theo trong hàng đợi mà không cần người chơi click tay (True Zero-APM Endless Mapping).
+  - Vượt qua 100% bài kiểm thử tự động `MapQueueTests` (10 bài test FIFO, Capacity, Reindex, Countdown, Cancellation, Continuous Run, Combat Engine loop) và bài kiểm thử tích hợp UI trong `MainLayoutTests`.
 
 ---
 
