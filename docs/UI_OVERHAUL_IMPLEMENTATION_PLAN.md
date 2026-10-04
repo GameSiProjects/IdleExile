@@ -194,8 +194,13 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 ### ⚡ Phase 6: Đánh Bóng Hiệu Ứng Thị Giác & Trải Nghiệm Xúc Giác (Polish & Dopamine FX)
 > **Mục tiêu:** Đạt chuẩn thẩm mỹ AAA cho desktop companion app.
 
-- [ ] **Task 6.1: Hiệu ứng chuyển Tab mượt mà (Micro-Animations)**
-  - Chuyển tab mượt mà bằng hiệu ứng Fade In / Slide ngang nhẹ trong 0.15s, không gây giật lag.
+- [x] **Task 6.1: Hiệu ứng chuyển Tab mượt mà (Micro-Animations)**
+  - Chuyển tab mượt mà bằng hiệu ứng Fade In / Slide ngang nhẹ trong 0.15s (`TabTransitionDuration = 0.15f`, `TabTransitionSlideOffset = 18.0f`), không gây giật lag (`Tween.TransitionType.Cubic`, `Tween.EaseType.Out`).
+  - Hỗ trợ trượt định hướng (Directional Slide): Trượt từ phải sang trái khi chọn tab phía sau và từ trái sang phải khi chọn tab phía trước.
+  - Tự động hủy tween dở dang (`Kill()`) khi spam click tab, bảo đảm trạng thái UI và transform luôn sạch sẽ, không rò rỉ bộ nhớ.
+  - Kích hoạt `clip_contents = true` trên `TabWorkspaceContainer` đảm bảo hiệu ứng trượt không tràn ra ngoài vùng làm việc.
+  - Duy trì 100% hiển thị liên tục `BattleViewport` trong suốt quá trình chuyển đổi giữa các tab.
+  - Vượt qua 100% các bài kiểm thử tự động `TestTabTransitionMicroAnimations` trong `MainLayoutTests`.
 - [ ] **Task 6.2: Viền Hào Quang Thông Báo (Edge Glow Alerts)**
   - Khi rớt đồ Tier 1 (Divine/Exalt/6-Link): Viền trên của cửa sổ nhấp nháy ánh vàng hoàng kim kèm âm thanh "Ting!" đanh thép.
   - Khi thăng cấp (Level Up) hoặc có điểm Passive chưa cộng: Icon Tab Tree phát sáng nhẹ nhàng thôi thúc người chơi mở tab.

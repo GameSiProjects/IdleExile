@@ -32,6 +32,7 @@ public static class MainLayoutTests
             TestAtlasViewIntegration(existingMain);
             TestPassiveTreeViewIntegration(existingMain);
             TestStashViewIntegration(existingMain);
+            TestTabTransitionMicroAnimations(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -58,6 +59,7 @@ public static class MainLayoutTests
             TestAtlasViewIntegration(main);
             TestPassiveTreeViewIntegration(main);
             TestStashViewIntegration(main);
+            TestTabTransitionMicroAnimations(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -1106,6 +1108,100 @@ public static class MainLayoutTests
 
         // Switch back to Gear tab
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
+    }
+
+    /// <summary>
+    /// Verifies Task 6.1: Smooth Tab Switching (Micro-Animations).
+    /// Tests:
+    /// 1. Tab switching micro-animation parameters (duration 0.15s, slide offset).
+    /// 2. Directional slide offset (positive when navigating right, negative when navigating left).
+    /// 3. Immediate visibility state of target view, clean hiding of outgoing views.
+    /// 4. Resting position accuracy and modulate reset.
+    /// 5. Rapid switching resilience (no crash, previous tweens cancelled cleanly).
+    /// 6. Persistent Combat Viewport (BattleViewport visible at all times).
+    /// </summary>
+    private static void TestTabTransitionMicroAnimations(Main main)
+    {
+        GD.Print("[Tests] Verifying Task 6.1: Smooth Tab Switching Micro-Animations...");
+
+        var battleViewport = main.BattleViewport;
+        AssertNotNull(battleViewport, "BattleViewport must exist");
+
+        // 1. Verify animation constants
+        AssertTrue(Mathf.IsEqualApprox(Main.TabTransitionDuration, 0.15f), $"TabTransitionDuration must be 0.15s, was {Main.TabTransitionDuration}");
+        AssertTrue(Main.TabTransitionSlideOffset > 0f, "TabTransitionSlideOffset must be positive");
+
+        Vector2 restingPos = main.GetTabRestingPosition();
+        AssertTrue(restingPos.X >= 0f && restingPos.Y >= 0f, $"Tab resting position should be valid, was {restingPos}");
+
+        // 2. Switch from Gear (0) to Atlas (2) -> Forward/Right navigation
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
+        var gearView = main.EquipmentView;
+        var atlasContainer = main.MapDeviceMargin;
+        AssertNotNull(gearView, "EquipmentView must exist");
+        AssertNotNull(atlasContainer, "MapDeviceMargin must exist");
+
+        AssertTrue(gearView.Visible, "GearView must be visible when on Gear tab");
+        AssertFalse(atlasContainer.Visible, "AtlasContainer must be hidden when on Gear tab");
+
+        // Now switch to Atlas with animation
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Atlas, animated: true);
+        AssertTrue(atlasContainer.Visible, "AtlasContainer must immediately become visible upon tab switch");
+        AssertFalse(gearView.Visible, "GearView must immediately be hidden upon tab switch");
+        AssertTrue(battleViewport.Visible, "BattleViewport must remain persistently visible");
+
+        if (main.IsInsideTree())
+        {
+            // Forward navigation (Gear 0 -> Atlas 2): slide from right (+offset)
+            float expectedStartX = restingPos.X + Main.TabTransitionSlideOffset;
+            AssertTrue(Mathf.IsEqualApprox(atlasContainer.Position.X, expectedStartX),
+                $"Atlas incoming slide start X should be {expectedStartX}, was {atlasContainer.Position.X}");
+            AssertTrue(Mathf.IsEqualApprox(atlasContainer.Modulate.A, 0.0f),
+                $"Atlas incoming fade start alpha should be 0.0, was {atlasContainer.Modulate.A}");
+        }
+
+        // 3. Switch from Atlas (2) to Skills (1) -> Backward/Left navigation
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Skills, animated: true);
+        var gemView = main.GemView;
+        AssertNotNull(gemView, "GemView must exist");
+        AssertTrue(gemView.Visible, "GemView must be visible on Skills tab");
+        AssertFalse(atlasContainer.Visible, "AtlasContainer must be hidden");
+
+        if (main.IsInsideTree())
+        {
+            // Backward navigation (Atlas 2 -> Skills 1): slide from left (-offset)
+            float expectedStartX = restingPos.X - Main.TabTransitionSlideOffset;
+            AssertTrue(Mathf.IsEqualApprox(gemView.Position.X, expectedStartX),
+                $"GemView incoming slide start X should be {expectedStartX}, was {gemView.Position.X}");
+            AssertTrue(Mathf.IsEqualApprox(gemView.Modulate.A, 0.0f),
+                $"GemView incoming fade start alpha should be 0.0, was {gemView.Modulate.A}");
+        }
+
+        // 4. Test rapid switching resilience (spam click tabs)
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Passives, animated: true);
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Stash, animated: true);
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: true);
+
+        AssertTrue(gearView.Visible, "Final active tab (Gear) must be visible");
+        AssertFalse(gemView.Visible, "Skills tab must be hidden");
+        AssertFalse(atlasContainer.Visible, "Atlas tab must be hidden");
+        AssertFalse(main.PassiveTreeView?.Visible ?? false, "Passives tab must be hidden");
+        AssertFalse(main.StashView?.Visible ?? false, "Stash tab must be hidden");
+        AssertTrue(battleViewport.Visible, "BattleViewport must remain visible through rapid tab switches");
+
+        // 5. Test Non-Animated / Direct layout application
+        main.ApplyTabVisibility(Main.WorkspaceTab.Stash, animated: false);
+        var stashView = main.StashView;
+        AssertNotNull(stashView, "StashView must exist");
+        AssertTrue(stashView.Visible, "StashView must be visible");
+        AssertTrue(Mathf.IsEqualApprox(stashView.Position.X, restingPos.X),
+            $"Non-animated transition must place view at resting X {restingPos.X}, was {stashView.Position.X}");
+        AssertTrue(Mathf.IsEqualApprox(stashView.Modulate.A, 1.0f),
+            $"Non-animated transition must leave alpha at 1.0, was {stashView.Modulate.A}");
+
+        // Return to Gear tab for subsequent tests
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
+        AssertTrue(gearView.Visible, "Gear tab restored for clean test state");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

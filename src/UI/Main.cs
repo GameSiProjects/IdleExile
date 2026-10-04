@@ -51,6 +51,13 @@ public partial class Main : Control
     }
 
     private WorkspaceTab _activeTab = WorkspaceTab.Gear;
+    private WorkspaceTab _previousTab = WorkspaceTab.Gear;
+    private Tween? _tabTransitionTween;
+    public const float TabTransitionDuration = 0.15f;
+    public const float TabTransitionSlideOffset = 18.0f;
+
+    public Tween? ActiveTabTransitionTween => _tabTransitionTween;
+    public WorkspaceTab PreviousTab => _previousTab;
 
     public WindowController WindowController => _windowController;
     public WorkspaceTab ActiveTab => _activeTab;
@@ -775,12 +782,42 @@ public partial class Main : Control
     }
 
     /// <summary>
+    /// Gets the associated Control view for the specified workspace tab.
+    /// </summary>
+    public Control? GetWorkspaceView(WorkspaceTab tab) => tab switch
+    {
+        WorkspaceTab.Gear => _equipmentView,
+        WorkspaceTab.Skills => _gemView,
+        WorkspaceTab.Atlas => _mapDeviceMargin,
+        WorkspaceTab.Passives => _passiveTreeView,
+        WorkspaceTab.Stash => _stashView,
+        _ => null
+    };
+
+    /// <summary>
+    /// Returns the resting position for workspace tab views inside TabWorkspaceContainer.
+    /// </summary>
+    public Vector2 GetTabRestingPosition()
+    {
+        float left = 6f;
+        float top = 4f;
+        if (_tabWorkspaceContainer is MarginContainer mc)
+        {
+            left = mc.GetThemeConstant("margin_left");
+            top = mc.GetThemeConstant("margin_top");
+        }
+        return new Vector2(left, top);
+    }
+
+    /// <summary>
     /// Switches the active view inside TabWorkspaceContainer.
+    /// If animated is true, plays a 0.15s Fade In / subtle horizontal Slide micro-animation (Task 6.1).
     /// In accordance with Core Objective #1, BattleViewport is persistent and NEVER hidden.
     /// If currently in Compact Mode, automatically expands the window upward.
     /// </summary>
-    public void SwitchWorkspaceTab(WorkspaceTab tab)
+    public void SwitchWorkspaceTab(WorkspaceTab tab, bool animated = true)
     {
+        var prev = _activeTab;
         _activeTab = tab;
 
         // If window is currently in compact mode, auto-expand upward to full height!
@@ -790,14 +827,15 @@ public partial class Main : Control
             return;
         }
 
-        ApplyTabVisibility(tab);
+        ApplyTabVisibility(tab, animated: animated, previousTab: prev);
     }
 
     /// <summary>
     /// Applies segmented tab button states and switches child view visibility in TabWorkspaceContainer.
+    /// If animated is true, smoothly transitions the newly active tab via Fade In (0->1) and horizontal Slide (18px->0px) over 0.15s.
     /// In accordance with Core Objective #1, BattleViewport is persistent and NEVER hidden.
     /// </summary>
-    public void ApplyTabVisibility(WorkspaceTab tab)
+    public void ApplyTabVisibility(WorkspaceTab tab, bool animated = false, WorkspaceTab? previousTab = null)
     {
         // Update segmented tab button states
         if (_tabGearBtn != null) _tabGearBtn.ButtonPressed = (tab == WorkspaceTab.Gear);
@@ -806,51 +844,62 @@ public partial class Main : Control
         if (_tabPassivesBtn != null) _tabPassivesBtn.ButtonPressed = (tab == WorkspaceTab.Passives);
         if (_tabStashBtn != null) _tabStashBtn.ButtonPressed = (tab == WorkspaceTab.Stash);
 
-        // Switch workspace views
-        if (_equipmentView != null)
+        // Cancel any in-flight tab transition tween
+        if (_tabTransitionTween != null && _tabTransitionTween.IsValid())
         {
-            _equipmentView.Visible = (tab == WorkspaceTab.Gear);
-            if (tab == WorkspaceTab.Gear)
+            _tabTransitionTween.Kill();
+            _tabTransitionTween = null;
+        }
+
+        Vector2 basePos = GetTabRestingPosition();
+        Control? targetView = GetWorkspaceView(tab);
+
+        // Switch workspace views visibility:
+        // Outgoing views are immediately hidden and cleanly reset to resting transform/alpha.
+        // Incoming view is made visible immediately.
+        foreach (WorkspaceTab t in Enum.GetValues<WorkspaceTab>())
+        {
+            var view = GetWorkspaceView(t);
+            if (view == null) continue;
+
+            if (t == tab)
             {
-                _equipmentView.SetPlayer(Player);
-                _equipmentView.RefreshView();
+                view.Visible = true;
+            }
+            else
+            {
+                view.Visible = false;
+                view.Position = basePos;
+                view.Modulate = Colors.White;
             }
         }
 
-        if (_gemView != null)
+        // Trigger view-specific data refresh
+        switch (tab)
         {
-            _gemView.Visible = (tab == WorkspaceTab.Skills);
-            if (tab == WorkspaceTab.Skills)
-            {
-                _gemView.RefreshView();
-            }
-        }
+            case WorkspaceTab.Gear:
+                if (_equipmentView != null)
+                {
+                    _equipmentView.SetPlayer(Player);
+                    _equipmentView.RefreshView();
+                }
+                break;
 
-        if (_mapDeviceMargin != null)
-        {
-            _mapDeviceMargin.Visible = (tab == WorkspaceTab.Atlas);
-            if (tab == WorkspaceTab.Atlas)
-            {
+            case WorkspaceTab.Skills:
+                _gemView?.RefreshView();
+                break;
+
+            case WorkspaceTab.Atlas:
                 _atlasView?.RefreshAvailableMaps();
-            }
-        }
+                break;
 
-        if (_passiveTreeView != null)
-        {
-            _passiveTreeView.Visible = (tab == WorkspaceTab.Passives);
-            if (tab == WorkspaceTab.Passives)
-            {
-                _passiveTreeView.RefreshView();
-            }
-        }
+            case WorkspaceTab.Passives:
+                _passiveTreeView?.RefreshView();
+                break;
 
-        if (_stashView != null)
-        {
-            _stashView.Visible = (tab == WorkspaceTab.Stash);
-            if (tab == WorkspaceTab.Stash)
-            {
-                _stashView.RefreshView();
-            }
+            case WorkspaceTab.Stash:
+                _stashView?.RefreshView();
+                break;
         }
 
         // Persistent Combat Viewport: NEVER hide BattleViewport!
@@ -858,6 +907,44 @@ public partial class Main : Control
         {
             _battleViewport.Visible = true;
         }
+
+        // Play smooth 0.15s Fade In / subtle horizontal Slide micro-animation (Task 6.1)
+        if (animated && targetView != null && IsInsideTree())
+        {
+            int fromIdx = previousTab.HasValue ? (int)previousTab.Value : (int)tab;
+            int toIdx = (int)tab;
+            float slideDir = toIdx >= fromIdx ? 1.0f : -1.0f;
+            float startOffsetX = slideDir * TabTransitionSlideOffset;
+
+            targetView.Position = new Vector2(basePos.X + startOffsetX, basePos.Y);
+            targetView.Modulate = new Color(1f, 1f, 1f, 0f);
+
+            _tabTransitionTween = CreateTween();
+            _tabTransitionTween.SetParallel(true);
+            _tabTransitionTween.TweenProperty(targetView, "position:x", basePos.X, TabTransitionDuration)
+                .SetTrans(Tween.TransitionType.Cubic)
+                .SetEase(Tween.EaseType.Out);
+            _tabTransitionTween.TweenProperty(targetView, "modulate:a", 1.0f, TabTransitionDuration)
+                .SetTrans(Tween.TransitionType.Cubic)
+                .SetEase(Tween.EaseType.Out);
+
+            _tabTransitionTween.Finished += () =>
+            {
+                if (GodotObject.IsInstanceValid(targetView))
+                {
+                    targetView.Position = basePos;
+                    targetView.Modulate = Colors.White;
+                }
+                _tabTransitionTween = null;
+            };
+        }
+        else if (targetView != null)
+        {
+            targetView.Position = basePos;
+            targetView.Modulate = Colors.White;
+        }
+
+        _previousTab = tab;
     }
 
     private void OnGearNavPressed()

@@ -185,6 +185,7 @@ dotnet build
 | **Boss Room Chamber & Arena Lock (Task 2.8)** | Complete | `src/UI/Components/ArenaCamera.cs`, `src/UI/Components/Arena2D.cs` |
 | **Passive Skill Tree Graph (Task 5.1)** | Complete | `data/passive_tree.json`, `src/Core/Models/PassiveTreeDefinition.cs`, `src/Core/State/PassiveTreeState.cs`, `scenes/PassiveTreeView.tscn`, `src/UI/Components/PassiveTreeView.cs` |
 | **Affinity Stash View (Task 5.2)** | Complete | `data/currencies.json`, `data/fossils.json`, `src/Core/State/AffinityStashState.cs`, `scenes/StashView.tscn`, `src/UI/Components/StashView.cs` |
+| **Tab Micro-Animations (Task 6.1)** | Complete | `scenes/Main.tscn`, `src/UI/Main.cs`, `src/UI/MainLayoutTests.cs` |
 
 ---
 
