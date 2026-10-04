@@ -35,6 +35,7 @@ public partial class Main : Control
     private Control? _subTabBarContainer;
     private Control? _tabWorkspaceContainer;
     private Control? _mapDeviceMargin;
+    private EdgeGlowAlert? _edgeGlowAlert;
     private readonly WindowController _windowController = new();
 
 #if DEBUG
@@ -70,6 +71,7 @@ public partial class Main : Control
     public PassiveTreeView? PassiveTreeView => _passiveTreeView;
     public StashView? StashView => _stashView;
     public Control? MapDeviceMargin => _mapDeviceMargin;
+    public EdgeGlowAlert? EdgeGlowAlert => _edgeGlowAlert;
     public Button? ResizeModeButton => _resizeModeButton;
 
     public DatabaseLoader Db { get; } = new();
@@ -108,6 +110,7 @@ public partial class Main : Control
         _subTabBarContainer = GetNodeOrNull<Control>("%SubTabBarContainer");
         _tabWorkspaceContainer = GetNodeOrNull<Control>("%TabWorkspaceContainer");
         _mapDeviceMargin = GetNodeOrNull<Control>("%MapDeviceMargin");
+        _edgeGlowAlert = GetNodeOrNull<EdgeGlowAlert>("%EdgeGlowAlert");
 
         _tabGearBtn = GetNodeOrNull<Button>("%TabGearBtn");
         _tabSkillsBtn = GetNodeOrNull<Button>("%TabSkillsBtn");
@@ -115,6 +118,21 @@ public partial class Main : Control
         _tabPassivesBtn = GetNodeOrNull<Button>("%TabPassivesBtn");
         _tabStashBtn = GetNodeOrNull<Button>("%TabStashBtn");
         _gearNavButton = _tabGearBtn ?? GetNodeOrNull<Button>("%GearNavButton");
+
+        if (_tabPassivesBtn != null)
+        {
+            _edgeGlowAlert?.AttachPassiveTabGlow(_tabPassivesBtn);
+        }
+
+        Player.OnLevelUp += OnPlayerLevelUp;
+        Player.OnBootstrapped += archetype =>
+        {
+            if (_charInfoLabel != null)
+            {
+                _charInfoLabel.Text = $"Lv.{Player.Level} {archetype.DisplayName}";
+            }
+            UpdatePassiveTreeAlert();
+        };
 
         if (_charInfoLabel != null)
         {
@@ -222,7 +240,9 @@ public partial class Main : Control
                 {
                     Engine.PassiveStats = _passiveTreeView.TreeState.BuildAggregatedOffensiveBucket();
                 }
+                UpdatePassiveTreeAlert();
             };
+            UpdatePassiveTreeAlert();
         }
 
         MapQueue.OnCountdownTick += seconds =>
@@ -558,6 +578,11 @@ public partial class Main : Control
         Engine.OnLootDropped += drop =>
         {
             _battleViewport?.ShowLootToast($"Dropped: {drop.DisplayName}", new Color(drop.ColorHex));
+
+            if (LootDropEvaluationHelper.IsTier1Drop(drop))
+            {
+                _edgeGlowAlert?.TriggerTier1Alert(drop.DisplayName);
+            }
 
             if (drop.Type == LootDropType.Currency)
             {
@@ -944,6 +969,8 @@ public partial class Main : Control
             targetView.Modulate = Colors.White;
         }
 
+        UpdatePassiveTreeAlert();
+
         _previousTab = tab;
     }
 
@@ -1000,6 +1027,37 @@ public partial class Main : Control
     {
         // When equipment view is closed via [X], shrink window back to Compact Mode
         _windowController.ShrinkWindow(keepBottom: true);
+    }
+
+    /// <summary>
+    /// Synchronizes the Passive Tree tab alert (breathing halo and unspent point badge)
+    /// based on available unallocated passive points and active tab.
+    /// </summary>
+    public void UpdatePassiveTreeAlert()
+    {
+        int unspentPoints = _passiveTreeView?.TreeState?.AvailablePoints ?? 0;
+        bool isPassiveTabActive = _activeTab == WorkspaceTab.Passives;
+        _edgeGlowAlert?.UpdatePassiveTreeAlert(unspentPoints, isPassiveTabActive);
+    }
+
+    private void OnPlayerLevelUp(int newLevel)
+    {
+        if (_charInfoLabel != null)
+        {
+            string charName = Player.Archetype?.DisplayName ?? "Exile";
+            _charInfoLabel.Text = $"Lv.{newLevel} {charName}";
+        }
+
+        _edgeGlowAlert?.TriggerLevelUpPulse();
+        UpdatePassiveTreeAlert();
+    }
+
+    /// <summary>
+    /// Explicitly triggers the Tier 1 drop alert (gold edge glow + Ting sound).
+    /// </summary>
+    public void TriggerTier1DropAlert(string? dropName = null)
+    {
+        _edgeGlowAlert?.TriggerTier1Alert(dropName);
     }
 
     public override void _UnhandledInput(InputEvent @event)
@@ -1072,6 +1130,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.AtlasSystemTests.RunAll();
         IdleExile.Core.Tests.PassiveTreeSystemTests.RunAll();
         IdleExile.Core.Tests.AffinityStashTests.RunAllTests();
+        IdleExile.Core.Tests.EdgeGlowAlertTests.RunAll();
         IdleExile.UI.MainLayoutTests.RunAll(mainInstance);
         GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }

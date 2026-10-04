@@ -201,9 +201,13 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
   - Kích hoạt `clip_contents = true` trên `TabWorkspaceContainer` đảm bảo hiệu ứng trượt không tràn ra ngoài vùng làm việc.
   - Duy trì 100% hiển thị liên tục `BattleViewport` trong suốt quá trình chuyển đổi giữa các tab.
   - Vượt qua 100% các bài kiểm thử tự động `TestTabTransitionMicroAnimations` trong `MainLayoutTests`.
-- [ ] **Task 6.2: Viền Hào Quang Thông Báo (Edge Glow Alerts)**
-  - Khi rớt đồ Tier 1 (Divine/Exalt/6-Link): Viền trên của cửa sổ nhấp nháy ánh vàng hoàng kim kèm âm thanh "Ting!" đanh thép.
-  - Khi thăng cấp (Level Up) hoặc có điểm Passive chưa cộng: Icon Tab Tree phát sáng nhẹ nhàng thôi thúc người chơi mở tab.
+- [x] **Task 6.2: Viền Hào Quang Thông Báo (Edge Glow Alerts)**
+  - Khi rớt đồ Tier 1 (Divine/Exalt/6-Link/Unique): Viền trên của cửa sổ nhấp nháy ánh vàng hoàng kim rực rỡ (`EdgeGlowAlert.cs`, 3-phase golden shimmer undulation) kèm âm thanh "Ting!" đanh thép được tổng hợp sóng âm PCM 16-bit thuần thủ tục (`DropSoundSynthesizer.cs`, zero external binary assets).
+  - Phân loại giá trị vật phẩm chuẩn xác qua `LootDropEvaluationHelper.cs` (nhận diện Divine Orb, Exalted Orb, Mirror, Vaal, 6-Link equipment, 5-Slot gem, Unique items).
+  - Khi thăng cấp (Level Up) hoặc có điểm Passive chưa cộng (`AvailablePoints > 0`): Icon Tab Tree phát sáng nhẹ nhàng thôi thúc người chơi mở tab (`PassiveTabGlowOverlay.cs`, gentle breathing amber/gold halo giữa alpha 0.28 và 0.88), cập nhật huy hiệu điểm `🌳 Tree (+N)`.
+  - Tự động tắt phát sáng tab khi người chơi chuyển sang Tab Passive Tree hoặc đã phân bổ hết điểm.
+  - Kích hoạt nhịp chớp kép sôi nổi (`TriggerLevelUpBurst()`) trên Tab Tree ngay khoảnh khắc thăng cấp.
+  - Vượt qua 100% các bài kiểm thử tự động `EdgeGlowAlertTests` và `TestEdgeGlowAlerts` trong `MainLayoutTests`.
 - [ ] **Task 6.3: Phím Tắt Tiện Lợi (Global Hotkeys)**
   - `Space`: Kích hoạt Emergency Portal tẩu thoát ngay lập tức.
   - `G`: Mở nhanh Tab Gear.

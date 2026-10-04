@@ -33,6 +33,7 @@ public static class MainLayoutTests
             TestPassiveTreeViewIntegration(existingMain);
             TestStashViewIntegration(existingMain);
             TestTabTransitionMicroAnimations(existingMain);
+            TestEdgeGlowAlerts(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -60,6 +61,7 @@ public static class MainLayoutTests
             TestPassiveTreeViewIntegration(main);
             TestStashViewIntegration(main);
             TestTabTransitionMicroAnimations(main);
+            TestEdgeGlowAlerts(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -1202,6 +1204,86 @@ public static class MainLayoutTests
         // Return to Gear tab for subsequent tests
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
         AssertTrue(gearView.Visible, "Gear tab restored for clean test state");
+    }
+
+    private static void TestEdgeGlowAlerts(Main main)
+    {
+        GD.Print("[Tests] Verifying Task 6.2: Edge Glow Alerts (Golden Border Glow, Ting Sound & Tab Tree Glow)...");
+
+        // 1. Verify EdgeGlowAlert node binding & layout
+        var glowAlert = main.EdgeGlowAlert;
+        AssertNotNull(glowAlert, "EdgeGlowAlert must exist on Main");
+        AssertTrue(glowAlert.CustomMinimumSize.Y >= 28f, $"EdgeGlowAlert height should be >= 28px, was {glowAlert.CustomMinimumSize.Y}");
+        AssertEqual(Control.MouseFilterEnum.Ignore, glowAlert.MouseFilter, "EdgeGlowAlert must ignore mouse clicks to avoid obstructing header buttons");
+
+        // 2. Verify PassiveTabGlowOverlay attached to TabPassivesBtn
+        var tabPassivesBtn = main.GetNodeOrNull<Button>("%TabPassivesBtn");
+        AssertNotNull(tabPassivesBtn, "TabPassivesBtn must exist");
+        var tabGlow = tabPassivesBtn.GetNodeOrNull<PassiveTabGlowOverlay>("PassiveTabGlowOverlay");
+        AssertNotNull(tabGlow, "PassiveTabGlowOverlay must be attached to TabPassivesBtn");
+        AssertEqual(Control.MouseFilterEnum.Ignore, tabGlow.MouseFilter, "PassiveTabGlowOverlay must ignore mouse clicks");
+
+        // 3. Test Tier 1 Drop Alert Trigger (Golden Edge Glow + Ting Sound)
+        string? alertDropName = null;
+        Action<string?> alertHandler = name => alertDropName = name;
+        glowAlert.OnTier1DropAlertTriggered += alertHandler;
+
+        try
+        {
+            main.TriggerTier1DropAlert("Divine Orb");
+            AssertEqual("Divine Orb", alertDropName, "OnTier1DropAlertTriggered event must fire with dropped item name");
+            AssertTrue(glowAlert.IsGlowActive, "Golden Edge Glow must become active upon Tier 1 drop alert");
+            AssertTrue(glowAlert.CurrentGlowAlpha > 0.0f, "CurrentGlowAlpha must be greater than 0");
+
+            // Test programmatic alpha clamp & redraw
+            glowAlert.SetGlowAlpha(0.85f);
+            AssertEqual(0.85f, glowAlert.CurrentGlowAlpha, "SetGlowAlpha must accurately update glow alpha");
+            glowAlert.SetGlowAlpha(0.0f);
+            AssertFalse(glowAlert.IsGlowActive, "Glow should become inactive when alpha is set to 0");
+        }
+        finally
+        {
+            glowAlert.OnTier1DropAlertTriggered -= alertHandler;
+        }
+
+        // 4. Test Passive Tree Tab Alert (Unspent Points & Tab Switching)
+        var treeState = main.PassiveTreeView?.TreeState;
+        AssertNotNull(treeState, "PassiveTreeView.TreeState must be initialized");
+
+        // 4a. 0 unspent points -> Tab Tree glow inactive
+        treeState.SetCharacterLevel(1);
+        main.UpdatePassiveTreeAlert();
+        AssertEqual(0, treeState.AvailablePoints, "Level 1 should have 0 unspent points");
+        AssertFalse(glowAlert.IsPassiveTabGlowActive, "Passive Tab Glow must be inactive when 0 unspent points");
+        AssertEqual("🌳 Tree", tabPassivesBtn.Text, "Tab button text should be default when 0 points");
+
+        // 4b. Advance level -> unspent points > 0 -> Tab Tree glow active when on Gear tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
+        treeState.SetCharacterLevel(4); // (4-1)*1 = 3 points
+        main.UpdatePassiveTreeAlert();
+        AssertEqual(3, treeState.AvailablePoints, "Level 4 should grant 3 passive points");
+        AssertTrue(glowAlert.IsPassiveTabGlowActive, "Passive Tab Glow must be active on non-passive tab with unspent points");
+        AssertTrue(tabPassivesBtn.Text.Contains("(+3)"), $"Tab button text should contain badge (+3), was '{tabPassivesBtn.Text}'");
+
+        // 4c. Switch to Passives tab -> Tab glow calms down while active on tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Passives, animated: false);
+        AssertFalse(glowAlert.IsPassiveTabGlowActive, "Passive Tab Glow must be inactive while user is actively viewing Passives tab");
+
+        // 4d. Switch away to Atlas tab -> Tab glow resumes to remind player
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Atlas, animated: false);
+        AssertTrue(glowAlert.IsPassiveTabGlowActive, "Passive Tab Glow must resume when navigating away with unspent points");
+
+        // 4e. Test celebratory Level Up burst
+        glowAlert.TriggerLevelUpPulse();
+        AssertTrue(glowAlert.IsPassiveTabGlowActive, "Passive tab glow must be active during/after level up pulse");
+
+        // 4f. Reset points back to level 1 for clean test state
+        treeState.SetCharacterLevel(1);
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
+        main.UpdatePassiveTreeAlert();
+        AssertEqual(0, treeState.AvailablePoints, "Reset to Level 1 should restore 0 available points");
+        AssertFalse(glowAlert.IsPassiveTabGlowActive, "Passive Tab Glow must be deactivated after resetting points");
+        AssertEqual("🌳 Tree", tabPassivesBtn.Text, "Tab button text must be restored to '🌳 Tree'");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)
