@@ -1,0 +1,449 @@
+[gd_scene format=3 uid="uid://psvtr1ew4k2m9"]
+
+[ext_resource type="Script" path="res://src/UI/Components/PassiveTreeView.cs" id="1_tree_view"]
+[ext_resource type="Script" path="res://src/UI/Components/PassiveTreeCanvas.cs" id="2_tree_canvas"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.0470588, 0.0509804, 0.0666667, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.22, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header_panel"]
+bg_color = Color(0.0666667, 0.0705882, 0.0941176, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.20, 0.26, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_search"]
+bg_color = Color(0.0862745, 0.0901961, 0.121569, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.24, 0.27, 0.35, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_points_pill"]
+bg_color = Color(0.12, 0.10, 0.06, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.65, 0.25, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+shadow_color = Color(0.85, 0.65, 0.25, 0.15)
+shadow_size = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pill"]
+bg_color = Color(0.0862745, 0.0941176, 0.129412, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.28, 0.36, 0.85)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pill_hover"]
+bg_color = Color(0.13, 0.14, 0.19, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.40, 0.44, 0.55, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_canvas_border"]
+bg_color = Color(0.0431373, 0.0470588, 0.0588235, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.20, 0.26, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_inspector"]
+bg_color = Color(0.0588235, 0.0627451, 0.0823529, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.20, 0.22, 0.29, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_btn"]
+bg_color = Color(0.18, 0.13, 0.05, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.90, 0.70, 0.25, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+shadow_color = Color(0.90, 0.70, 0.25, 0.2)
+shadow_size = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_btn_hover"]
+bg_color = Color(0.25, 0.18, 0.07, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.85, 0.35, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stats_drawer"]
+bg_color = Color(0.0666667, 0.0705882, 0.0941176, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.28, 0.36, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="PassiveTreeView" type="Control"]
+custom_minimum_size = Vector2(0, 390)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_tree_view")
+
+[node name="TreeBg" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="TreeMargin" type="MarginContainer" parent="TreeBg"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="TreeLayout" type="VBoxContainer" parent="TreeBg/TreeMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TreeHeaderBar" type="HBoxContainer" parent="TreeBg/TreeMargin/TreeLayout"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SearchHBox" type="HBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="SearchInput" type="LineEdit" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/SearchHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/caret_color = Color(0.9, 0.75, 0.3, 1)
+theme_override_colors/font_placeholder_color = Color(0.45, 0.48, 0.55, 1)
+theme_override_colors/font_color = Color(0.9, 0.92, 0.96, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_search")
+placeholder_text = "🔍 Search (Life, Damage, Resist)..."
+clear_button_enabled = true
+
+[node name="ClearSearchBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/SearchHBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_pill")
+text = "✕"
+
+[node name="MatchCountLabel" type="Label" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/SearchHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.25, 0.88, 1, 1)
+theme_override_font_sizes/font_size = 9
+vertical_alignment = 1
+
+[node name="PointsBadgePanel" type="PanelContainer" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_points_pill")
+
+[node name="PointsBadgeLabel" type="Label" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/PointsBadgePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Passive points available to allocate on character Level Up"
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "⚡ 0 Pts"
+vertical_alignment = 1
+
+[node name="NavControlsHBox" type="HBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ZoomOutBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/NavControlsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+tooltip_text = "Zoom Out (Wheel Down)"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_pill")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_pill_hover")
+text = "–"
+
+[node name="ZoomInBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/NavControlsHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+tooltip_text = "Zoom In (Wheel Up)"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_pill")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_pill_hover")
+text = "+"
+
+[node name="ResetViewBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/NavControlsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Reset Zoom and Center View on Class Origin"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_pill")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_pill_hover")
+text = "⊙ Center"
+
+[node name="ToggleStatsBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/NavControlsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Toggle Passive Stats Summary"
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_pill")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_pill_hover")
+text = "📊 Stats"
+
+[node name="RespecBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/TreeHeaderBar/NavControlsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Reset all allocated passive points and return to pool"
+theme_override_colors/font_color = Color(0.9, 0.45, 0.4, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_pill")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_pill_hover")
+text = "↺"
+
+[node name="CanvasContainer" type="PanelContainer" parent="TreeBg/TreeMargin/TreeLayout"]
+clip_contents = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_canvas_border")
+
+[node name="PassiveTreeCanvas" type="Control" parent="TreeBg/TreeMargin/TreeLayout/CanvasContainer"]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 2
+script = ExtResource("2_tree_canvas")
+
+[node name="NodeInspectorPanel" type="PanelContainer" parent="TreeBg/TreeMargin/TreeLayout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_inspector")
+
+[node name="InspectorMargin" type="MarginContainer" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="InspectorHBox" type="HBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="NodeInfoVBox" type="VBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="NodeTitleHBox" type="HBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/NodeInfoVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="NodeTypeBadge" type="Label" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/NodeInfoVBox/NodeTitleHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.68, 0.75, 1)
+theme_override_font_sizes/font_size = 9
+text = "• MINOR"
+vertical_alignment = 1
+
+[node name="NodeNameLabel" type="Label" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/NodeInfoVBox/NodeTitleHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.85, 0.55, 1)
+theme_override_font_sizes/font_size = 11
+text = "Select a passive node"
+vertical_alignment = 1
+
+[node name="NodeClusterLabel" type="Label" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/NodeInfoVBox/NodeTitleHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.55, 0.58, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+horizontal_alignment = 2
+vertical_alignment = 1
+text_overrun_behavior = 3
+
+[node name="StatsScroll" type="ScrollContainer" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/NodeInfoVBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+horizontal_scroll_mode = 3
+
+[node name="NodeStatsVBox" type="VBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/NodeInfoVBox/StatsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="ActionHintLabel" type="Label" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/NodeInfoVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.54, 0.62, 1)
+theme_override_font_sizes/font_size = 9
+text = "Click to inspect • Double-click to allocate"
+text_overrun_behavior = 3
+
+[node name="ActionBtnVBox" type="VBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox"]
+custom_minimum_size = Vector2(136, 0)
+layout_mode = 2
+alignment = 1
+
+[node name="NodeActionBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/NodeInspectorPanel/InspectorMargin/InspectorHBox/ActionBtnVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(136, 30)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.6, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_action_btn_hover")
+text = "⚡ ALLOCATE (1 pt)"
+
+[node name="StatsSummaryDrawer" type="PanelContainer" parent="TreeBg/TreeMargin/TreeLayout"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_stats_drawer")
+
+[node name="StatsSummaryMargin" type="MarginContainer" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="StatsSummaryVBox" type="VBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer/StatsSummaryMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StatsSummaryHeaderHBox" type="HBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer/StatsSummaryMargin/StatsSummaryVBox"]
+layout_mode = 2
+
+[node name="StatsTitleLabel" type="Label" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer/StatsSummaryMargin/StatsSummaryVBox/StatsSummaryHeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.8, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "PASSIVE STATS SUMMARY"
+
+[node name="Spacer" type="Control" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer/StatsSummaryMargin/StatsSummaryVBox/StatsSummaryHeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseStatsBtn" type="Button" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer/StatsSummaryMargin/StatsSummaryVBox/StatsSummaryHeaderHBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_pill")
+text = "✕"
+
+[node name="StatsSummaryScroll" type="ScrollContainer" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer/StatsSummaryMargin/StatsSummaryVBox"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatsListVBox" type="VBoxContainer" parent="TreeBg/TreeMargin/TreeLayout/StatsSummaryDrawer/StatsSummaryMargin/StatsSummaryVBox/StatsSummaryScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1

@@ -169,9 +169,15 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
 ### 🟠 Phase 5: Tab Cây Nội Tại Thu Nhỏ & Rương Phân Loại (`PassiveTreeView`, `StashView`)
 > **Mục tiêu:** Mang lại khả năng theorycrafting chuyên sâu trên khung nhìn hẹp 440px.
 
-- [ ] **Task 5.1: Tab Cây Nội Tại Thu Nhỏ (`PassiveTreeView.tscn`)**
-  - Hệ thống chòm sao nội tại (Constellation Clusters) có thể Zoom & Drag.
-  - Thanh tìm kiếm thông minh (Search Bar): Gõ `"Life"`, `"Damage"`, `"Resist"` tự động highlight các nhánh phù hợp và đề xuất lộ trình nâng điểm ngắn nhất.
+- [x] **Task 5.1: Tab Cây Nội Tại Thu Nhỏ (`PassiveTreeView.tscn`)**
+  - Cơ sở dữ liệu đồ thị nội tại nguồn sự thật `data/passive_tree.json` kết nối 3 điểm khởi đầu (`Marauder`, `Witch`, `Ranger`), 13 chòm sao (`Constellation Clusters`), 55 nodes (Minor, Notable, và Keystones biểu tượng: CI, Avatar of Fire, Resolute Technique, Iron Reflexes, Point Blank, Mind Over Matter).
+  - Kiến trúc Pure C# độc lập engine (`PassiveTreeDefinition.cs`, `PassiveTreeState.cs`): Quản lý điểm theo cấp độ, kiểm tra tính liên tục khi hủy điểm (refund), thuật toán BFS đa nguồn tìm đường ngắn nhất (auto-pathing) và phân định rõ ràng giữa additive `Increased/Reduced` và multiplicative `More/Less`.
+  - Thành phần vẽ vector thủ tục `PassiveTreeCanvas.cs`: Tối ưu hóa cực hạn cho `gl_compatibility` và Low Processor Mode; hỗ trợ kéo rê (Drag to Pan), phóng to thu nhỏ (Mouse Wheel Zoom mượt mà 0.5x–2.4x) và căn giữa xuất phát điểm (`[⊙ Center]`).
+  - Thanh tìm kiếm thông minh (`SearchInput`): Gõ `"Life"`, `"Damage"`, `"Resist"` tự động quét toàn bộ tên, tag, cluster và stat lines; tạo vòng hào quang phát sáng cyan xung quanh các node trùng khớp kèm nhãn đếm kết quả thời gian thực.
+  - Khay thẩm định thông minh cố định (`NodeInspectorPanel`): Xem chi tiết tên node, cluster, loại node, thống kê định dạng chuẩn PoE; hỗ trợ 1-click Allocate, Refund, hoặc Auto-Path theo lộ trình ngắn nhất.
+  - Khay tổng hợp chỉ số nội tại (`StatsSummaryDrawer`): Bấm `[📊 Stats]` để liệt kê toàn bộ các dòng tăng cường và Keystones đã kích hoạt.
+  - Tích hợp 100% vào `Main.tscn` và `Main.cs`: Bấm nút `[🌳 Tree]` trên Sub-Tab Bar hiển thị `PassiveTreeView` tức thì trong khi `BattleViewport` vẫn duy trì 100% hiển thị liên tục (Persistent Combat Viewport); đồng bộ chỉ số sát thương nội tại vào `CombatEngine.PassiveStats`.
+  - Vượt qua 100% các bài kiểm thử tự động `PassiveTreeSystemTests` và `TestPassiveTreeViewIntegration` trong `MainLayoutTests`.
 - [ ] **Task 5.2: Tab Rương Đồ Chuyên Dụng (Affinity Stash View)**
   - Phân loại 4 ngăn tủ chuyên biệt: *Currency Tab, Gear Tab, Map Tab, Fossil Tab*.
   - Bộ nút chuyển đồ nhanh 1-Click: Tự động dọn sạch hòm đồ sau mỗi chuyến map.

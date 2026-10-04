@@ -1,0 +1,238 @@
+{
+  "pointsPerLevel": 1,
+  "bonusPoints": 0,
+  "defaultStartNode": "start_marauder",
+  "statLabels": {
+    "maximum_life": "maximum Life",
+    "energy_shield": "maximum Energy Shield",
+    "armour": "Armour",
+    "evasion": "Evasion Rating",
+    "fire_resistance": "Fire Resistance",
+    "cold_resistance": "Cold Resistance",
+    "lightning_resistance": "Lightning Resistance",
+    "all_elemental_resistances": "all Elemental Resistances",
+    "chaos_resistance": "Chaos Resistance",
+    "damage": "Damage",
+    "spell_damage": "Spell Damage",
+    "fire_damage": "Fire Damage",
+    "burning_damage": "Burning Damage",
+    "ignite_chance": "chance to Ignite",
+    "physical_damage": "Physical Damage",
+    "melee_damage": "Melee Damage",
+    "attack_damage": "Attack Damage",
+    "attack_speed": "Attack Speed",
+    "projectile_damage": "Projectile Damage",
+    "critical_strike_chance": "Critical Strike Chance",
+    "critical_strike_multiplier": "Critical Strike Multiplier",
+    "all_attributes": "all Attributes"
+  },
+  "clusters": [
+    { "id": "origin_marauder", "name": "Marauder", "color": "#e05a3a", "labelX": -260, "labelY": 205 },
+    { "id": "origin_witch", "name": "Witch", "color": "#6a8dff", "labelX": 0, "labelY": -340 },
+    { "id": "origin_ranger", "name": "Ranger", "color": "#55d68f", "labelX": 260, "labelY": 205 },
+    { "id": "marauder_bastion", "name": "Juggernaut's Bastion", "color": "#d9603b", "labelX": -345, "labelY": 345 },
+    { "id": "marauder_might", "name": "Warlord's Might", "color": "#c7452f", "labelX": -370, "labelY": 40 },
+    { "id": "witch_arcane", "name": "Arcane Conflux", "color": "#5b8cff", "labelX": -140, "labelY": -370 },
+    { "id": "witch_flame", "name": "Flame Covenant", "color": "#ff7a2f", "labelX": 140, "labelY": -370 },
+    { "id": "ranger_wind", "name": "Windrunner's Path", "color": "#4fd08a", "labelX": 345, "labelY": 345 },
+    { "id": "ranger_hunter", "name": "Hunter's Precision", "color": "#9be05a", "labelX": 370, "labelY": 40 },
+    { "id": "templar_bulwark", "name": "Templar's Bulwark", "color": "#c9a6ff", "labelX": -205, "labelY": -120 },
+    { "id": "shadow_veil", "name": "Shadow's Veil", "color": "#47c9d6", "labelX": 205, "labelY": -120 },
+    { "id": "duelist_arena", "name": "Duelist's Arena", "color": "#e0b04a", "labelX": 0, "labelY": 215 },
+    { "id": "crucible_nexus", "name": "Crucible Nexus", "color": "#e8e2cf", "labelX": 0, "labelY": -80 }
+  ],
+  "nodes": [
+    { "id": "start_marauder", "name": "Marauder", "type": "Start", "cluster": "origin_marauder", "x": -260, "y": 170, "className": "Marauder", "attribute": "Strength", "description": "Strength class origin. Brute force, Life and Armour." },
+    { "id": "start_witch", "name": "Witch", "type": "Start", "cluster": "origin_witch", "x": 0, "y": -300, "className": "Witch", "attribute": "Intelligence", "description": "Intelligence class origin. Spells, Energy Shield and elemental mastery." },
+    { "id": "start_ranger", "name": "Ranger", "type": "Start", "cluster": "origin_ranger", "x": 260, "y": 170, "className": "Ranger", "attribute": "Dexterity", "description": "Dexterity class origin. Projectiles, Attack Speed and Evasion." },
+
+    { "id": "witch_spell_1", "name": "Spell Damage", "type": "Minor", "cluster": "witch_arcane", "x": -60, "y": -300, "tags": ["spell", "caster"],
+      "stats": [ { "stat": "spell_damage", "mod": "increased", "value": 10, "text": "10% increased Spell Damage" } ] },
+    { "id": "witch_spell_2", "name": "Spell Damage", "type": "Minor", "cluster": "witch_arcane", "x": -110, "y": -335, "tags": ["spell", "caster"],
+      "stats": [ { "stat": "spell_damage", "mod": "increased", "value": 10, "text": "10% increased Spell Damage" } ] },
+    { "id": "witch_es_1", "name": "Energy Shield", "type": "Minor", "cluster": "witch_arcane", "x": -110, "y": -265, "tags": ["es", "defence"],
+      "stats": [ { "stat": "energy_shield", "mod": "increased", "value": 8, "text": "8% increased maximum Energy Shield" } ] },
+    { "id": "witch_notable_arcane", "name": "Arcane Potency", "type": "Notable", "cluster": "witch_arcane", "x": -165, "y": -300, "tags": ["spell", "es", "caster"],
+      "stats": [
+        { "stat": "spell_damage", "mod": "increased", "value": 20, "text": "20% increased Spell Damage" },
+        { "stat": "energy_shield", "mod": "increased", "value": 12, "text": "12% increased maximum Energy Shield" }
+      ] },
+    { "id": "ks_chaos_inoculation", "name": "Chaos Inoculation", "type": "Keystone", "cluster": "witch_arcane", "x": -225, "y": -300, "tags": ["ci", "es", "chaos"],
+      "stats": [ { "stat": "keystone_chaos_inoculation", "mod": "keystone", "value": 1, "text": "Maximum Life becomes 1, Immune to Chaos Damage" } ] },
+
+    { "id": "witch_fire_1", "name": "Fire Damage", "type": "Minor", "cluster": "witch_flame", "x": 60, "y": -300, "tags": ["fire", "elemental"],
+      "stats": [ { "stat": "fire_damage", "mod": "increased", "value": 12, "text": "12% increased Fire Damage" } ] },
+    { "id": "witch_fire_2", "name": "Fire Damage", "type": "Minor", "cluster": "witch_flame", "x": 110, "y": -335, "tags": ["fire", "elemental"],
+      "stats": [ { "stat": "fire_damage", "mod": "increased", "value": 12, "text": "12% increased Fire Damage" } ] },
+    { "id": "witch_burn_1", "name": "Burning Damage", "type": "Minor", "cluster": "witch_flame", "x": 110, "y": -265, "tags": ["fire", "ignite", "dot"],
+      "stats": [ { "stat": "burning_damage", "mod": "increased", "value": 15, "text": "15% increased Burning Damage" } ] },
+    { "id": "witch_notable_pyro", "name": "Pyromaniac", "type": "Notable", "cluster": "witch_flame", "x": 165, "y": -300, "tags": ["fire", "ignite", "elemental"],
+      "stats": [
+        { "stat": "fire_damage", "mod": "increased", "value": 20, "text": "20% increased Fire Damage" },
+        { "stat": "ignite_chance", "mod": "chance", "value": 10, "text": "10% chance to Ignite" }
+      ] },
+    { "id": "ks_avatar_of_fire", "name": "Avatar of Fire", "type": "Keystone", "cluster": "witch_flame", "x": 225, "y": -300, "tags": ["fire", "conversion"],
+      "stats": [
+        { "stat": "keystone_avatar_of_fire", "mod": "keystone", "value": 1, "text": "50% of Physical, Cold and Lightning Damage Converted to Fire Damage" },
+        { "stat": "keystone_avatar_of_fire_restriction", "mod": "keystone", "value": 1, "text": "Deal no Non-Fire Damage" }
+      ] },
+
+    { "id": "bulwark_res_1", "name": "Fire Resistance", "type": "Minor", "cluster": "templar_bulwark", "x": -60, "y": -220, "tags": ["resist", "defence", "fire"],
+      "stats": [ { "stat": "fire_resistance", "mod": "flat_percent", "value": 12, "text": "+12% to Fire Resistance" } ] },
+    { "id": "bulwark_res_2", "name": "Cold Resistance", "type": "Minor", "cluster": "templar_bulwark", "x": -105, "y": -150, "tags": ["resist", "defence", "cold"],
+      "stats": [ { "stat": "cold_resistance", "mod": "flat_percent", "value": 12, "text": "+12% to Cold Resistance" } ] },
+    { "id": "bulwark_res_3", "name": "Lightning Resistance", "type": "Minor", "cluster": "templar_bulwark", "x": -150, "y": -80, "tags": ["resist", "defence", "lightning"],
+      "stats": [ { "stat": "lightning_resistance", "mod": "flat_percent", "value": 12, "text": "+12% to Lightning Resistance" } ] },
+    { "id": "bulwark_notable", "name": "Prismatic Bulwark", "type": "Notable", "cluster": "templar_bulwark", "x": -195, "y": -5, "tags": ["resist", "defence", "life"],
+      "stats": [
+        { "stat": "all_elemental_resistances", "mod": "flat_percent", "value": 12, "text": "+12% to all Elemental Resistances" },
+        { "stat": "maximum_life", "mod": "increased", "value": 5, "text": "5% increased maximum Life" }
+      ] },
+    { "id": "bulwark_res_4", "name": "Elemental Resistances", "type": "Minor", "cluster": "templar_bulwark", "x": -230, "y": 80, "tags": ["resist", "defence"],
+      "stats": [ { "stat": "all_elemental_resistances", "mod": "flat_percent", "value": 8, "text": "+8% to all Elemental Resistances" } ] },
+
+    { "id": "veil_crit_1", "name": "Critical Strike Chance", "type": "Minor", "cluster": "shadow_veil", "x": 60, "y": -220, "tags": ["crit"],
+      "stats": [ { "stat": "critical_strike_chance", "mod": "increased", "value": 12, "text": "12% increased Critical Strike Chance" } ] },
+    { "id": "veil_chaos_1", "name": "Chaos Resistance", "type": "Minor", "cluster": "shadow_veil", "x": 105, "y": -150, "tags": ["resist", "defence", "chaos"],
+      "stats": [ { "stat": "chaos_resistance", "mod": "flat_percent", "value": 12, "text": "+12% to Chaos Resistance" } ] },
+    { "id": "veil_crit_2", "name": "Critical Strike Chance", "type": "Minor", "cluster": "shadow_veil", "x": 150, "y": -80, "tags": ["crit"],
+      "stats": [ { "stat": "critical_strike_chance", "mod": "increased", "value": 12, "text": "12% increased Critical Strike Chance" } ] },
+    { "id": "veil_notable", "name": "Deadly Infusion", "type": "Notable", "cluster": "shadow_veil", "x": 195, "y": -5, "tags": ["crit"],
+      "stats": [
+        { "stat": "critical_strike_multiplier", "mod": "flat_percent", "value": 20, "text": "+20% to Critical Strike Multiplier" },
+        { "stat": "critical_strike_chance", "mod": "increased", "value": 15, "text": "15% increased Critical Strike Chance" }
+      ] },
+    { "id": "veil_chaos_2", "name": "Chaos Resistance", "type": "Minor", "cluster": "shadow_veil", "x": 230, "y": 80, "tags": ["resist", "defence", "chaos"],
+      "stats": [ { "stat": "chaos_resistance", "mod": "flat_percent", "value": 12, "text": "+12% to Chaos Resistance" } ] },
+
+    { "id": "nexus_w_1", "name": "Attributes", "type": "Minor", "cluster": "crucible_nexus", "x": 0, "y": -215, "tags": ["attributes"],
+      "stats": [ { "stat": "all_attributes", "mod": "flat", "value": 8, "text": "+8 to all Attributes" } ] },
+    { "id": "nexus_w_2", "name": "Damage", "type": "Minor", "cluster": "crucible_nexus", "x": 0, "y": -130, "tags": ["generic"],
+      "stats": [ { "stat": "damage", "mod": "increased", "value": 8, "text": "8% increased Damage" } ] },
+    { "id": "nexus_core", "name": "Crucible Heart", "type": "Notable", "cluster": "crucible_nexus", "x": 0, "y": -40, "tags": ["generic", "life"],
+      "stats": [
+        { "stat": "damage", "mod": "increased", "value": 15, "text": "15% increased Damage" },
+        { "stat": "maximum_life", "mod": "increased", "value": 6, "text": "6% increased maximum Life" }
+      ] },
+    { "id": "nexus_m_2", "name": "Damage", "type": "Minor", "cluster": "crucible_nexus", "x": -90, "y": 40, "tags": ["generic"],
+      "stats": [ { "stat": "damage", "mod": "increased", "value": 8, "text": "8% increased Damage" } ] },
+    { "id": "nexus_m_1", "name": "Attributes", "type": "Minor", "cluster": "crucible_nexus", "x": -170, "y": 115, "tags": ["attributes"],
+      "stats": [ { "stat": "all_attributes", "mod": "flat", "value": 8, "text": "+8 to all Attributes" } ] },
+    { "id": "nexus_r_2", "name": "Damage", "type": "Minor", "cluster": "crucible_nexus", "x": 90, "y": 40, "tags": ["generic"],
+      "stats": [ { "stat": "damage", "mod": "increased", "value": 8, "text": "8% increased Damage" } ] },
+    { "id": "nexus_r_1", "name": "Attributes", "type": "Minor", "cluster": "crucible_nexus", "x": 170, "y": 115, "tags": ["attributes"],
+      "stats": [ { "stat": "all_attributes", "mod": "flat", "value": 8, "text": "+8 to all Attributes" } ] },
+    { "id": "ks_mind_over_matter", "name": "Mind Over Matter", "type": "Keystone", "cluster": "crucible_nexus", "x": 0, "y": 55, "tags": ["mom", "mana", "defence"],
+      "stats": [ { "stat": "keystone_mind_over_matter", "mod": "keystone", "value": 1, "text": "30% of Damage is taken from Mana before Life" } ] },
+
+    { "id": "arena_life_1", "name": "Life", "type": "Minor", "cluster": "duelist_arena", "x": -170, "y": 220, "tags": ["life", "defence"],
+      "stats": [ { "stat": "maximum_life", "mod": "increased", "value": 6, "text": "6% increased maximum Life" } ] },
+    { "id": "arena_attack_1", "name": "Attack Damage", "type": "Minor", "cluster": "duelist_arena", "x": -85, "y": 245, "tags": ["attack"],
+      "stats": [ { "stat": "attack_damage", "mod": "increased", "value": 10, "text": "10% increased Attack Damage" } ] },
+    { "id": "arena_notable", "name": "Arena Champion", "type": "Notable", "cluster": "duelist_arena", "x": 0, "y": 255, "tags": ["attack", "life"],
+      "stats": [
+        { "stat": "maximum_life", "mod": "increased", "value": 8, "text": "8% increased maximum Life" },
+        { "stat": "attack_damage", "mod": "increased", "value": 15, "text": "15% increased Attack Damage" }
+      ] },
+    { "id": "arena_attack_2", "name": "Attack Speed", "type": "Minor", "cluster": "duelist_arena", "x": 85, "y": 245, "tags": ["attack", "speed"],
+      "stats": [ { "stat": "attack_speed", "mod": "increased", "value": 6, "text": "6% increased Attack Speed" } ] },
+    { "id": "arena_life_2", "name": "Life", "type": "Minor", "cluster": "duelist_arena", "x": 170, "y": 220, "tags": ["life", "defence"],
+      "stats": [ { "stat": "maximum_life", "mod": "increased", "value": 6, "text": "6% increased maximum Life" } ] },
+    { "id": "ks_resolute_technique", "name": "Resolute Technique", "type": "Keystone", "cluster": "duelist_arena", "x": 0, "y": 315, "tags": ["rt", "attack", "accuracy"],
+      "stats": [
+        { "stat": "keystone_resolute_technique", "mod": "keystone", "value": 1, "text": "Your hits can't be Evaded" },
+        { "stat": "keystone_resolute_technique_restriction", "mod": "keystone", "value": 1, "text": "Never deal Critical Strikes" }
+      ] },
+
+    { "id": "mar_life_1", "name": "Life", "type": "Minor", "cluster": "marauder_bastion", "x": -320, "y": 205, "tags": ["life", "defence"],
+      "stats": [ { "stat": "maximum_life", "mod": "increased", "value": 8, "text": "8% increased maximum Life" } ] },
+    { "id": "mar_armour_1", "name": "Armour", "type": "Minor", "cluster": "marauder_bastion", "x": -290, "y": 255, "tags": ["armour", "defence"],
+      "stats": [ { "stat": "armour", "mod": "increased", "value": 15, "text": "15% increased Armour" } ] },
+    { "id": "mar_life_2", "name": "Life", "type": "Minor", "cluster": "marauder_bastion", "x": -365, "y": 250, "tags": ["life", "defence"],
+      "stats": [ { "stat": "maximum_life", "mod": "increased", "value": 8, "text": "8% increased maximum Life" } ] },
+    { "id": "mar_notable_bastion", "name": "Unbreakable", "type": "Notable", "cluster": "marauder_bastion", "x": -345, "y": 300, "tags": ["life", "armour", "defence"],
+      "stats": [
+        { "stat": "maximum_life", "mod": "increased", "value": 12, "text": "12% increased maximum Life" },
+        { "stat": "armour", "mod": "increased", "value": 25, "text": "25% increased Armour" }
+      ] },
+    { "id": "ks_iron_reflexes", "name": "Iron Reflexes", "type": "Keystone", "cluster": "marauder_bastion", "x": -405, "y": 335, "tags": ["ir", "armour", "evasion", "defence"],
+      "stats": [ { "stat": "keystone_iron_reflexes", "mod": "keystone", "value": 1, "text": "Converts all Evasion Rating to Armour" } ] },
+
+    { "id": "mar_phys_1", "name": "Physical Damage", "type": "Minor", "cluster": "marauder_might", "x": -305, "y": 120, "tags": ["physical", "melee"],
+      "stats": [ { "stat": "physical_damage", "mod": "increased", "value": 12, "text": "12% increased Physical Damage" } ] },
+    { "id": "mar_melee_1", "name": "Melee Damage", "type": "Minor", "cluster": "marauder_might", "x": -345, "y": 75, "tags": ["melee", "attack"],
+      "stats": [ { "stat": "melee_damage", "mod": "increased", "value": 12, "text": "12% increased Melee Damage" } ] },
+    { "id": "mar_phys_2", "name": "Physical Damage", "type": "Minor", "cluster": "marauder_might", "x": -370, "y": 140, "tags": ["physical", "melee"],
+      "stats": [ { "stat": "physical_damage", "mod": "increased", "value": 12, "text": "12% increased Physical Damage" } ] },
+    { "id": "mar_notable_might", "name": "Brutal Fervour", "type": "Notable", "cluster": "marauder_might", "x": -405, "y": 85, "tags": ["physical", "melee", "attack"],
+      "stats": [
+        { "stat": "physical_damage", "mod": "increased", "value": 20, "text": "20% increased Physical Damage" },
+        { "stat": "melee_damage", "mod": "increased", "value": 12, "text": "12% increased Melee Damage" }
+      ] },
+
+    { "id": "ran_evasion_1", "name": "Evasion", "type": "Minor", "cluster": "ranger_wind", "x": 320, "y": 205, "tags": ["evasion", "defence"],
+      "stats": [ { "stat": "evasion", "mod": "increased", "value": 15, "text": "15% increased Evasion Rating" } ] },
+    { "id": "ran_proj_1", "name": "Projectile Damage", "type": "Minor", "cluster": "ranger_wind", "x": 290, "y": 255, "tags": ["projectile", "bow"],
+      "stats": [ { "stat": "projectile_damage", "mod": "increased", "value": 10, "text": "10% increased Projectile Damage" } ] },
+    { "id": "ran_evasion_2", "name": "Evasion", "type": "Minor", "cluster": "ranger_wind", "x": 365, "y": 250, "tags": ["evasion", "defence"],
+      "stats": [ { "stat": "evasion", "mod": "increased", "value": 15, "text": "15% increased Evasion Rating" } ] },
+    { "id": "ran_notable_wind", "name": "Windrunner", "type": "Notable", "cluster": "ranger_wind", "x": 345, "y": 300, "tags": ["evasion", "projectile", "defence"],
+      "stats": [
+        { "stat": "evasion", "mod": "increased", "value": 25, "text": "25% increased Evasion Rating" },
+        { "stat": "projectile_damage", "mod": "increased", "value": 15, "text": "15% increased Projectile Damage" }
+      ] },
+    { "id": "ks_point_blank", "name": "Point Blank", "type": "Keystone", "cluster": "ranger_wind", "x": 405, "y": 335, "tags": ["projectile", "bow"],
+      "stats": [ { "stat": "keystone_point_blank", "mod": "keystone", "value": 1, "text": "Projectile Attack Hits deal up to 30% more Damage to nearby targets, and up to 30% less Damage to distant targets" } ] },
+
+    { "id": "ran_speed_1", "name": "Attack Speed", "type": "Minor", "cluster": "ranger_hunter", "x": 305, "y": 120, "tags": ["attack", "speed"],
+      "stats": [ { "stat": "attack_speed", "mod": "increased", "value": 6, "text": "6% increased Attack Speed" } ] },
+    { "id": "ran_proj_2", "name": "Projectile Damage", "type": "Minor", "cluster": "ranger_hunter", "x": 345, "y": 75, "tags": ["projectile", "bow"],
+      "stats": [ { "stat": "projectile_damage", "mod": "increased", "value": 10, "text": "10% increased Projectile Damage" } ] },
+    { "id": "ran_speed_2", "name": "Attack Speed", "type": "Minor", "cluster": "ranger_hunter", "x": 370, "y": 140, "tags": ["attack", "speed"],
+      "stats": [ { "stat": "attack_speed", "mod": "increased", "value": 6, "text": "6% increased Attack Speed" } ] },
+    { "id": "ran_notable_hunter", "name": "Hunter's Precision", "type": "Notable", "cluster": "ranger_hunter", "x": 405, "y": 85, "tags": ["attack", "projectile", "speed"],
+      "stats": [
+        { "stat": "attack_speed", "mod": "increased", "value": 10, "text": "10% increased Attack Speed" },
+        { "stat": "projectile_damage", "mod": "increased", "value": 20, "text": "20% increased Projectile Damage" }
+      ] }
+  ],
+  "connections": [
+    ["start_witch", "witch_spell_1"], ["witch_spell_1", "witch_spell_2"], ["witch_spell_1", "witch_es_1"],
+    ["witch_spell_2", "witch_notable_arcane"], ["witch_es_1", "witch_notable_arcane"], ["witch_notable_arcane", "ks_chaos_inoculation"],
+
+    ["start_witch", "witch_fire_1"], ["witch_fire_1", "witch_fire_2"], ["witch_fire_1", "witch_burn_1"],
+    ["witch_fire_2", "witch_notable_pyro"], ["witch_burn_1", "witch_notable_pyro"], ["witch_notable_pyro", "ks_avatar_of_fire"],
+
+    ["start_witch", "bulwark_res_1"], ["witch_spell_1", "bulwark_res_1"], ["bulwark_res_1", "bulwark_res_2"],
+    ["bulwark_res_2", "bulwark_res_3"], ["bulwark_res_3", "bulwark_notable"], ["bulwark_notable", "bulwark_res_4"],
+    ["bulwark_res_4", "start_marauder"], ["bulwark_res_4", "mar_phys_1"],
+
+    ["start_witch", "veil_crit_1"], ["witch_fire_1", "veil_crit_1"], ["veil_crit_1", "veil_chaos_1"],
+    ["veil_chaos_1", "veil_crit_2"], ["veil_crit_2", "veil_notable"], ["veil_notable", "veil_chaos_2"],
+    ["veil_chaos_2", "start_ranger"], ["veil_chaos_2", "ran_speed_1"],
+
+    ["start_witch", "nexus_w_1"], ["nexus_w_1", "bulwark_res_1"], ["nexus_w_1", "veil_crit_1"],
+    ["nexus_w_1", "nexus_w_2"], ["nexus_w_2", "nexus_core"],
+    ["nexus_core", "nexus_m_2"], ["nexus_m_2", "nexus_m_1"], ["nexus_m_1", "start_marauder"],
+    ["nexus_m_1", "bulwark_res_4"], ["nexus_m_1", "arena_life_1"],
+    ["nexus_core", "nexus_r_2"], ["nexus_r_2", "nexus_r_1"], ["nexus_r_1", "start_ranger"],
+    ["nexus_r_1", "veil_chaos_2"], ["nexus_r_1", "arena_life_2"],
+    ["nexus_core", "ks_mind_over_matter"],
+
+    ["start_marauder", "arena_life_1"], ["arena_life_1", "mar_armour_1"], ["arena_life_1", "arena_attack_1"],
+    ["arena_attack_1", "arena_notable"], ["arena_notable", "arena_attack_2"], ["arena_attack_2", "arena_life_2"],
+    ["arena_life_2", "start_ranger"], ["arena_life_2", "ran_proj_1"], ["arena_notable", "ks_resolute_technique"],
+
+    ["start_marauder", "mar_life_1"], ["mar_life_1", "mar_armour_1"], ["mar_life_1", "mar_life_2"],
+    ["mar_armour_1", "mar_notable_bastion"], ["mar_life_2", "mar_notable_bastion"], ["mar_notable_bastion", "ks_iron_reflexes"],
+
+    ["start_marauder", "mar_phys_1"], ["mar_phys_1", "mar_melee_1"], ["mar_phys_1", "mar_phys_2"],
+    ["mar_melee_1", "mar_notable_might"], ["mar_phys_2", "mar_notable_might"],
+
+    ["start_ranger", "ran_evasion_1"], ["ran_evasion_1", "ran_proj_1"], ["ran_evasion_1", "ran_evasion_2"],
+    ["ran_proj_1", "ran_notable_wind"], ["ran_evasion_2", "ran_notable_wind"], ["ran_notable_wind", "ks_point_blank"],
+
+    ["start_ranger", "ran_speed_1"], ["ran_speed_1", "ran_proj_2"], ["ran_speed_1", "ran_speed_2"],
+    ["ran_proj_2", "ran_notable_hunter"], ["ran_speed_2", "ran_notable_hunter"]
+  ]
+}

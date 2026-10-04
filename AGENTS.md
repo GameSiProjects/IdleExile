@@ -183,7 +183,7 @@ dotnet build
 | **Mini-Window 2D Battle Viewport UI** | Complete (Tasks 2.1 - 2.8) | `scenes/BattleViewport.tscn`, `src/UI/BattleViewport.cs`, `src/UI/Components/` |
 | **Dynamic Window Controller (reference/windows)** | Complete | `src/UI/DesktopWindow.cs`, `src/UI/WindowController.cs` |
 | **Boss Room Chamber & Arena Lock (Task 2.8)** | Complete | `src/UI/Components/ArenaCamera.cs`, `src/UI/Components/Arena2D.cs` |
-| **Passive Skill Tree Graph** | Planned | `data/passive_tree.json`, `src/Core/Models/` |
+| **Passive Skill Tree Graph (Task 5.1)** | Complete | `data/passive_tree.json`, `src/Core/Models/PassiveTreeDefinition.cs`, `src/Core/State/PassiveTreeState.cs`, `scenes/PassiveTreeView.tscn`, `src/UI/Components/PassiveTreeView.cs` |
 
 ---
 

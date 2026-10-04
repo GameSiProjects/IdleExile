@@ -21,6 +21,7 @@ public class DatabaseLoader
     public Dictionary<string, GemDefinition> Gems { get; private set; } = new();
     public Dictionary<string, MapDefinition> Maps { get; private set; } = new();
     public List<MapModifierDefinition> MapModifiers { get; private set; } = new();
+    public PassiveTreeDefinition? PassiveTree { get; private set; }
 
     public void LoadAll()
     {
@@ -30,8 +31,9 @@ public class DatabaseLoader
         LoadAccessoryBases();
         LoadGems();
         LoadMaps();
+        LoadPassiveTree();
         ValidateWeaponBases();
-        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps.");
+        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps, PassiveTree: {PassiveTree?.Nodes.Count ?? 0} nodes.");
     }
 
     private void LoadAffixes()
@@ -114,6 +116,33 @@ public class DatabaseLoader
 
         var list = JsonSerializer.Deserialize<List<AccessoryBaseDefinition>>(json, JsonOptions);
         AccessoryBases = list?.ToDictionary(a => a.Id) ?? new();
+    }
+
+    private void LoadPassiveTree()
+    {
+        string json = FileAccess.GetFileAsString("res://data/passive_tree.json");
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            GD.PrintErr("[DatabaseLoader] Could not read res://data/passive_tree.json");
+            return;
+        }
+
+        try
+        {
+            PassiveTree = PassiveTreeDefinition.Parse(json);
+            var validationIssues = PassiveTree.Validate();
+            if (validationIssues.Count > 0)
+            {
+                foreach (var issue in validationIssues)
+                {
+                    GD.PrintErr($"[DatabaseLoader] PassiveTree validation issue: {issue}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"[DatabaseLoader] Failed to parse res://data/passive_tree.json: {ex.Message}");
+        }
     }
 
     private void ValidateWeaponBases()

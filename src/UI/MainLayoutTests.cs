@@ -30,6 +30,7 @@ public static class MainLayoutTests
             TestActionButtonAndCandidateDrawerLayout(existingMain);
             TestGemViewIntegration(existingMain);
             TestAtlasViewIntegration(existingMain);
+            TestPassiveTreeViewIntegration(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -54,6 +55,7 @@ public static class MainLayoutTests
             TestActionButtonAndCandidateDrawerLayout(main);
             TestGemViewIntegration(main);
             TestAtlasViewIntegration(main);
+            TestPassiveTreeViewIntegration(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -875,6 +877,118 @@ public static class MainLayoutTests
         queueClearBtn.EmitSignal(Button.SignalName.Pressed);
         AssertEqual(0, atlasView.QueueManager?.Count, "Queue count must be 0 after clicking Clear");
         AssertTrue(queueTitle.Text.Contains("0/10"), $"QueueTitleLabel must update to 0/10 after clear, was '{queueTitle.Text}'");
+
+        // Switch back to Gear tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
+    }
+
+    private static void TestPassiveTreeViewIntegration(Main main)
+    {
+        GD.Print("[Tests] Verifying Task 5.1: PassiveTreeView node hierarchy, search filter, pan/zoom, auto-pathing, and respec...");
+
+        var passiveTreeView = main.PassiveTreeView;
+        AssertNotNull(passiveTreeView, "PassiveTreeView must be instantiated in Main.tscn");
+
+        // 1. Verify Node Hierarchy
+        var searchInput = passiveTreeView.GetNodeOrNull<LineEdit>("%SearchInput");
+        AssertNotNull(searchInput, "SearchInput must exist in PassiveTreeView");
+
+        var pointsBadge = passiveTreeView.GetNodeOrNull<Label>("%PointsBadgeLabel");
+        AssertNotNull(pointsBadge, "PointsBadgeLabel must exist in PassiveTreeView");
+
+        var zoomInBtn = passiveTreeView.GetNodeOrNull<Button>("%ZoomInBtn");
+        var zoomOutBtn = passiveTreeView.GetNodeOrNull<Button>("%ZoomOutBtn");
+        var resetViewBtn = passiveTreeView.GetNodeOrNull<Button>("%ResetViewBtn");
+        var toggleStatsBtn = passiveTreeView.GetNodeOrNull<Button>("%ToggleStatsBtn");
+        var respecBtn = passiveTreeView.GetNodeOrNull<Button>("%RespecBtn");
+
+        AssertNotNull(zoomInBtn, "ZoomInBtn must exist");
+        AssertNotNull(zoomOutBtn, "ZoomOutBtn must exist");
+        AssertNotNull(resetViewBtn, "ResetViewBtn must exist");
+        AssertNotNull(toggleStatsBtn, "ToggleStatsBtn must exist");
+        AssertNotNull(respecBtn, "RespecBtn must exist");
+
+        var canvas = passiveTreeView.Canvas;
+        AssertNotNull(canvas, "PassiveTreeCanvas must exist in PassiveTreeView");
+
+        var nodeNameLabel = passiveTreeView.GetNodeOrNull<Label>("%NodeNameLabel");
+        AssertNotNull(nodeNameLabel, "NodeNameLabel must exist");
+
+        var nodeTypeBadge = passiveTreeView.GetNodeOrNull<Label>("%NodeTypeBadge");
+        AssertNotNull(nodeTypeBadge, "NodeTypeBadge must exist");
+
+        var nodeActionBtn = passiveTreeView.GetNodeOrNull<Button>("%NodeActionBtn");
+        AssertNotNull(nodeActionBtn, "NodeActionBtn must exist in NodeInspectorPanel");
+
+        var statsDrawer = passiveTreeView.GetNodeOrNull<PanelContainer>("%StatsSummaryDrawer");
+        AssertNotNull(statsDrawer, "StatsSummaryDrawer must exist");
+
+        // 2. Tab Navigation to Passives
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Passives);
+        AssertTrue(passiveTreeView.Visible, "PassiveTreeView must be visible on Passives tab");
+        AssertTrue(main.BattleViewport?.Visible ?? false, "BattleViewport must remain persistent and visible on Passives tab");
+        AssertFalse(main.EquipmentView?.Visible ?? false, "EquipmentView must be hidden on Passives tab");
+        AssertFalse(main.MapDeviceMargin?.Visible ?? false, "MapDeviceMargin must be hidden on Passives tab");
+
+        // 3. Search Filter & Highlighting
+        passiveTreeView.SetSearchQuery("Life");
+        AssertEqual("Life", passiveTreeView.CurrentSearchQuery, "CurrentSearchQuery mismatch");
+        var matchCountLabel = passiveTreeView.GetNodeOrNull<Label>("%MatchCountLabel");
+        AssertNotNull(matchCountLabel, "MatchCountLabel must exist");
+        AssertTrue(matchCountLabel.Text.Contains("matches") || matchCountLabel.Text.Contains("kết quả"),
+            $"MatchCountLabel should show match count, was '{matchCountLabel.Text}'");
+
+        passiveTreeView.SetSearchQuery("Resist");
+        AssertTrue(!string.IsNullOrEmpty(matchCountLabel.Text), "Searching for 'Resist' should show matches");
+
+        passiveTreeView.ClearSearch();
+        AssertEqual(string.Empty, passiveTreeView.CurrentSearchQuery, "Search query should be cleared");
+        AssertEqual(string.Empty, matchCountLabel.Text, "MatchCountLabel should be empty when search cleared");
+
+        // 4. Node Selection and Inspector
+        var treeState = passiveTreeView.TreeState;
+        AssertNotNull(treeState, "TreeState must be initialized in PassiveTreeView");
+
+        // Select Marauder start or Witch start
+        treeState.SetStartingClass("start_witch");
+        treeState.SetCharacterLevel(5); // 4 points
+
+        passiveTreeView.SelectNodeById("witch_spell_1");
+        AssertEqual("Spell Damage", nodeNameLabel.Text, "NodeNameLabel should show 'Spell Damage'");
+        AssertTrue(nodeTypeBadge.Text.Contains("MINOR"), "NodeTypeBadge should show MINOR");
+        AssertTrue(nodeActionBtn.Text.Contains("ALLOCATE"), $"Action button should show ALLOCATE, was '{nodeActionBtn.Text}'");
+        AssertFalse(nodeActionBtn.Disabled, "Action button should be enabled for adjacent node");
+
+        // Allocate node via UI
+        passiveTreeView.AllocateSelectedNode();
+        AssertTrue(treeState.IsAllocated("witch_spell_1"), "witch_spell_1 must now be allocated");
+        AssertTrue(nodeActionBtn.Text.Contains("REFUND") || nodeActionBtn.Text.Contains("ALLOCATED"),
+            $"Action button should update after allocation, was '{nodeActionBtn.Text}'");
+
+        // 5. Auto-Pathing
+        passiveTreeView.SelectNodeById("witch_notable_arcane");
+        AssertTrue(nodeActionBtn.Text.Contains("PATH") || nodeActionBtn.Text.Contains("ALLOCATE"),
+            $"Action button for notable should offer PATH TO NODE, was '{nodeActionBtn.Text}'");
+
+        passiveTreeView.AutoPathToSelectedNode();
+        AssertTrue(treeState.IsAllocated("witch_notable_arcane"), "witch_notable_arcane must be allocated via auto-pathing");
+
+        // 6. Stats Summary Drawer
+        passiveTreeView.SetStatsSummaryVisible(true);
+        AssertTrue(statsDrawer.Visible, "StatsSummaryDrawer must be visible when toggled on");
+
+        var statsListVBox = passiveTreeView.GetNodeOrNull<VBoxContainer>("%StatsListVBox");
+        AssertNotNull(statsListVBox, "StatsListVBox must exist");
+        AssertTrue(statsListVBox.GetChildCount() > 0, "StatsListVBox must contain passive stat lines");
+
+        passiveTreeView.SetStatsSummaryVisible(false);
+        AssertFalse(statsDrawer.Visible, "StatsSummaryDrawer must be hidden when closed");
+
+        // 7. Respec Button
+        respecBtn.EmitSignal(Button.SignalName.Pressed);
+        AssertEqual(0, treeState.SpentPoints, "All allocated points should be refunded after respec");
+        AssertFalse(treeState.IsAllocated("witch_spell_1"), "witch_spell_1 should be unallocated after respec");
+        AssertEqual(4, treeState.AvailablePoints, "All 4 points must be available after respec");
 
         // Switch back to Gear tab
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);

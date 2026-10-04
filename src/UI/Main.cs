@@ -20,6 +20,7 @@ public partial class Main : Control
     private AtlasView? _atlasView;
     private EquipmentView? _equipmentView;
     private GemView? _gemView;
+    private PassiveTreeView? _passiveTreeView;
     private Button? _gearNavButton;
     private Button? _resizeModeButton;
     private Button? _screenCycleButton;
@@ -57,6 +58,7 @@ public partial class Main : Control
     public EquipmentView? EquipmentView => _equipmentView;
     public GemView? GemView => _gemView;
     public AtlasView? AtlasView => _atlasView;
+    public PassiveTreeView? PassiveTreeView => _passiveTreeView;
     public Control? MapDeviceMargin => _mapDeviceMargin;
     public Button? ResizeModeButton => _resizeModeButton;
 
@@ -90,6 +92,7 @@ public partial class Main : Control
         _atlasView = GetNodeOrNull<AtlasView>("%AtlasView");
         _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
         _gemView = GetNodeOrNull<GemView>("%GemView");
+        _passiveTreeView = GetNodeOrNull<PassiveTreeView>("%PassiveTreeView");
         _emergencyPortalButton = GetNodeOrNull<Button>("%EmergencyPortalButton");
         _subTabBarContainer = GetNodeOrNull<Control>("%SubTabBarContainer");
         _tabWorkspaceContainer = GetNodeOrNull<Control>("%TabWorkspaceContainer");
@@ -175,9 +178,21 @@ public partial class Main : Control
         // 4. Load JSON Database
         Db.LoadAll();
 
-        // 4b. Initialize GemView and AtlasView with database and state
+        // 4b. Initialize GemView, AtlasView, and PassiveTreeView with database and state
         _gemView?.Initialize(Loadout, Db, Player);
         _atlasView?.Initialize(Db, Player, MapQueue, Ftue);
+        _passiveTreeView?.Initialize(Player, Db);
+
+        if (_passiveTreeView?.TreeState != null)
+        {
+            _passiveTreeView.TreeState.OnTreeChanged += () =>
+            {
+                if (Engine != null && _passiveTreeView.TreeState != null)
+                {
+                    Engine.PassiveStats = _passiveTreeView.TreeState.BuildAggregatedOffensiveBucket();
+                }
+            };
+        }
 
         MapQueue.OnCountdownTick += seconds =>
         {
@@ -265,6 +280,7 @@ public partial class Main : Control
             Loadout.PrimarySkill.SetActiveGem(starterGem);
             _gemView?.RefreshView();
         }
+        _passiveTreeView?.SetStartingClassByAttribute(archetype.PrimaryAttribute);
 
         // 3. Update Status and Telemetry
         if (_charInfoLabel != null)
@@ -374,6 +390,10 @@ public partial class Main : Control
         _battleViewport?.BindPlayer(Player, Loadout);
 
         Engine = new CombatEngine(Player, Loadout, dropCoordinator: DropCoordinator);
+        if (_passiveTreeView?.TreeState != null)
+        {
+            Engine.PassiveStats = _passiveTreeView.TreeState.BuildAggregatedOffensiveBucket();
+        }
 
         Engine.OnWaveSpawned += wave =>
         {
@@ -771,13 +791,22 @@ public partial class Main : Control
             }
         }
 
+        if (_passiveTreeView != null)
+        {
+            _passiveTreeView.Visible = (tab == WorkspaceTab.Passives);
+            if (tab == WorkspaceTab.Passives)
+            {
+                _passiveTreeView.RefreshView();
+            }
+        }
+
         // Persistent Combat Viewport: NEVER hide BattleViewport!
         if (_battleViewport != null)
         {
             _battleViewport.Visible = true;
         }
 
-        if (tab != WorkspaceTab.Gear && tab != WorkspaceTab.Atlas && tab != WorkspaceTab.Skills && _statusLabel != null)
+        if (tab != WorkspaceTab.Gear && tab != WorkspaceTab.Atlas && tab != WorkspaceTab.Skills && tab != WorkspaceTab.Passives && _statusLabel != null)
         {
             _statusLabel.Text = $"{tab} Tab coming in upcoming phase!";
         }
@@ -906,6 +935,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.EquipmentSystemTests.RunAll();
         IdleExile.Core.Tests.GemSystemTests.RunAll();
         IdleExile.Core.Tests.AtlasSystemTests.RunAll();
+        IdleExile.Core.Tests.PassiveTreeSystemTests.RunAll();
         IdleExile.UI.MainLayoutTests.RunAll(mainInstance);
         GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }
