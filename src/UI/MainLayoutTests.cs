@@ -34,6 +34,7 @@ public static class MainLayoutTests
             TestStashViewIntegration(existingMain);
             TestTabTransitionMicroAnimations(existingMain);
             TestEdgeGlowAlerts(existingMain);
+            TestInWindowShortcuts(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -62,6 +63,7 @@ public static class MainLayoutTests
             TestStashViewIntegration(main);
             TestTabTransitionMicroAnimations(main);
             TestEdgeGlowAlerts(main);
+            TestInWindowShortcuts(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -1284,6 +1286,129 @@ public static class MainLayoutTests
         AssertEqual(0, treeState.AvailablePoints, "Reset to Level 1 should restore 0 available points");
         AssertFalse(glowAlert.IsPassiveTabGlowActive, "Passive Tab Glow must be deactivated after resetting points");
         AssertEqual("🌳 Tree", tabPassivesBtn.Text, "Tab button text must be restored to '🌳 Tree'");
+    }
+
+    /// <summary>
+    /// Verifies Task 6.3: In-Window Hotkeys / Shortcuts (No OS-level hooks).
+    /// Tests Space (Emergency Portal), I/G (Gear), P (Passives), M (Atlas), S (Stash),
+    /// K (Skills), Tab/F11 (Expand/Shrink), and Escape (Dismiss overlays / collapse window).
+    /// </summary>
+    private static void TestInWindowShortcuts(Main main)
+    {
+        GD.Print("[Tests] Testing Task 6.3: In-Window Hotkeys / Shortcuts...");
+
+        var windowController = main.WindowController;
+
+        // 1. Test Key.Space: Emergency Portal
+        bool handledSpace = main.HandleInWindowShortcut(Key.Space);
+        AssertTrue(handledSpace, "Space key must be handled by In-Window Shortcut dispatcher");
+        var statusLabel = main.GetNodeOrNull<Label>("%StatusLabel");
+        AssertNotNull(statusLabel, "StatusLabel must exist");
+        AssertTrue(statusLabel.Text.Contains("Safely retreated") || statusLabel.Text.Contains("Crucible Online"),
+            $"Space shortcut must trigger Emergency Portal. Status was: '{statusLabel.Text}'");
+
+        // 2. Start in Compact Mode
+        windowController.ShrinkWindow(keepBottom: true);
+        AssertFalse(windowController.IsExpanded, "Window must start in Compact Mode for shortcut tests");
+
+        // 3. Test Key.I and Key.G: Gear & Inventory Tab
+        // 3a. Press Key.I in Compact mode -> auto-expands to Gear
+        bool handledI = main.HandleInWindowShortcut(Key.I);
+        AssertTrue(handledI, "Key.I must be handled");
+        AssertEqual(Main.WorkspaceTab.Gear, main.ActiveTab, "Key.I must set ActiveTab to Gear");
+        AssertTrue(windowController.IsExpanded, "Key.I must auto-expand window to full height");
+
+        // 3b. Press Key.I again while already on Gear and expanded -> PoE-style toggle collapses to Compact
+        bool handledIToggle = main.HandleInWindowShortcut(Key.I);
+        AssertTrue(handledIToggle, "Key.I toggle must be handled");
+        AssertFalse(windowController.IsExpanded, "Key.I when already on Gear should toggle window back to Compact");
+
+        // 3c. Press Key.G in Compact mode -> auto-expands to Gear
+        bool handledG = main.HandleInWindowShortcut(Key.G);
+        AssertTrue(handledG, "Key.G must be handled");
+        AssertEqual(Main.WorkspaceTab.Gear, main.ActiveTab, "Key.G must set ActiveTab to Gear");
+        AssertTrue(windowController.IsExpanded, "Key.G must auto-expand window to full height");
+
+        // 4. Test Key.P: Passive Skill Tree Tab
+        // 4a. While expanded on Gear, press Key.P -> switches to Passives, stays expanded
+        bool handledP = main.HandleInWindowShortcut(Key.P);
+        AssertTrue(handledP, "Key.P must be handled");
+        AssertEqual(Main.WorkspaceTab.Passives, main.ActiveTab, "Key.P must switch ActiveTab to Passives");
+        AssertTrue(windowController.IsExpanded, "Key.P should maintain expanded window state when switching tabs");
+
+        // 4b. Press Key.P again -> toggles back to Compact
+        bool handledPToggle = main.HandleInWindowShortcut(Key.P);
+        AssertTrue(handledPToggle, "Key.P toggle must be handled");
+        AssertFalse(windowController.IsExpanded, "Key.P when already on Passives should toggle window back to Compact");
+
+        // 5. Test Key.M: Map Device / Atlas Tab
+        bool handledM = main.HandleInWindowShortcut(Key.M);
+        AssertTrue(handledM, "Key.M must be handled");
+        AssertEqual(Main.WorkspaceTab.Atlas, main.ActiveTab, "Key.M must switch ActiveTab to Atlas");
+        AssertTrue(windowController.IsExpanded, "Key.M must auto-expand window to display Atlas");
+
+        // 6. Test Key.S: Affinity Stash Tab
+        bool handledS = main.HandleInWindowShortcut(Key.S);
+        AssertTrue(handledS, "Key.S must be handled");
+        AssertEqual(Main.WorkspaceTab.Stash, main.ActiveTab, "Key.S must switch ActiveTab to Stash");
+        AssertTrue(windowController.IsExpanded, "Key.S must keep window expanded to display Stash");
+
+        // 7. Test Key.K: Skills & Gems Tab
+        bool handledK = main.HandleInWindowShortcut(Key.K);
+        AssertTrue(handledK, "Key.K must be handled");
+        AssertEqual(Main.WorkspaceTab.Skills, main.ActiveTab, "Key.K must switch ActiveTab to Skills");
+        AssertTrue(windowController.IsExpanded, "Key.K must keep window expanded to display Skills");
+
+        // 8. Test Key.Tab and Key.F11: Quick Window Mode Switch
+        // 8a. Currently expanded, press Key.Tab -> collapses to Compact
+        bool handledTab = main.HandleInWindowShortcut(Key.Tab);
+        AssertTrue(handledTab, "Key.Tab must be handled");
+        AssertFalse(windowController.IsExpanded, "Key.Tab must collapse expanded window to Compact");
+
+        // 8b. Currently compact, press Key.Tab -> expands to full height
+        bool handledTab2 = main.HandleInWindowShortcut(Key.Tab);
+        AssertTrue(handledTab2, "Key.Tab must be handled");
+        AssertTrue(windowController.IsExpanded, "Key.Tab must expand compact window to Expanded mode");
+
+        // 8c. Test Key.F11: collapses and expands
+        bool handledF11 = main.HandleInWindowShortcut(Key.F11);
+        AssertTrue(handledF11, "Key.F11 must be handled");
+        AssertFalse(windowController.IsExpanded, "Key.F11 must collapse window to Compact");
+        bool handledF11_2 = main.HandleInWindowShortcut(Key.F11);
+        AssertTrue(handledF11_2, "Key.F11 must be handled");
+        AssertTrue(windowController.IsExpanded, "Key.F11 must expand window to Expanded mode");
+
+        // 9. Test Key.Escape Hierarchy
+        // 9a. Test Escape dismissing Equipment Help Overlay
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
+        main.EquipmentView?.SetHelpOverlayVisible(true);
+        AssertTrue(main.EquipmentView?.IsHelpOverlayVisible == true, "Equipment help overlay should be visible");
+        bool handledEscOverlay = main.HandleInWindowShortcut(Key.Escape);
+        AssertTrue(handledEscOverlay, "Escape must be handled");
+        AssertFalse(main.EquipmentView?.IsHelpOverlayVisible == true, "Escape must close Equipment help overlay");
+        AssertTrue(windowController.IsExpanded, "Closing an overlay with Escape should NOT collapse the window yet");
+
+        // 9b. Test Escape dismissing Passive Tree Stats Drawer
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Passives, animated: false);
+        main.PassiveTreeView?.SetStatsSummaryVisible(true);
+        AssertTrue(main.PassiveTreeView?.IsStatsSummaryVisible == true, "Stats summary drawer should be visible");
+        bool handledEscDrawer = main.HandleInWindowShortcut(Key.Escape);
+        AssertTrue(handledEscDrawer, "Escape must be handled");
+        AssertFalse(main.PassiveTreeView?.IsStatsSummaryVisible == true, "Escape must close stats summary drawer");
+        AssertTrue(windowController.IsExpanded, "Closing a stats drawer with Escape should NOT collapse the window yet");
+
+        // 9c. Test Escape when no overlays are open -> collapses window to Compact Mode
+        bool handledEscCollapse = main.HandleInWindowShortcut(Key.Escape);
+        AssertTrue(handledEscCollapse, "Escape must be handled when expanded");
+        AssertFalse(windowController.IsExpanded, "Escape must collapse window to Compact Mode when no modal/drawer is open");
+
+        // 10. Test unhandled keys (e.g. Key.X, Key.Z)
+        bool handledUnknown = main.HandleInWindowShortcut(Key.X);
+        AssertFalse(handledUnknown, "Unmapped keys (like Key.X) must return false");
+
+        // Reset to clean state
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
+        GD.Print("[Tests] Task 6.3: In-Window Hotkeys / Shortcuts PASSED!");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

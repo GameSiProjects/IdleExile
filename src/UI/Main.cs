@@ -1060,23 +1060,144 @@ public partial class Main : Control
         _edgeGlowAlert?.TriggerTier1Alert(dropName);
     }
 
-    public override void _UnhandledInput(InputEvent @event)
+    /// <summary>
+    /// Intercepts unhandled keyboard events when the game window is focused (Task 6.3).
+    /// Strictly adheres to the "Zero System-Wide OS Hooking" policy (no Win32 RegisterHotKey).
+    /// </summary>
+    public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            if (keyEvent.Keycode == Key.Space)
+            if (HandleInWindowShortcut(keyEvent.Keycode))
             {
-                OnEmergencyPortalTriggered();
-                GetViewport().SetInputAsHandled();
+                GetViewport()?.SetInputAsHandled();
             }
-#if DEBUG
-            else if (keyEvent.Keycode == Key.F12)
-            {
-                ToggleDiagnosticModal();
-                GetViewport().SetInputAsHandled();
-            }
-#endif
         }
+    }
+
+    /// <summary>
+    /// Dispatches in-window keyboard shortcuts (Task 6.3).
+    /// Returns true if the shortcut was recognized and handled; otherwise false.
+    /// </summary>
+    public bool HandleInWindowShortcut(Key keycode)
+    {
+        // Safety guard: Do not intercept shortcut keys if the player is actively typing into a text field
+        var focusOwner = GetViewport()?.GuiGetFocusOwner();
+        if (focusOwner is LineEdit or TextEdit)
+        {
+            if (keycode == Key.Escape)
+            {
+                focusOwner.ReleaseFocus();
+                return true;
+            }
+            return false;
+        }
+
+        switch (keycode)
+        {
+            // Emergency Escape Portal
+            case Key.Space:
+                OnEmergencyPortalTriggered();
+                return true;
+
+            // Gear & Inventory Tab (Supports both standard PoE 'I' and 'G')
+            case Key.I:
+            case Key.G:
+                ToggleOrSwitchWorkspaceTab(WorkspaceTab.Gear);
+                return true;
+
+            // Passive Skill Tree Tab
+            case Key.P:
+                ToggleOrSwitchWorkspaceTab(WorkspaceTab.Passives);
+                return true;
+
+            // Crucible / Map Device / Atlas Tab
+            case Key.M:
+                ToggleOrSwitchWorkspaceTab(WorkspaceTab.Atlas);
+                return true;
+
+            // Affinity Stash Tab
+            case Key.S:
+                ToggleOrSwitchWorkspaceTab(WorkspaceTab.Stash);
+                return true;
+
+            // Skills & Gems Tab (PoE / ARPG standard 'K')
+            case Key.K:
+                ToggleOrSwitchWorkspaceTab(WorkspaceTab.Skills);
+                return true;
+
+            // Resolution Mode Toggle (Compact ↔ Expanded)
+            case Key.Tab:
+            case Key.F11:
+                _windowController.ToggleExpand(keepBottom: true);
+                return true;
+
+            // Escape: Dismiss overlays / modal drawers first, or collapse to Compact Mode
+            case Key.Escape:
+                return HandleEscapeShortcut();
+
+#if DEBUG
+            case Key.F12:
+                ToggleDiagnosticModal();
+                return true;
+#endif
+
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// PoE-style tab navigation: switches to the target tab, or collapses window to Compact mode
+    /// if the target tab is already active and the window is expanded.
+    /// If currently in Compact mode, auto-expands upward to display the target tab.
+    /// </summary>
+    public void ToggleOrSwitchWorkspaceTab(WorkspaceTab tab)
+    {
+        if (_windowController.IsExpanded && _activeTab == tab)
+        {
+            _windowController.ShrinkWindow(keepBottom: true);
+        }
+        else
+        {
+            SwitchWorkspaceTab(tab);
+        }
+    }
+
+    /// <summary>
+    /// Handles the Escape key: dismisses active modals/overlays first,
+    /// or collapses the window back to Compact Mode if currently expanded.
+    /// </summary>
+    public bool HandleEscapeShortcut()
+    {
+#if DEBUG
+        if (_diagnosticModal != null && IsInstanceValid(_diagnosticModal))
+        {
+            _diagnosticModal.Close();
+            _diagnosticModal = null;
+            return true;
+        }
+#endif
+
+        if (_equipmentView != null && _equipmentView.IsHelpOverlayVisible)
+        {
+            _equipmentView.SetHelpOverlayVisible(false);
+            return true;
+        }
+
+        if (_passiveTreeView != null && _passiveTreeView.IsStatsSummaryVisible)
+        {
+            _passiveTreeView.SetStatsSummaryVisible(false);
+            return true;
+        }
+
+        if (_windowController.IsExpanded)
+        {
+            _windowController.ShrinkWindow(keepBottom: true);
+            return true;
+        }
+
+        return false;
     }
 
 #if DEBUG

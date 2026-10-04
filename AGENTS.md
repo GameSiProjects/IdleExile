@@ -132,6 +132,10 @@ IdleExile/
   * In Godot scene files (`scenes/*.tscn`), labels can use either direct English text matching translation keys or explicit translation IDs.
 * **Core Separation:** `src/Core/` must NOT depend on Godot translation APIs. All core records, error strings, and data definitions must be clean, idiomatic English.
 
+### 4.6. In-Window Shortcut Policy (Zero System-Wide OS Hooking)
+* **Local Input Only:** All keyboard shortcuts (e.g. `Space` Emergency Portal, `I`/`G` Gear, `P` Passives, `M` Map Device, `S` Stash, `Tab`/`F11` Window Mode Toggle, `Esc`) MUST only be handled locally when the window is focused via Godot's `_UnhandledKeyInput`.
+* **Zero System-Wide OS Hooking:** Never register OS-level global hooks (such as Win32 `RegisterHotKey`). This eliminates shortcut collisions with IDEs, terminals, and user work tools, prevents false positive antivirus flags, and strictly preserves the "Zero APM, 100% Theorycrafting" companion philosophy.
+
 ---
 
 ## 5. Development & Build Commands
@@ -186,6 +190,8 @@ dotnet build
 | **Passive Skill Tree Graph (Task 5.1)** | Complete | `data/passive_tree.json`, `src/Core/Models/PassiveTreeDefinition.cs`, `src/Core/State/PassiveTreeState.cs`, `scenes/PassiveTreeView.tscn`, `src/UI/Components/PassiveTreeView.cs` |
 | **Affinity Stash View (Task 5.2)** | Complete | `data/currencies.json`, `data/fossils.json`, `src/Core/State/AffinityStashState.cs`, `scenes/StashView.tscn`, `src/UI/Components/StashView.cs` |
 | **Tab Micro-Animations (Task 6.1)** | Complete | `scenes/Main.tscn`, `src/UI/Main.cs`, `src/UI/MainLayoutTests.cs` |
+| **Edge Glow Alerts & Ting Sound (Task 6.2)** | Complete | `src/UI/Components/EdgeGlowAlert.cs`, `src/UI/Components/DropSoundSynthesizer.cs`, `src/UI/MainLayoutTests.cs` |
+| **In-Window Shortcuts (Task 6.3)** | Complete | `src/UI/Main.cs`, `src/UI/MainLayoutTests.cs`, `localization/translations.csv` |
 
 ---
 

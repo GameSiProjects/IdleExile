@@ -278,6 +278,16 @@ public partial class EquipmentView : Control
         }
     }
 
+    public bool IsHelpOverlayVisible => _helpOverlay?.Visible ?? false;
+
+    public void SetHelpOverlayVisible(bool visible)
+    {
+        if (_helpOverlay != null)
+        {
+            _helpOverlay.Visible = visible;
+        }
+    }
+
     /// <summary>
     /// Toggles the Sticky Drawer affix list between full smooth-scroll mode and T1/T2 summary mode.
     /// </summary>

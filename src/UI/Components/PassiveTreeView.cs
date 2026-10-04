@@ -509,6 +509,8 @@ public partial class PassiveTreeView : Control
     //  Stats Summary Overlay Drawer
     // ─────────────────────────────────────────────
 
+    public bool IsStatsSummaryVisible => _statsSummaryDrawer?.Visible ?? false;
+
     public void ToggleStatsSummary()
     {
         if (_statsSummaryDrawer == null) return;

@@ -208,12 +208,20 @@ Khi thu nhỏ, khu vực `Interactive Tab Content` tự động ẩn, cửa sổ
   - Tự động tắt phát sáng tab khi người chơi chuyển sang Tab Passive Tree hoặc đã phân bổ hết điểm.
   - Kích hoạt nhịp chớp kép sôi nổi (`TriggerLevelUpBurst()`) trên Tab Tree ngay khoảnh khắc thăng cấp.
   - Vượt qua 100% các bài kiểm thử tự động `EdgeGlowAlertTests` và `TestEdgeGlowAlerts` trong `MainLayoutTests`.
-- [ ] **Task 6.3: Phím Tắt Tiện Lợi (Global Hotkeys)**
-  - `Space`: Kích hoạt Emergency Portal tẩu thoát ngay lập tức.
-  - `G`: Mở nhanh Tab Gear.
-  - `M`: Mở nhanh Tab Map Device / Atlas.
-  - `P`: Mở nhanh Tab Passive Tree.
-  - `F11`: Chuyển đổi nhanh Compact Mode $\leftrightarrow$ Expanded Mode.
+- [x] **Task 6.3: Phím Tắt Tiện Lợi Trong Cửa Sổ Ứng Dụng (In-Window Hotkeys / Shortcuts)**
+  - **Quyết định thiết kế (Design Decision):** Tuyệt đối **KHÔNG áp dụng System-wide Global Hotkeys (OS-level Hook)** nhằm tránh xung đột với các phím tắt hệ thống, IDE hoặc phần mềm làm việc khác khi game chạy ngầm/chạy song song. Giữ vững triết lý Zero-APM và bảo đảm tính bảo mật, ổn định tuyệt đối của desktop companion.
+  - Phím tắt chỉ được xử lý khi cửa sổ Idle Exile đang được focus (`_UnhandledKeyInput`):
+    - `Space`: Kích hoạt Emergency Portal tẩu thoát ngay lập tức về Hideout.
+    - `I` / `G`: Mở nhanh Tab Gear & Inventory (hỗ trợ cả chuẩn phím PoE `I` và `G`, có cơ chế toggle đóng mở chuẩn PoE).
+    - `P`: Mở nhanh Tab Passive Skill Tree (hỗ trợ toggle).
+    - `M`: Mở nhanh Tab Crucible / Map Device.
+    - `S`: Mở nhanh Tab Affinity Stash.
+    - `K`: Mở nhanh Tab Gem & Skill Links.
+    - `Tab` / `F11`: Chuyển đổi nhanh giữa Compact Mode ($440 \times 380\text{px}$) $\leftrightarrow$ Expanded Mode ($440 \times 780\text{px}$).
+    - `Esc`: Đóng các tooltip / popup / drawer mở rộng trước, hoặc thu gọn cửa sổ về Compact Mode nếu đang ở Expanded Mode.
+    - Tự động bỏ qua phím tắt khi người chơi đang gõ trong ô nhập liệu văn bản (`LineEdit` / `TextEdit`), nhấn `Esc` để giải phóng tiêu điểm (Unfocus).
+  - Cập nhật hiển thị phím tắt trực quan trên Tooltips của thanh điều hướng (`translations.csv` & `scenes/Main.tscn`).
+  - Vượt qua 100% các bài kiểm thử tự động `TestInWindowShortcuts` trong `MainLayoutTests`.
 
 ---
 

@@ -232,6 +232,22 @@ Node C# gắn vào Scene Tree cung cấp các Signals và API trực quan:
 * `MoveToNextScreen()`
 * Hỗ trợ kéo thả cửa sổ tự do không viền (`HandleInput`).
 
+### 5.5. Quy Chuẩn Xử Lý Phím Tắt (In-Window Shortcuts Only — Zero OS Hooking)
+* **Quy Tắc Kiến Trúc & Quyền Riêng Tư:**
+  * Toàn bộ phím tắt điều hướng và tương tác chỉ được tiếp nhận và xử lý khi cửa sổ game đang có focus (In-Window Focus) thông qua Godot `_UnhandledKeyInput(InputEvent @event)`.
+  * **Tuyệt đối KHÔNG đăng ký System-wide Global Hotkeys (OS-level hooks như Win32 `RegisterHotKey`)**:
+    * Không chiếm dụng tổ hợp phím của các phần mềm làm việc khác (Visual Studio, VS Code, Browser, công cụ đồ họa).
+    * Giữ tiến trình Desktop Companion sạch sẽ, không kích hoạt cảnh báo sai từ các phần mềm diệt virus (Antivirus / Heuristics), tiêu thụ 0% tài nguyên CPU khi cửa sổ mất focus.
+    * Tuân thủ triết lý cốt lõi: *"Zero APM, 100% Theorycrafting"* — phím tắt chỉ đóng vai trò tiện ích điều hướng tab và xem đồ, không phục vụ micro-actions trong combat.
+* **Danh Mục Phím Tắt Tiêu Chuẩn (In-Window):**
+  * `Space`: Kích hoạt Emergency Portal tẩu thoát an toàn về Hideout.
+  * `I` / `G`: Mở nhanh Tab Trang bị (Gear & Inventory).
+  * `P`: Mở nhanh Tab Cây Kỹ Năng Nội Tại (Passive Tree).
+  * `M`: Mở nhanh Tab Thiết Bị Bản Đồ (Crucible / Atlas Map Device).
+  * `S`: Mở nhanh Tab Rương Chuyên Dụng (Affinity Stash).
+  * `Tab` / `F11`: Chuyển đổi nhanh giữa Compact Mode (`440x380`) và Expanded Mode (`440x780`).
+  * `Esc`: Đóng các modal / tooltip mở rộng, hoặc thu gọn cửa sổ về Compact Mode nếu đang mở Expanded Mode.
+
 ---
 
 ## 6. Xử Lý Offline Progress Theo Tỉ Lệ & Record (Rate-Based Estimation O(1))
