@@ -39,8 +39,11 @@ public partial class ArenaCamera : Node2D
     /// <summary>Target world-space focal coordinate that the camera is interpolating toward.</summary>
     public Vector2 TargetPosition { get; set; } = Arena2D.CenterPosition;
 
-    /// <summary>Look-ahead offset applied in forward marching direction (+X) during corridor travel.</summary>
-    public Vector2 LookAheadOffset { get; set; } = new(24f, 0f);
+    /// <summary>
+    /// Look-ahead offset applied in forward marching direction (+X) during corridor travel (Task 2.6 & Prompt 4).
+    /// Anchors the Exile character with a generous forward buffer (400-450px) to spot approaching monster packs in advance.
+    /// </summary>
+    public Vector2 LookAheadOffset { get; set; } = new(80f, 0f);
 
     /// <summary>Lerp smoothing coefficient when following the Exile along the corridor.</summary>
     public float FollowLerpSpeed { get; set; } = 8.0f;
@@ -156,17 +159,21 @@ public partial class ArenaCamera : Node2D
 
     /// <summary>
     /// Projects a 2D world space coordinate into 2D viewport screen coordinates relative to the camera focal point.
+    /// Defaults to Arena2D.CenterPosition (320f, 86f) if viewportCenter is not provided.
     /// </summary>
-    public Vector2 WorldToScreen(Vector2 worldPos, Vector2 viewportCenter)
+    public Vector2 WorldToScreen(Vector2 worldPos, Vector2? viewportCenter = null)
     {
-        return viewportCenter + (worldPos - CurrentPosition);
+        Vector2 center = viewportCenter ?? Arena2D.CenterPosition;
+        return center + (worldPos - CurrentPosition);
     }
 
     /// <summary>
     /// Unprojects a 2D screen coordinate back to world coordinates.
+    /// Defaults to Arena2D.CenterPosition (320f, 86f) if viewportCenter is not provided.
     /// </summary>
-    public Vector2 ScreenToWorld(Vector2 screenPos, Vector2 viewportCenter)
+    public Vector2 ScreenToWorld(Vector2 screenPos, Vector2? viewportCenter = null)
     {
-        return CurrentPosition + (screenPos - viewportCenter);
+        Vector2 center = viewportCenter ?? Arena2D.CenterPosition;
+        return CurrentPosition + (screenPos - center);
     }
 }

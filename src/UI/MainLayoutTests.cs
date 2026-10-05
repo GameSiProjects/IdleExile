@@ -35,6 +35,7 @@ public static class MainLayoutTests
             TestTabTransitionMicroAnimations(existingMain);
             TestEdgeGlowAlerts(existingMain);
             TestInWindowShortcuts(existingMain);
+            TestCameraLookAheadAndTransformations(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -64,6 +65,7 @@ public static class MainLayoutTests
             TestTabTransitionMicroAnimations(main);
             TestEdgeGlowAlerts(main);
             TestInWindowShortcuts(main);
+            TestCameraLookAheadAndTransformations(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -1420,6 +1422,85 @@ public static class MainLayoutTests
         // Reset to clean state
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
         GD.Print("[Tests] Task 6.3: In-Window Hotkeys / Shortcuts PASSED!");
+    }
+
+    private static void TestCameraLookAheadAndTransformations(Main main)
+    {
+        GD.Print("[Tests] Verifying Prompt 4: Camera Look-Ahead (+80px), BossArenaLock lerp, and 640px dimensions...");
+
+        // 1. Verify 640px Corridor Dimensions
+        AssertEqual(640f, Arena2D.ArenaWidth, "Arena2D.ArenaWidth must be 640px");
+        AssertEqual(172f, Arena2D.ArenaHeight, "Arena2D.ArenaHeight must be 172px");
+        AssertEqual(new Vector2(320f, 86f), Arena2D.CenterPosition, "Arena2D.CenterPosition must be (320, 86)");
+        AssertEqual(640f, ExileMovementController.DefaultCorridorWidth, "ExileMovementController.DefaultCorridorWidth must be 640px");
+        AssertEqual(260f, ExileMovementController.DefaultPerceptionRange, "Perception range must remain 260px");
+        AssertEqual(320f, ExileMovementController.DefaultCenterX, "DefaultCenterX must be 320px");
+        AssertEqual(600f, ExileMovementController.MaxCorridorX, "MaxCorridorX must be 600px");
+
+        // 2. Verify Camera LookAheadOffset configuration
+        var camera = new ArenaCamera();
+        camera.Reset(new Vector2(40f, 104f));
+        AssertEqual(new Vector2(80f, 0f), camera.LookAheadOffset, "LookAheadOffset must default to (80, 0)");
+        AssertEqual(new Vector2(120f, 104f), camera.TargetPosition, "TargetPosition should be initialPos (40, 104) + LookAhead (80, 0)");
+
+        // 3. Verify Bidirectional Coordinate Transformations (WorldToScreen <-> ScreenToWorld)
+        var worldPt = new Vector2(450f, 110f);
+        var screenPt = camera.WorldToScreen(worldPt, Arena2D.CenterPosition);
+        var backPt = camera.ScreenToWorld(screenPt, Arena2D.CenterPosition);
+        if (MathF.Abs(worldPt.X - backPt.X) > 0.001f || MathF.Abs(worldPt.Y - backPt.Y) > 0.001f)
+        {
+            throw new Exception($"Bidirectional transformation failed: Started at {worldPt}, roundtrip resulted in {backPt}");
+        }
+
+        // Test default viewportCenter overload
+        var defaultScreenPt = camera.WorldToScreen(worldPt);
+        AssertEqual(screenPt, defaultScreenPt, "WorldToScreen with omitted viewportCenter should default to Arena2D.CenterPosition");
+        var defaultBackPt = camera.ScreenToWorld(defaultScreenPt);
+        AssertEqual(worldPt, defaultBackPt, "ScreenToWorld with omitted viewportCenter should default to Arena2D.CenterPosition");
+
+        // 4. Verify BossArenaLock mode and Lerp to center (X = 320px)
+        Vector2 bossCenterWorld = new(2232f, 86f);
+        camera.SetArenaLock(bossCenterWorld);
+        AssertEqual(ArenaCameraMode.BossArenaLock, camera.Mode, "Mode should be BossArenaLock");
+        AssertEqual(bossCenterWorld, camera.TargetPosition, "Camera target should snap to Boss Arena center");
+
+        // Step camera updates to simulate convergence
+        for (int i = 0; i < 30; i++)
+        {
+            camera.Update(0.05f, new Vector2(2040f, 104f), bossCenterWorld, shouldLockToArena: true);
+        }
+        AssertTrue(camera.IsLocked, "Camera should complete lerp and lock firmly to boss center");
+        Vector2 lockedScreen = camera.WorldToScreen(bossCenterWorld);
+        if (MathF.Abs(lockedScreen.X - 320f) > 1.5f || MathF.Abs(lockedScreen.Y - 86f) > 1.5f)
+        {
+            throw new Exception($"Boss arena center must project to screen center (320, 86), but was {lockedScreen}");
+        }
+
+        // 5. Verify CorridorFollow steady state projection
+        camera.ReleaseLock();
+        AssertEqual(ArenaCameraMode.CorridorFollow, camera.Mode, "Releasing lock must restore CorridorFollow mode");
+        Vector2 exileWorld = new(300f, 104f);
+        camera.TargetPosition = exileWorld + camera.LookAheadOffset;
+        camera.CurrentPosition = camera.TargetPosition; // Simulate steady state
+        Vector2 exileScreen = camera.WorldToScreen(exileWorld);
+        float expectedScreenX = Arena2D.CenterPosition.X - camera.LookAheadOffset.X; // 320 - 80 = 240px
+        if (MathF.Abs(exileScreen.X - expectedScreenX) > 0.01f)
+        {
+            throw new Exception($"Steady-state Exile screen X should be {expectedScreenX}, but was {exileScreen.X}");
+        }
+        float forwardBuffer = Arena2D.ArenaWidth - exileScreen.X;
+        AssertTrue(forwardBuffer >= 400f, $"Forward buffer ({forwardBuffer}px) must be >= 400px, giving generous preview of incoming packs");
+
+        // 6. Verify BattleViewport integrated arena camera
+        if (main.BattleViewport?.Arena != null)
+        {
+            var arenaCam = main.BattleViewport.Arena.Camera;
+            AssertNotNull(arenaCam, "BattleViewport.Arena.Camera must exist");
+            AssertEqual(new Vector2(80f, 0f), arenaCam.LookAheadOffset, "Live arena camera LookAheadOffset must be (80, 0)");
+        }
+
+        camera.Free();
+        GD.Print("[Tests] Prompt 4: Camera Look-Ahead (+80px) & 640px dimensions PASSED!");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

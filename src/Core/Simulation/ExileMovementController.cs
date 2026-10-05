@@ -60,8 +60,8 @@ public sealed class ExileMovementController
     /// <summary>Default linear corridor length L_map in world pixels (~1800 - 3000px, Docs 07.A).</summary>
     public const float DefaultMapLength = 2400.0f;
 
-    /// <summary>Default corridor width W_corridor in world pixels (440px).</summary>
-    public const float DefaultCorridorWidth = 440.0f;
+    /// <summary>Default corridor width W_corridor in world pixels (640px, Prompt 4).</summary>
+    public const float DefaultCorridorWidth = 640.0f;
 
     /// <summary>Default corridor height in world pixels (208px).</summary>
     public const float DefaultCorridorHeight = 208.0f;
@@ -82,10 +82,10 @@ public sealed class ExileMovementController
     public const float MinCorridorX = 40.0f;
 
     /// <summary>Playable lane maximum X boundary inside vertical corridor (legacy).</summary>
-    public const float MaxCorridorX = 400.0f;
+    public const float MaxCorridorX = 600.0f;
 
     /// <summary>Corridor central lane X coordinate (legacy).</summary>
-    public const float DefaultCenterX = 220.0f;
+    public const float DefaultCenterX = 320.0f;
 
     /// <summary>Fog Gate / Sealed Threshold progress ratio along corridor length (85%).</summary>
     public const float FogGateRatio = 0.85f;

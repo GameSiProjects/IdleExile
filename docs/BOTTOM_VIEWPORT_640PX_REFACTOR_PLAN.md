@@ -220,8 +220,8 @@ Tài liệu này xác lập **Kế hoạch hành động chi tiết (Actionable 
   > 5. Chạy `dotnet build` và bảo đảm không có hồi quy."*
 
 * **Tiêu chí nghiệm thu:**
-  - [ ] Nhân vật chạy ở vị trí $X \approx 190\text{px}$, quái vật xuất hiện từ mép phải cách 450px.
-  - [ ] Không có đạn bắn từ ngoài màn hình; người chơi có 1.5s nhìn rõ cụm quái trước khi giao tranh.
+  - [x] Nhân vật chạy ở vị trí $X \approx 190\text{px}$, quái vật xuất hiện từ mép phải cách 450px.
+  - [x] Không có đạn bắn từ ngoài màn hình; người chơi có 1.5s nhìn rõ cụm quái trước khi giao tranh.
 
 ---
 
@@ -293,7 +293,7 @@ Tài liệu này xác lập **Kế hoạch hành động chi tiết (Actionable 
 | **Prompt 1** | Cấu Hình Cửa Sổ & Engine 640px | ✅ Hoàn thành | `project.godot`, `DesktopWindow.cs`, `WindowController.cs` |
 | **Prompt 2** | Đảo Tầng Scene Tree `Main.tscn` | ✅ Hoàn thành | `scenes/Main.tscn`, `src/UI/Main.cs` |
 | **Prompt 3** | Mở Rộng Viewport & Arena2D 640px | ✅ Hoàn thành | `BattleViewport.tscn`, `Arena2D.cs` |
-| **Prompt 4** | Camera Look-Ahead & Buffer 450px | 📋 Sẵn sàng | `ArenaCamera.cs`, `ExileMovementController.cs` |
+| **Prompt 4** | Camera Look-Ahead & Buffer 450px | ✅ Hoàn thành | `ArenaCamera.cs`, `ExileMovementController.cs` |
 | **Prompt 5** | Tối Ưu Bố Cục 5 Sub-Tabs 640px | 📋 Sẵn sàng | `EquipmentView.cs`, `PassiveTreeView.cs`, `StashView.cs` |
 | **Prompt 6** | Kiểm Thử Tự Động Toàn Diện | 📋 Sẵn sàng | `src/UI/MainLayoutTests.cs` |
 

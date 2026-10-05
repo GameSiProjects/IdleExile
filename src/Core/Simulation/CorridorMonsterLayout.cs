@@ -42,9 +42,9 @@ public sealed class CorridorMonsterLayout
 
     // Backward compatibility aliases
     public const float MinPlayableX = ExileMovementController.MinCorridorX; // 40f
-    public const float MaxPlayableX = ExileMovementController.MaxCorridorX; // 400f
-    public const float CenterX = ExileMovementController.DefaultCenterX;    // 220f
-    public const float DefaultCorridorWidth = ExileMovementController.DefaultCorridorWidth; // 440f
+    public const float MaxPlayableX = ExileMovementController.MaxCorridorX; // 600f
+    public const float CenterX = ExileMovementController.DefaultCenterX;    // 320f
+    public const float DefaultCorridorWidth = ExileMovementController.DefaultCorridorWidth; // 640f
 
     // ─────────────────────────────────────────────
     //  Properties
