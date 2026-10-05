@@ -1,13 +1,13 @@
 # 07. Thiết Kế Giao Diện Chiến Đấu (Combat Interface & Top-Down Viewport)
 
-Tài liệu này đặc tả chi tiết giao diện chiến đấu (**Combat UI / Viewport**) của **Idle Exile**, định dạng chuẩn cho cửa sổ phụ dạng **Mini-Window Desktop Companion (`440 x 780` px)** phát triển trên **Godot 4 .NET (C#)**.
+Tài liệu này đặc tả chi tiết giao diện chiến đấu (**Combat UI / Viewport**) của **Idle Exile**, định dạng chuẩn cho cửa sổ phụ dạng **Dynamic Desktop Companion (`640 x 320` px Compact đến `640 x 780` px Expanded)** phát triển trên **Godot 4 .NET (C#)**.
 
 > **Quyết Định Thiết Kế Trọng Tâm (Senior Game Design Shift):**  
-> Chuyển đổi toàn diện sang **Góc Nhìn Từ Trên Xuống Dọc Hành Lang Bản Đồ Tuyến Tính (2D Top-Down Linear Corridor & Camera Follow)**:
-> 1. **Bản Đồ Kéo Dài Đơn Hướng (Directional Linear Corridor):** Bản đồ mở rộng theo một hướng trong không gian thế giới thực ($X_{\text{world}}, Y_{\text{world}}$), tái hiện cảm giác dọn map kinh điển (*Strand, Canyon, Promenade*) với chuỗi cụm quái tuần tự và kết thúc bằng Phòng Boss (End-of-Map Boss Room).
-> 2. **Tuyệt Đối Không Áp Dụng Cuộn Sàn (No Fake Parallax/Floor Scrolling):** Mặt sàn, chướng ngại vật, quái vật và đồ rơi đều nằm tại tọa độ thế giới thực. Nhân vật (Exile) **thực sự di chuyển tịnh tiến** trong thế giới game (`Position` thay đổi liên tục).
-> 3. **Camera2D Bám Theo Nhân Vật (Camera Tracking):** Camera2D di chuyển mượt mà bám theo vị trí thực của Exile, duy trì góc quan sát tối ưu (kèm khoảng nhìn trước Look-ahead) để người chơi luôn thấy bầy quái đang chờ phía trước.
-> 4. **Giữ Vững Giá Trị Không Gian 360°:** Dù bản đồ có hướng đi chính (Macro Direction), hành lang vẫn có độ rộng 2D ($W \approx 280 - 440\text{px}$) cho phép bầy quái bao vây, quái cơ động bọc hậu, và phát huy 100% sức mạnh của các kỹ năng 360° (Righteous Fire, Nova, GMP, Cleave).```
+> 1. **Chuẩn Bề Ngang 640px (1/3 Màn Hình Full HD & Windows 11 Snap Assist):** Chiều ngang $640\text{px}$ chiếm chính xác 1/3 chiều rộng màn hình $1920\times 1080$, tương thích hoàn hảo với tính năng Snap 1/3 - 2/3 của Windows 11, để lại $1280\text{px}$ (độ phân giải 720p hoàn chỉnh) cho công việc, IDE và lướt web.
+> 2. **Cố Định Sàn Đấu Ở Đáy Cùng (Bottom-Anchored Persistent Viewport):** Sàn đấu 2D và thanh sinh mệnh Vitometer luôn nằm **cố định 100% tại một vị trí vật lý duy nhất sát mép thanh Windows Taskbar** trong cả Compact Mode và Expanded Mode, triệt tiêu hoàn toàn hiện tượng "nhảy sàn đấu" (Visual Anchor Invariance).
+> 3. **Bản Đồ Hành Lang Ngang Tuyến Tính (2D Horizontal Linear Corridor & Look-Ahead):** Hành lang trải dài theo trục $+X$ ($W = 640\text{px}$, $H = 200\text{px}$). Nhân vật (Exile) di chuyển thực sự trong thế giới.
+> 4. **Trọng Tâm Lệch Trái & Forward Buffer 450px:** Camera ghim Exile tại $X_{\text{screen}} \approx 190\text{px}$ ($30\%$ chiều ngang), tạo khoảng nhìn trước lên tới $450\text{px}$, vượt xa tầm nhận thức quái ($260\text{px}$) và tầm bắn ($180\text{px}$), triệt tiêu hoàn toàn tình trạng quái nhảy bổ vào mặt hay đạn bắn từ ngoài màn hình (Off-screen projectiles).
+> 5. **Ngăn Kéo Menu Nở Lên Phía Trên (Upward Drawer Pattern):** Khi bấm mở các Tab (Gear, Gems, Atlas, Tree, Stash), cửa sổ mở rộng ngược lên phía trên ($keepBottom = true$). Toàn bộ menu hiển thị ở nửa trên màn hình, người chơi vừa nghiên cứu build vừa quan sát nhân vật dọn map mượt mà ở đáy.
 
 ---
 
@@ -22,66 +22,65 @@ Tài liệu này đặc tả chi tiết giao diện chiến đấu (**Combat UI 
   * **Dopamine Drop Beams:** Cột sáng rực rỡ chiếu thẳng từ trên trời xuống đúng tọa độ quái vừa ngã gục trong thế giới kèm âm thanh "Ting!" đanh thép khi rớt đồ hiếm qua Loot Filter (Divine, Exalted, 6-Link).
 * **Low Resource Footprint (Tối ưu tài nguyên cực hạn):**
   * Tận dụng `gl_compatibility` và `LowProcessorUsageMode` của Godot 4.
-  * Tách biệt hoàn toàn giữa `CombatEngine` (tính toán ngầm 30Hz) và Render Viewport (vẽ 2D qua CanvasItem/TileMap nhẹ, hỗ trợ giảm FPS khi minimize).```
+  * Tách biệt hoàn toàn giữa `CombatEngine` (tính toán ngầm 30Hz) và Render Viewport (vẽ 2D qua CanvasItem/TileMap nhẹ, hỗ trợ giảm FPS khi minimize).
 
 ---
 
 ## 2. Bố Cục Không Gian & Phân Tầng Pixel Động (Dynamic Adaptive Layout)
 
-Ứng dụng hỗ trợ chuyển đổi linh hoạt giữa **Chế độ Treo Máy Mini (Compact Mode: 440 x 380 px)** và **Chế độ Nghiên Cứu Đầy Đủ (Expanded Mode: 440 x 780 px)** với thuật toán neo đáy Taskbar (keepBottom = true):
+Ứng dụng hỗ trợ chuyển đổi linh hoạt giữa **Chế độ Treo Máy Mini (Compact Mode: 640 x 320 px)** và **Chế độ Nghiên Cứu Đầy Đủ (Expanded Mode: 640 x 780 px)** với thuật toán neo đáy Taskbar (keepBottom = true):
 
-### 2.1. Wireframe Chế Độ Thu Nhỏ: Compact Mode (440 x 380 px)
-Dành cho người chơi vừa làm việc/chơi game khác vừa treo map:
+### 2.1. Wireframe Chế Độ Thu Nhỏ: Compact Mode (640 x 320 px)
+Cố định sát góc Taskbar, chỉ hiển thị sàn đấu ngang siêu rộng và thanh điều khiển tối thiểu:
 
 ```text
-┌─────────────────────────────────────────────────────────┐  Y: 0
-│ [IE] IDLE EXILE       [Pin] [⤢ Expand] [🖥 Screen] [X]  │  Header: 40px
-├─────────────────────────────────────────────────────────┤  Y: 40
-│ [MAP] T14 Strand Map • Rare (+68% IIQ)   [████░░ 68%] ☠ │  Map Meta: 34px
-├─────────────────────────────────────────────────────────┤  Y: 74
-│                                                         │
-│        [ 2D TOP-DOWN VIEWPORT (Camera2D Following) ]    │
-│   ┌─────────────────────────────────────────────────┐   │
-│   │  [Mob: Skel] ↖           ▲ (Hướng)    [Archer]  │   │  Top-Down Viewport:
-│   │                  *CRIT* 12.4k                   │   │  208px
-│   │         ══►           ▲                         │   │  (Sàn đá, đạn 360°,
-│   │  [Mob] ──►     [ EXILE ]  (360° AURA) ◄── [Mob] │   │   quái vật, Boss Slam
-│   │         (⭕ Red Shrinking Ring 1.4s)             │   │   AoE Telegraph)
-│   └─────────────────────────────────────────────────┘   │
-│   [LOOT TOAST]: ★ Exalted Orb dropped! [Ting!]          │
-├─────────────────────────────────────────────────────────┤  Y: 282
-│ [LIFE / ES]                    [GUARD / FLASKS]  [MANA] │
-│ 3,450 / 3,450 HP               [1][2][3][4][5]   82/820 │  Vitometer: 50px
-├─────────────────────────────────────────────────────────┤  Y: 332
-│ [🌀 EMERGENCY PORTAL (Space)]     DPS: 142.5K | [🛡 Gear]│  Quick Footer: 48px
-└─────────────────────────────────────────────────────────┘  Y: 380
+┌─────────────────────────────────────────────────────────────────┐  Y: 0
+│ [IE] IDLE EXILE  Lv.72 Juggernaut     [Pin] [⤢ Expand] [🖥] [X] │  Compact Header: 32px
+├─────────────────────────────────────────────────────────────────┤  Y: 32
+│ [MAP] T14 Strand Map • Rare (+68% IIQ)   [████████░░░░░░ 68%] ☠ │  Map Meta & Progress: 28px
+│                                                                 │
+│            2D TOP-DOWN COMBAT ARENA (640 x 176 px)              │
+│   ◄── 190px ──► [EXILE] ├──────────────── 450px ──────────────► │  Horizontal Corridor:
+│                        │       *CRIT* 14.8k                     │  176px
+│   [Aura 360°]          │  ══►  ══►  ══►     [Trash] [Rare Boss] │  (Forward buffer 450px)
+│                                                                 │
+│ [LIFE / ES] 3,450 / 3,450 HP        [1][2][3][4][5]   MANA: 820 │  Vitometer: 44px
+├─────────────────────────────────────────────────────────────────┤  Y: 280
+│ [🌀 EMERGENCY PORTAL (Space)]           DPS: 142.5K | [🛡 Gear] │  Quick Footer: 40px
+└─────────────────────────────────────────────────────────────────┘  Y: 320 (Sát Taskbar)
 ```
 
-### 2.2. Wireframe Chế Độ Phóng To: Expanded Mode (440 x 780 px)
-Khi bấm [⤢ Expand] hoặc [🛡 Gear], cửa sổ **tự động nở lên phía trên** (cạnh đáy giữ nguyên sát thanh Taskbar) mở ra toàn bộ khay tương tác:
+### 2.2. Wireframe Chế Độ Phóng To: Expanded Mode (640 x 780 px)
+Khi bấm `[⤢ Expand]`, `[🛡 Gear]`, hoặc phím tắt `I`/`P`/`M`/`S`, cửa sổ **tự động nở lên phía trên**; **Sàn đấu và Vitometer giữ nguyên vị trí cố định dưới đáy**, toàn bộ Tab Workspace mở ra ở nửa trên:
 
 ```text
-┌─────────────────────────────────────────────────────────┐  Y: 0
-│ [IE] IDLE EXILE       [Pin] [⤡ Min] [🖥 Screen] [X]     │  Header: 40px
-├─────────────────────────────────────────────────────────┤  Y: 40
-│ [MAP] T14 Strand Map • Rare (+68% IIQ)   [████░░ 68%] ☠ │  Map Meta: 34px
-├─────────────────────────────────────────────────────────┤  Y: 74
-│        [ 2D TOP-DOWN VIEWPORT (Camera2D Following) ]    │  Top-Down Arena:
-│        (Xem trực tiếp hiệu quả thay đồ trong combat)    │  208px
-├─────────────────────────────────────────────────────────┤  Y: 282
-│ [LIFE / ES]                    [GUARD / FLASKS]  [MANA] │  Vitometer: 50px
-├─────────────────────────────────────────────────────────┤  Y: 332
-│ [ 🛡 GEAR ]  |  [ 💎 GEMS ]  |  [ 🗺 ATLAS ]  |  [ 🌳 ]  │  Sub-Tabs Bar: 36px
-├─────────────────────────────────────────────────────────┤  Y: 368
-│                                                         │
-│                  TAB CONTENT AREA                       │
-│    - Bảng trang bị 10 ô (Doll)                          │
-│    - Smart Tooltip hiển thị Delta (▲ EHP / ▲ DPS)       │  Tab Body: 372px
-│    - Rương đồ (Stash) / Bàn ép hóa thạch (Anvil)        │
-│                                                         │
-├─────────────────────────────────────────────────────────┤  Y: 740
-│ [🌀 EMERGENCY PORTAL (Space)]          DPS: 142.5K      │  Footer: 40px
-└─────────────────────────────────────────────────────────┘  Y: 780
+┌─────────────────────────────────────────────────────────────────┐  Y: 0
+│ [IE] IDLE EXILE  Lv.72 Juggernaut        [Pin] [⤡ Min] [🖥] [X] │  Top Header: 36px
+├─────────────────────────────────────────────────────────────────┤  Y: 36
+│                                                                 │
+│                 INTERACTIVE TAB WORKSPACE                       │
+│                                                                 │
+│   • Tab Gear: Paperdoll 10 ô bên trái (280px) + Stats & Smart   │  Workspace Drawer
+│               Delta Tooltip so sánh trực tiếp bên phải (340px)  │  (Nở lên phía trên):
+│   • Tab Gems: 1 Active Gem + 5 Support Slots hình cánh cung     │  424px
+│   • Tab Atlas: Khay Map Device & Map Queue 10 slots             │
+│   • Tab Passives: Cây nội tại 55+ nodes rộng rãi, bao quát      │
+│   • Tab Stash: 4 ngăn rương chuyên dụng (Currency/Gear/Maps)   │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────┤  Y: 460
+│ [ 🛡 GEAR ]   [ 💎 GEMS ]   [ 🗺 ATLAS ]   [ 🌳 TREE ]   [📦]   │  Sub-Tabs Bar (Bản lề): 36px
+├─────────────────────────────────────────────────────────────────┤  Y: 496
+│ [MAP BANNER] T14 Strand Map • Rare (+68%)   [████████░░ 68%] ☠   │  Map Header: 32px
+│                                                                 │
+│               2D TOP-DOWN COMBAT VIEWPORT (640 x 172 px)        │  PERSISTENT VIEWPORT
+│   ◄── 190px ──► [EXILE] ├──────────────── 450px ──────────────► │  (CỐ ĐỊNH Ở ĐÁY):
+│                        │       *CRIT* 14.8k                     │  172px
+│   [Aura 360°]          │  ══►  ══►  ══►     [Trash] [Rare Boss] │
+│                                                                 │
+│ [LIFE / ES] 3,450 / 3,450 HP        [1][2][3][4][5]   MANA: 820 │  Vitometer: 44px
+├─────────────────────────────────────────────────────────────────┤  Y: 740
+│ [🌀 EMERGENCY PORTAL (Space)]           DPS: 142.5K | Auto-Run  │  Bottom Macro Bar: 40px
+└─────────────────────────────────────────────────────────────────┘  Y: 780 (Sát Taskbar)
 ```
 
 ---
@@ -98,41 +97,41 @@ Khi bấm [⤢ Expand] hoặc [🛡 Gear], cửa sổ **tự động nở lên p
   * 🩸 `No Leech`: Giọt máu gạch chéo cảnh báo build hút máu.
   * Hover chuột để xem danh sách chi tiết toàn bộ Mod của Map kèm `+% IIQ / IIR / Pack Size`.
 * **Thanh Tiến Trình Tuyến Tính (Map Progress Bar):**
-  * Phản ánh trung thực tỉ lệ quãng đường thực tế mà Exile đã vượt qua: $\text{Progress} = \text{Clamp01}(Y_E / L_{\text{boss\_gate}})$.
-  * Đánh dấu vị trí các mốc **League Encounter** trên hành lang và biểu tượng **Cổng Boss (Boss Gate)** ở mốc cuối thanh.```
+  * Phản ánh trung thực tỉ lệ quãng đường thực tế mà Exile đã vượt qua: $\text{Progress} = \text{Clamp01}(X_E / L_{\text{boss\_gate}})$.
+  * Đánh dấu vị trí các mốc **League Encounter** trên hành lang và biểu tượng **Cổng Boss (Boss Gate)** ở mốc cuối thanh.
 
 ---
 
 ### 3.2. Sàn Đấu 2D Top-Down & Hành Lang Bản Đồ Tuyến Tính
 
-#### A. Không Gian Hành Lang Thế Giới & Triệt Tiêu Cuộn Sàn Giả (World-Space Linear Corridor)
+#### A. Không Gian Hành Lang Thế Giới & Bề Ngang 640px (World-Space Linear Corridor)
 * **Góc nhìn:** **2D Top-Down / Angled Bird's-Eye (~60° Tilt)** chuẩn ARPG.
 * **Không gian thế giới thực:**
-  * Bản đồ là một hành lang trải dài theo trục dọc (ví dụ: $Y_{\text{world}} \in [0, L_{\text{map}}]$ với $L_{\text{map}} \approx 1800 - 3000\text{px}$) hoặc trục định hướng, bề rộng hành lang $W_{\text{corridor}} \approx 280 - 440\text{px}$.
+  * Bản đồ là một hành lang trải dài theo trục ngang $+X$ ($X_{\text{world}} \in [0, L_{\text{map}}]$ với $L_{\text{map}} \approx 2400 - 3000\text{px}$), chiều cao hành lang $H_{\text{corridor}} \approx 200\text{px}$, bề rộng khung nhìn $W_{\text{viewport}} = 640\text{px}$.
   * **Tuyệt đối không áp dụng cuộn sàn (No fake floor scrolling / conveyor belt):** Mặt sàn đá cổ, các rãnh tường, vật cản, quái vật và đồ rơi đều được đặt tại **tọa độ thế giới thực ($X_{\text{world}}, Y_{\text{world}}$)**.
 * **Môi trường & Không gian thị giác:**
-  * Mặt sàn gạch đá hầm ngục (`#13161F` và ron viền `#1C202B`) trải dài liên tục.
-  * Viền tối tự nhiên 2 bên vách hành lang (Vignette & Shadow Walls) tạo cảm giác chiều sâu hầm ngục, tăng độ tương phản giúp đọc rõ đạn đạo và vòng cảnh báo.
+  * Mặt sàn gạch đá hầm ngục (`#13161F` và ron viền `#1C202B`) trải dài liên tục từ trái sang phải.
+  * Viền tối tự nhiên 2 bên trần và sàn hành lang (Vignette & Shadow Walls) tạo cảm giác chiều sâu hầm ngục, tăng độ tương phản giúp đọc rõ đạn đạo và vòng cảnh báo.
   * Hiệu ứng tàn tro / đom đóm dạ quang lơ lửng trong không gian thế giới.
 
-#### B. Di Chuyển Thế Giới Thực Của Nhân Vật & Camera2D Tracking
+#### B. Di Chuyển Thế Giới Thực Của Nhân Vật & Camera2D Forward Buffer 450px
 * **Di chuyển thực sự của Nhân vật (Real Character Movement):**
-  * Nhân vật (Exile) thay đổi `Position` thực sự trong Scene 2D, không đứng chôn chân tại một điểm cố định.
-  * Tốc độ di chuyển thực tế (`Movement Speed`) quyết định tốc độ lướt qua các khoảng cách trống giữa các pack quái.
+  * Nhân vật (Exile) thay đổi `Position` thực sự trong Scene 2D theo trục $+X$, không đứng chôn chân tại một điểm cố định.
+  * Vận tốc di chuyển thực tế (`Movement Speed` $\approx 120 - 220\text{ px/s}$) quyết định tốc độ lướt qua các khoảng cách trống giữa các cụm quái.
 * **Máy Trạng Thái Tự Động (Zero-APM Character Controller):**
-  1. **Hành quân (Marching / Advancing):** Khi không có quái vật trong tầm nhận thức, Exile chủ động tiến bước dọc theo hướng hành lang.
+  1. **Hành quân (Marching / Advancing):** Khi không có quái vật trong tầm nhận thức, Exile chủ động tiến bước dọc theo hướng hành lang sang phải.
   2. **Tiếp cận & Giữ khoảng cách (Engaging / Combat Staging):** Khi phát hiện cụm quái phía trước lọt vào tầm đánh hiệu dụng (35px với Melee, 150-180px với Ranged/Spell), Exile dừng lại hoặc xoay quanh cụm để công kích.
   3. **Tiếp tục hành quân:** Khi dọn sạch toàn bộ quái trong cụm, Exile tiếp tục dấn bước tới cụm tiếp theo.
   4. **Bước vào phòng Boss:** Khi chạm mốc cuối hành lang, Exile bước qua cổng sương mù phong ấn.
-* **Hệ Thống Camera2D Bám Theo (Camera Follow System):**
+* **Hệ Thống Camera2D Bám Theo & Forward Buffer:**
   * `Camera2D` gắn thuật toán Smooth Interpolation (Lerp) bám sát vị trí thực của Exile.
-  * Camera có khoảng lệch nhìn trước (**Look-ahead Offset**) theo hướng di chuyển để người chơi luôn nhìn thấy bầy quái đang chờ sẵn phía trước trong khung nhìn $440 \times 208\text{px}$.
+  * Camera áp dụng **Look-ahead Offset lớn ($+80\text{px}$ theo trục $+X$)**, ghim Exile tại $X_{\text{screen}} \approx 190\text{px}$ ($30\%$ chiều ngang).
+  * **Tầm nhìn phía trước đạt $450\text{px}$**, vượt xa `PerceptionRange` ($260\text{px}$). Quái vật luôn xuất hiện trọn vẹn trong tầm mắt người chơi trước $1.4 - 1.8\text{ giây}$ trước khi vào tầm giao chiến.
 * **Xoay Hướng Tự Động 360° (Auto-Facing & Dynamic Aiming Vector):**
   * Nhân vật tự động tính toán vector hướng tới mục tiêu ưu tiên:
     $$\vec{V}_{\text{target}} = \text{TargetWorldPos} - \text{ExileWorldPos}$$
   * Xoay góc mặt mượt mà về phía mục tiêu đang công kích.
   * Khi xuất chiêu (Cast/Attack), Exile có độ giật lùi nhẹ (Micro-Recoil) ngược chiều vector tấn công tạo lực phản hồi thị giác mạnh mẽ.
-
 #### C. Hình Học Kỹ Năng Đa Chiều (360° Skill Geometry)
 Dù hành lang có hướng tiến chính, độ rộng 2D vẫn mở khóa toàn bộ các hình thái kỹ năng trứ danh của *Path of Exile*:
 1. **Radial / Nova (360° Tỏa Tròn):**
@@ -232,44 +231,53 @@ Quái vật không rớt từ trên trời xuống ngẫu nhiên, mà được b
 
 ---
 
-## 5. Cấu Trúc Scene Tree Cho Godot 4 (`BattleViewport.tscn`)
+## 5. Cấu Trúc Scene Tree Cho Godot 4 (`Main.tscn` & `BattleViewport.tscn`)
 
+### 5.1. Cấu Trúc Khung Chính Đảo Tầng (`scenes/Main.tscn`)
 ```
-BattleViewport (Control, custom_minimum_size: Vector2(440, 300))
+Main (Control, custom_minimum_size: Vector2(640, 320))
+└── MainLayout (VBoxContainer)
+    ├── TopHeaderBar (HBoxContainer, 36px - Title, Class/Lv, Resize, Multi-Monitor, Close)
+    │
+    ├── TabWorkspaceContainer (MarginContainer, SizeFlags: Vertical Expand)
+    │   └── [Interactive Views: EquipmentView, GemView, AtlasView, PassiveTreeView, StashView]
+    │       (Hiển thị ở NỬA TRÊN khi ở Expanded Mode; ẩn hoàn toàn khi ở Compact Mode)
+    │
+    ├── SubTabBarContainer (HBoxContainer, 36px - Bản lề đóng/mở & chuyển đổi các Sub-Tabs)
+    │   └── [TabGearBtn, TabSkillsBtn, TabAtlasBtn, TabPassivesBtn, TabStashBtn]
+    │
+    ├── CombatViewportContainer (Control, 248px - Bọc Persistent BattleViewport)
+    │   └── BattleViewport (Control, custom_minimum_size: Vector2(640, 248) - CỐ ĐỊNH Ở ĐÁY)
+    │
+    └── BottomMacroBar (HBoxContainer, 40px - Sát Taskbar: Emergency Portal, DPS, Auto-Run)
+```
+
+### 5.2. Cấu Trúc Viewport Chiến Đấu (`scenes/BattleViewport.tscn`)
+```
+BattleViewport (Control, custom_minimum_size: Vector2(640, 248))
 ├── BackgroundRect (ColorRect - #0D0E12)
 │
-├── MapHeaderContainer (VBoxContainer)
-│   ├── MapInfoHBox (HBoxContainer)
-│   │   ├── TierBadge (TextureRect / Label: "T14")
-│   │   ├── MapNameLabel (Label: "Strand Map")
-│   │   ├── ModIconsContainer (HBoxContainer - Threat Badges)
-│   │   └── QuantityBonusLabel (Label: "IIQ: +72%")
+├── MapHeaderContainer (VBoxContainer, 32px)
+│   ├── MapInfoHBox (HBoxContainer - TierBadge, MapName, Threat Badges, IIQ Bonus)
 │   └── MapProgressBar (ProgressBar - 0% to 100%)
 │
-├── ArenaSubViewportContainer (SubViewportContainer)
-│   └── Arena2D (Node2D - Script: Arena2D.cs)
-│       ├── ArenaCamera2D (Camera2D - Script: ArenaCamera.cs, Smooth Follow ExileNode)
-│       ├── WorldMapCorridor (Node2D - Linear Dungeon Stone Floor & Wall Vistas)
-│       │   ├── AmbientDustLayer (Node2D - Drifting Atmospheric Motes in World Space)
-│       │   ├── BossGateThreshold (Node2D - Fog Gate / Sealed Threshold)
-│       │   └── BossRoomChamber (Node2D - End-of-Map Boss Arena)
-│       ├── MonsterPool (Node2D - Object pooled 2D enemies placed at World Coordinates)
-│       ├── ExileNode (Node2D - True World Movement, 360° Dynamic Aiming, Hood, Staff Tip)
-│       ├── ProjectilePool (Node2D - Pooled 360° combat projectiles in World Space)
+├── ArenaSubViewportContainer (SubViewportContainer, 172px)
+│   └── Arena2D (Node2D - Script: Arena2D.cs, 640 x 172 px)
+│       ├── ArenaCamera2D (Camera2D - Script: ArenaCamera.cs, LookAhead +80px)
+│       ├── WorldMapCorridor (Node2D - Horizontal Dungeon Stone Floor & Vistas)
+│       │   ├── AmbientDustLayer (Node2D)
+│       │   ├── BossGateThreshold (Node2D - Fog Gate at 85%)
+│       │   └── BossRoomChamber (Node2D - Final Arena at 93%)
+│       ├── MonsterPool (Node2D - Object pooled 2D enemies)
+│       ├── ExileNode (Node2D - True World Movement, Auto-Facing, Hood, Staff Tip)
+│       ├── ProjectilePool (Node2D - Pooled 360° combat projectiles)
 │       ├── TelegraphLayer (Node2D - 2D Circular Boss Slam AoE Rings)
-│       ├── DropBeamLayer (Node2D - Shader beams for rare loot at 2D dropped World Positions)
+│       ├── DropBeamLayer (Node2D - Shader beams for rare loot)
 │       └── FloatingCombatTextLayer (Control - Script: FloatingTextManager.cs)
 │
-├── VitometerPanel (PanelContainer)
-│   └── VitometerHBox (HBoxContainer)
-│       ├── HealthVBox (VBoxContainer)
-│       │   ├── LifeAndESOverlayBar (ProgressBar)
-│       │   └── DefensesSummaryLabel ("EHP: 14.2k | Block: 75%")
-│       ├── FlasksContainer (HBoxContainer - 5x FlaskSlot Controls)
-│       └── ManaVBox (VBoxContainer)
-│           ├── ManaReservedOverlayBar (ProgressBar)
-│           └── UnreservedManaLabel ("Mana: 82 / 820")
+├── VitometerPanel (PanelContainer, 44px)
+│   └── VitometerHBox (HBoxContainer - Life/ES Bar, 5x FlaskSlots, Mana/Reservation Bar)
 │
-└── LootToastOverlay (PanelContainer - Animated top banner)
+└── LootToastOverlay (PanelContainer - Animated top toast)
 ```
 

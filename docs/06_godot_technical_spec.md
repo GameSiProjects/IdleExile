@@ -198,22 +198,23 @@ public float CalculateFinalDamage(
 Nhằm đáp ứng linh hoạt giữa **chế độ treo máy rảnh tay (Zero-APM Hands-off Mapping)** và **chế độ nghiên cứu đồ đạc chuyên sâu (Deep Theorycrafting)**, hệ thống cửa sổ của **Idle Exile** được xây dựng theo kiến trúc **Dynamic Resizable Desktop Companion** (tham chiếu từ [reference/windows](file:///e:/Projects/Antigravity/IdleExile/reference/windows/)):
 
 ### 5.1. Các Chế Độ Kích Thước Cửa Sổ (Window Resolution Modes)
-1. **Compact Mode (`440 x 380` px) — Treo Máy Tinh Gọn:**
-   * Chiều cao chỉ 380px, chiếm một góc nhỏ unobtrusive trên desktop (ngay trên thanh Windows Taskbar).
-   * Tập trung hiển thị: Header siêu gọn, thanh tiến trình Map, sàn đấu 2D Top-Down (Arena), thanh máu/mana kép (Vitometer), và nút Emergency Portal.
-2. **Expanded Mode (`440 x 780` px) — Soi Đồ & Theorycrafting:**
-   * Chiều cao 780px dọc chuẩn.
-   * Mở rộng upward hiển thị toàn diện các Sub-Tabs: Bảng trang bị 10 ô (Gear View), Smart Tooltip Delta so sánh chỉ số, Quản lý Gem liên kết (PoE 2 model), Cây nội tại (Passive Tree), Rương đồ (Stash).
-3. **Wide Dual-Column Mode (`800 x 780` px) — Màn Hình Rộng Đa Cột:**
+1. **Compact Mode (`640 x 320` px) — Treo Máy Tinh Gọn (Bottom Viewport):**
+   * Chiếm đúng 1/3 chiều ngang màn hình Full HD ($1920 / 3 = 640\text{px}$), hoàn hảo với tính năng Windows 11 Snap Assist (1/3 game, 2/3 không gian làm việc).
+   * Cố định sàn đấu 2D ở đáy màn hình, sát thanh Taskbar.
+   * Tập trung hiển thị: Combat Viewport ngang siêu rộng ($640 \times 200\text{px}$), Map Progress Header, Vitometer (Máu/ES/Mana), và nút Emergency Portal.
+2. **Expanded Mode (`640 x 780` px) — Ngăn Kéo Theorycrafting Nở Lên Trên:**
+   * Chiều cao 780px dọc chuẩn ($640 \times 780\text{px}$).
+   * **Sàn đấu chiến đấu vẫn cố định bất biến ở dưới đáy**, các bảng Sub-Tabs nở lên phía trên (Drawer Pattern): Bảng trang bị 10 ô (Gear View), Smart Tooltip Delta so sánh chỉ số, Quản lý Gem liên kết (PoE 2 model), Cây nội tại (Passive Tree), Rương đồ (Stash).
+3. **Wide Dual-Column Mode (`960 x 780` px / `1280 x 780` px) — Màn Hình Rộng Đa Cột:**
    * Dành cho màn hình 2K/4K: Cột trái hiển thị Combat Viewport & Map Device, cột phải hiển thị Trang bị & Cây Passive song song.
 4. **Freeform Resizing (Kéo Dãn Tự Do):**
-   * Cho phép người chơi tự do kéo góc cạnh với `MinSize = Vector2I(400, 340)`. Bố cục UI thích ứng tự động qua hệ thống Anchor và Containers của Godot.
+   * Cho phép người chơi tự do kéo góc cạnh với `MinSize = Vector2I(560, 320)`. Bố cục UI thích ứng tự động qua hệ thống Anchor và Containers của Godot.
 
-### 5.2. Thuật Toán Giữ Cố Định Chân Cửa Sổ (`keepBottom = true`)
+### 5.2. Thuật Toán Giữ Cố Định Chân Cửa Sổ & Sàn Đấu Ở Đáy (`keepBottom = true`)
 Khi người chơi chuyển đổi giữa chế độ Compact và Expanded (hoặc khi click mở bảng Gear):
 $$\Delta Y = \text{NewHeight} - \text{CurrentHeight}$$
 $$\text{NewWindowY} = \text{CurrentWindowY} - \Delta Y$$
-* **Nguyên tắc then chốt:** Cửa sổ **nở lên phía trên** và **thu lại xuống phía dưới**. Cạnh đáy của cửa sổ luôn nằm bất biến ngay sát mép thanh Taskbar, không bao giờ bị trượt mất nút bấm hay tụt xuống dưới màn hình!
+* **Nguyên tắc then chốt:** Cửa sổ **nở lên phía trên** và **thu lại xuống phía dưới**. Cạnh đáy của cửa sổ và **toàn bộ khung sàn đấu 2D (Combat Viewport)** luôn nằm cố định bất biến ngay sát mép thanh Taskbar, bảo đảm tính ổn định thị giác tuyệt đối (Visual Anchor Invariance), không bao giờ bị nhảy vị trí trên màn hình!
 
 ### 5.3. Cầu Nối Nền Tảng Windows & DisplayServer (`DesktopWindow.cs`)
 * Tích hợp Win32 API (`user32.dll`, `shell32.dll`) kết hợp Godot `DisplayServer`:
@@ -245,7 +246,7 @@ Node C# gắn vào Scene Tree cung cấp các Signals và API trực quan:
   * `P`: Mở nhanh Tab Cây Kỹ Năng Nội Tại (Passive Tree).
   * `M`: Mở nhanh Tab Thiết Bị Bản Đồ (Crucible / Atlas Map Device).
   * `S`: Mở nhanh Tab Rương Chuyên Dụng (Affinity Stash).
-  * `Tab` / `F11`: Chuyển đổi nhanh giữa Compact Mode (`440x380`) và Expanded Mode (`440x780`).
+  * `Tab` / `F11`: Chuyển đổi nhanh giữa Compact Mode (`640x320`) và Expanded Mode (`640x780`).
   * `Esc`: Đóng các modal / tooltip mở rộng, hoặc thu gọn cửa sổ về Compact Mode nếu đang mở Expanded Mode.
 
 ---

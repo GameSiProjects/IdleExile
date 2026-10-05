@@ -8,7 +8,7 @@ Welcome, Agent! This file outlines the architectural principles, tech stack, con
 
 * **Project Name:** Idle Exile
 * **Genre:** Minimalist 2D Idle/Incremental ARPG inspired by *Path of Exile (PoE)*.
-* **Form Factor:** Dynamic Resizable Desktop Companion (`440 x 380` px Compact Idle to `440 x 780` px Expanded Theorycrafting), docked flush above the taskbar with upward bottom-invariant expansion (`keepBottom = true`).
+* **Form Factor:** Dynamic Resizable Desktop Companion (`640 x 320` px Compact Idle to `640 x 780` px Expanded Theorycrafting), docked flush above the taskbar with fixed bottom-anchored Combat Viewport and upward drawer expansion (`keepBottom = true`).
 * **Core Philosophy:** *"Zero APM, 100% Theorycrafting"* — Player does not micro-manage combat; all depth lies in build construction, socketed support gems, passive tree pathing, and gear crafting.
 
 ### Non-Negotiable Game Design Rules

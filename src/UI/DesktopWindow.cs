@@ -42,7 +42,7 @@ public class DesktopWindow
         _window.Borderless = borderless;
         _window.AlwaysOnTop = alwaysOnTop;
         _window.Unresizable = !resizable;
-        _window.MinSize = new Vector2I(400, 340);
+        _window.MinSize = new Vector2I(560, 320);
         _window.Size = _windowSize;
     }
 

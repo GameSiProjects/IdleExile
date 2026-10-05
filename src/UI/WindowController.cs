@@ -23,9 +23,9 @@ public partial class WindowController : Node
     [Signal]
     public delegate void WindowModeChangedEventHandler(int mode);
 
-    public static readonly Vector2I CompactWindowSize = new(440, 380);
-    public static readonly Vector2I ExpandedWindowSize = new(440, 780);
-    public static readonly Vector2I WideWindowSize = new(800, 780);
+    public static readonly Vector2I CompactWindowSize = new(640, 320);
+    public static readonly Vector2I ExpandedWindowSize = new(640, 780);
+    public static readonly Vector2I WideWindowSize = new(960, 780);
 
     [Export]
     public Vector2I WindowSize { get; set; } = ExpandedWindowSize;
@@ -80,8 +80,8 @@ public partial class WindowController : Node
         var newSize = window.Size;
         if (newSize == WindowSize) return;
 
-        WindowResolutionMode inferredMode = newSize.Y < 580 ? WindowResolutionMode.Compact : WindowResolutionMode.Expanded;
-        if (newSize.X >= 700)
+        WindowResolutionMode inferredMode = newSize.Y < 500 ? WindowResolutionMode.Compact : WindowResolutionMode.Expanded;
+        if (newSize.X >= 800)
         {
             inferredMode = WindowResolutionMode.Wide;
         }
@@ -146,9 +146,9 @@ public partial class WindowController : Node
         try
         {
             WindowSize = newSize;
-            CurrentMode = newSize.Y < 580
+            CurrentMode = newSize.Y < 500
                 ? WindowResolutionMode.Compact
-                : (newSize.X >= 700 ? WindowResolutionMode.Wide : WindowResolutionMode.Expanded);
+                : (newSize.X >= 800 ? WindowResolutionMode.Wide : WindowResolutionMode.Expanded);
             _desktopWindow.SetWindowSize(newSize, keepBottom);
             EmitSignal(SignalName.WindowResized, newSize, IsExpanded);
         }
