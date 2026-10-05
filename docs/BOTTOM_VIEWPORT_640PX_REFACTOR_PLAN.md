@@ -157,9 +157,9 @@ Tài liệu này xác lập **Kế hoạch hành động chi tiết (Actionable 
   > 4. Chạy `dotnet build` và kiểm tra không lỗi."*
 
 * **Tiêu chí nghiệm thu:**
-  - [ ] Sàn đấu nằm ở nửa dưới, các tab nằm ở nửa trên khi mở rộng.
-  - [ ] Thu nhỏ Compact Mode chỉ còn: Header + Sàn đấu + Macro Bar.
-  - [ ] `dotnet build` 0 cảnh báo, 0 lỗi.
+  - [x] Sàn đấu nằm ở nửa dưới, các tab nằm ở nửa trên khi mở rộng.
+  - [x] Thu nhỏ Compact Mode chỉ còn: Header + Sàn đấu + Macro Bar.
+  - [x] `dotnet build` 0 cảnh báo, 0 lỗi.
 
 ---
 
@@ -291,7 +291,7 @@ Tài liệu này xác lập **Kế hoạch hành động chi tiết (Actionable 
 | Prompt | Tên Hạng Mục | Trạng Thái | File Trọng Tâm |
 | :---: | :--- | :---: | :--- |
 | **Prompt 1** | Cấu Hình Cửa Sổ & Engine 640px | ✅ Hoàn thành | `project.godot`, `DesktopWindow.cs`, `WindowController.cs` |
-| **Prompt 2** | Đảo Tầng Scene Tree `Main.tscn` | 📋 Sẵn sàng | `scenes/Main.tscn`, `src/UI/Main.cs` |
+| **Prompt 2** | Đảo Tầng Scene Tree `Main.tscn` | ✅ Hoàn thành | `scenes/Main.tscn`, `src/UI/Main.cs` |
 | **Prompt 3** | Mở Rộng Viewport & Arena2D 640px | 📋 Sẵn sàng | `BattleViewport.tscn`, `Arena2D.cs` |
 | **Prompt 4** | Camera Look-Ahead & Buffer 450px | 📋 Sẵn sàng | `ArenaCamera.cs`, `ExileMovementController.cs` |
 | **Prompt 5** | Tối Ưu Bố Cục 5 Sub-Tabs 640px | 📋 Sẵn sàng | `EquipmentView.cs`, `PassiveTreeView.cs`, `StashView.cs` |

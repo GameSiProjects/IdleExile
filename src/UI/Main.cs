@@ -34,6 +34,7 @@ public partial class Main : Control
     private Button? _tabStashBtn;
     private Control? _subTabBarContainer;
     private Control? _tabWorkspaceContainer;
+    private Control? _combatViewportContainer;
     private Control? _mapDeviceMargin;
     private EdgeGlowAlert? _edgeGlowAlert;
     private readonly WindowController _windowController = new();
@@ -64,6 +65,7 @@ public partial class Main : Control
     public WorkspaceTab ActiveTab => _activeTab;
     public Control? SubTabBarContainer => _subTabBarContainer;
     public Control? TabWorkspaceContainer => _tabWorkspaceContainer;
+    public Control? CombatViewportContainer => _combatViewportContainer;
     public BattleViewport? BattleViewport => _battleViewport;
     public EquipmentView? EquipmentView => _equipmentView;
     public GemView? GemView => _gemView;
@@ -109,6 +111,7 @@ public partial class Main : Control
         _emergencyPortalButton = GetNodeOrNull<Button>("%EmergencyPortalButton");
         _subTabBarContainer = GetNodeOrNull<Control>("%SubTabBarContainer");
         _tabWorkspaceContainer = GetNodeOrNull<Control>("%TabWorkspaceContainer");
+        _combatViewportContainer = GetNodeOrNull<Control>("%CombatViewportContainer");
         _mapDeviceMargin = GetNodeOrNull<Control>("%MapDeviceMargin");
         _edgeGlowAlert = GetNodeOrNull<EdgeGlowAlert>("%EdgeGlowAlert");
 
@@ -928,6 +931,10 @@ public partial class Main : Control
         }
 
         // Persistent Combat Viewport: NEVER hide BattleViewport!
+        if (_combatViewportContainer != null)
+        {
+            _combatViewportContainer.Visible = true;
+        }
         if (_battleViewport != null)
         {
             _battleViewport.Visible = true;
@@ -995,10 +1002,14 @@ public partial class Main : Control
 
         // Compact Mode: hide sub tab bar and workspace
         // Expanded Mode: show sub tab bar and workspace, restoring active tab view
-        if (_subTabBarContainer != null) _subTabBarContainer.Visible = isExpanded;
         if (_tabWorkspaceContainer != null) _tabWorkspaceContainer.Visible = isExpanded;
+        if (_subTabBarContainer != null) _subTabBarContainer.Visible = isExpanded;
 
         // Persistent Combat Viewport is NEVER hidden!
+        if (_combatViewportContainer != null)
+        {
+            _combatViewportContainer.Visible = true;
+        }
         if (_battleViewport != null)
         {
             _battleViewport.Visible = true;

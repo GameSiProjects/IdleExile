@@ -229,18 +229,54 @@ tooltip_text = "Move to Next Monitor (Multi-Monitor)"
 theme_override_font_sizes/font_size = 11
 text = "🖥"
 
-[node name="CombatViewportContainer" type="PanelContainer" parent="MainLayout" unique_id=666968910]
+[node name="TabWorkspaceContainer" type="MarginContainer" parent="MainLayout" unique_id=318750000]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 260)
+clip_contents = true
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
 
-[node name="BattleViewport" parent="MainLayout/CombatViewportContainer" unique_id=925815124 instance=ExtResource("2_battle_viewport")]
+[node name="EquipmentView" parent="MainLayout/TabWorkspaceContainer" unique_id=1579532073 instance=ExtResource("4_equipment_view")]
 unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GemView" parent="MainLayout/TabWorkspaceContainer" unique_id=1175284143 instance=ExtResource("5_gem_view")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MapDeviceMargin" type="MarginContainer" parent="MainLayout/TabWorkspaceContainer" unique_id=504908021]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AtlasView" parent="MainLayout/TabWorkspaceContainer/MapDeviceMargin" unique_id=183036277 instance=ExtResource("6_atlas_view")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PassiveTreeView" parent="MainLayout/TabWorkspaceContainer" unique_id=855274202 instance=ExtResource("7_passive_tree_view")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StashView" parent="MainLayout/TabWorkspaceContainer" unique_id=2086660258 instance=ExtResource("8_stash_view")]
+unique_name_in_owner = true
+visible = false
 layout_mode = 2
 
 [node name="SubTabBarContainer" type="PanelContainer" parent="MainLayout" unique_id=1187136315]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_subtab_bar")
 
@@ -316,49 +352,13 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
 toggle_mode = true
 text = "📦 Stash"
 
-[node name="TabWorkspaceContainer" type="MarginContainer" parent="MainLayout" unique_id=318750000]
+[node name="CombatViewportContainer" type="PanelContainer" parent="MainLayout" unique_id=666968910]
 unique_name_in_owner = true
-clip_contents = true
+custom_minimum_size = Vector2(0, 248)
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 4
 
-[node name="EquipmentView" parent="MainLayout/TabWorkspaceContainer" unique_id=1579532073 instance=ExtResource("4_equipment_view")]
+[node name="BattleViewport" parent="MainLayout/CombatViewportContainer" unique_id=925815124 instance=ExtResource("2_battle_viewport")]
 unique_name_in_owner = true
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="GemView" parent="MainLayout/TabWorkspaceContainer" unique_id=1175284143 instance=ExtResource("5_gem_view")]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="MapDeviceMargin" type="MarginContainer" parent="MainLayout/TabWorkspaceContainer" unique_id=504908021]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="AtlasView" parent="MainLayout/TabWorkspaceContainer/MapDeviceMargin" unique_id=183036277 instance=ExtResource("6_atlas_view")]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="PassiveTreeView" parent="MainLayout/TabWorkspaceContainer" unique_id=855274202 instance=ExtResource("7_passive_tree_view")]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-size_flags_vertical = 3
-
-[node name="StashView" parent="MainLayout/TabWorkspaceContainer" unique_id=2086660258 instance=ExtResource("8_stash_view")]
-unique_name_in_owner = true
-visible = false
 layout_mode = 2
 
 [node name="BottomMacroBar" type="PanelContainer" parent="MainLayout" unique_id=496818663]

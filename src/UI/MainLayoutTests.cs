@@ -95,15 +95,15 @@ public static class MainLayoutTests
         var screenBtn = main.GetNodeOrNull<Button>("%ScreenCycleButton");
         AssertNotNull(screenBtn, "ScreenCycleButton must exist");
 
-        // Tier 2: CombatViewportContainer
-        var combatContainer = main.GetNodeOrNull<Control>("%CombatViewportContainer");
-        AssertNotNull(combatContainer, "Tier 2: CombatViewportContainer must exist");
-        AssertTrue(combatContainer.CustomMinimumSize.Y >= 260f, $"CombatViewportContainer minimum height should be >= 260px, was {combatContainer.CustomMinimumSize.Y}");
+        // Tier 2: TabWorkspaceContainer (Workspace expands above Combat Viewport)
+        var tabWorkspace = main.GetNodeOrNull<Control>("%TabWorkspaceContainer");
+        AssertNotNull(tabWorkspace, "Tier 2: TabWorkspaceContainer must exist");
+        AssertTrue((tabWorkspace.SizeFlagsVertical & Control.SizeFlags.Expand) != 0, "TabWorkspaceContainer must have Vertical Expand size flag");
 
-        var battleViewport = main.GetNodeOrNull<BattleViewport>("%BattleViewport");
-        AssertNotNull(battleViewport, "BattleViewport must exist inside CombatViewportContainer");
+        var equipView = main.GetNodeOrNull<EquipmentView>("%EquipmentView");
+        AssertNotNull(equipView, "EquipmentView must reside in TabWorkspaceContainer");
 
-        // Tier 3: SubTabBarContainer
+        // Tier 3: SubTabBarContainer (Hinge between Workspace and Combat Viewport)
         var subTabBar = main.GetNodeOrNull<Control>("%SubTabBarContainer");
         AssertNotNull(subTabBar, "Tier 3: SubTabBarContainer must exist");
         AssertTrue(subTabBar.CustomMinimumSize.Y >= 34f, $"SubTabBarContainer minimum height should be >= 34px, was {subTabBar.CustomMinimumSize.Y}");
@@ -120,15 +120,15 @@ public static class MainLayoutTests
         AssertNotNull(tabPassives, "TabPassivesBtn must exist");
         AssertNotNull(tabStash, "TabStashBtn must exist");
 
-        // Tier 4: TabWorkspaceContainer
-        var tabWorkspace = main.GetNodeOrNull<Control>("%TabWorkspaceContainer");
-        AssertNotNull(tabWorkspace, "Tier 4: TabWorkspaceContainer must exist");
-        AssertTrue((tabWorkspace.SizeFlagsVertical & Control.SizeFlags.Expand) != 0, "TabWorkspaceContainer must have Vertical Expand size flag");
+        // Tier 4: CombatViewportContainer (Bottom-Anchored Persistent Viewport)
+        var combatContainer = main.GetNodeOrNull<Control>("%CombatViewportContainer");
+        AssertNotNull(combatContainer, "Tier 4: CombatViewportContainer must exist");
+        AssertTrue(combatContainer.CustomMinimumSize.Y >= 240f, $"CombatViewportContainer minimum height should be >= 240px, was {combatContainer.CustomMinimumSize.Y}");
 
-        var equipView = main.GetNodeOrNull<EquipmentView>("%EquipmentView");
-        AssertNotNull(equipView, "EquipmentView must reside in TabWorkspaceContainer");
+        var battleViewport = main.GetNodeOrNull<BattleViewport>("%BattleViewport");
+        AssertNotNull(battleViewport, "BattleViewport must exist inside CombatViewportContainer");
 
-        // Tier 5: BottomMacroBar
+        // Tier 5: BottomMacroBar (Anchored flush to taskbar)
         var macroBar = main.GetNodeOrNull<Control>("%BottomMacroBar");
         AssertNotNull(macroBar, "Tier 5: BottomMacroBar must exist");
         AssertTrue(macroBar.CustomMinimumSize.Y >= 40f, $"BottomMacroBar minimum height should be >= 40px, was {macroBar.CustomMinimumSize.Y}");
@@ -142,6 +142,17 @@ public static class MainLayoutTests
 
         var statsLabel = main.GetNodeOrNull<Label>("%StatsLabel");
         AssertNotNull(statsLabel, "StatsLabel must exist in macro telemetry");
+
+        // Verify exact child hierarchy order in MainLayout: TopHeaderBar -> TabWorkspaceContainer -> SubTabBarContainer -> CombatViewportContainer -> BottomMacroBar
+        var mainLayout = main.GetNodeOrNull<VBoxContainer>("MainLayout");
+        if (mainLayout != null)
+        {
+            AssertTrue(mainLayout.GetChild(0) == header, "MainLayout child 0 must be TopHeaderBar");
+            AssertTrue(mainLayout.GetChild(1) == tabWorkspace, "MainLayout child 1 must be TabWorkspaceContainer");
+            AssertTrue(mainLayout.GetChild(2) == subTabBar, "MainLayout child 2 must be SubTabBarContainer");
+            AssertTrue(mainLayout.GetChild(3) == combatContainer, "MainLayout child 3 must be CombatViewportContainer");
+            AssertTrue(mainLayout.GetChild(4) == macroBar, "MainLayout child 4 must be BottomMacroBar");
+        }
     }
 
     private static void TestPersistentBattleViewport(Main main)
