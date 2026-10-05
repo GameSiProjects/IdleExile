@@ -261,6 +261,7 @@ public partial class StashView : PanelContainer
         var btn = new Button
         {
             CustomMinimumSize = new Vector2(96, 52),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
             ToggleMode = false,
             TooltipText = $"{currency.Name} (Tier {currency.Tier})\nStack: {count:N0} / {currency.MaxStackSize:N0}\n\n{currency.Description}"
         };

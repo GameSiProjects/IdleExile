@@ -140,7 +140,7 @@ content_margin_right = 6.0
 content_margin_bottom = 2.0
 
 [node name="StashView" type="PanelContainer"]
-custom_minimum_size = Vector2(420, 390)
+custom_minimum_size = Vector2(0, 390)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

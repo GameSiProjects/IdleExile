@@ -899,7 +899,7 @@ public partial class AtlasView : Control
     {
         var btn = new Button
         {
-            CustomMinimumSize = new Vector2(36, 32),
+            CustomMinimumSize = new Vector2(50, 36),
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             FocusMode = FocusModeEnum.None,
             ToggleMode = false

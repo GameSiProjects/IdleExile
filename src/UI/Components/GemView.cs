@@ -173,6 +173,11 @@ public partial class GemView : Control
         if (_socketRingCanvas != null)
         {
             _socketRingCanvas.ParentView = this;
+            _socketRingCanvas.Resized += () =>
+            {
+                LayoutSocketsInHub();
+                _socketRingCanvas.QueueRedraw();
+            };
         }
 
         _activeSocketBtn = GetNodeOrNull<Button>("%ActiveGemSocket");
@@ -449,7 +454,7 @@ public partial class GemView : Control
         if (_socketRingCanvas == null) return;
 
         Vector2 canvasSize = _socketRingCanvas.Size;
-        float centerX = canvasSize.X > 0 ? canvasSize.X * 0.5f : 204f;
+        float centerX = canvasSize.X > 0 ? canvasSize.X * 0.5f : 314f;
         float centerY = 116f;
 
         // Active Gem Socket (68 x 68 px, centered at centerX, centerY)
@@ -460,8 +465,8 @@ public partial class GemView : Control
             _activeSocketBtn.Position = new Vector2(centerX - 34f, centerY - 34f);
         }
 
-        // 5 Support Sockets arranged along upper arc (radius 76px, angles -160 to -20)
-        float radius = 76f;
+        // 5 Support Sockets arranged along upper arc (radius 86px, angles -160 to -20)
+        float radius = 86f;
         float startAngle = -160f * (MathF.PI / 180f);
         float endAngle = -20f * (MathF.PI / 180f);
         float step = (endAngle - startAngle) / 4f;
@@ -723,10 +728,10 @@ public partial class GemView : Control
 
         Vector2 activePos = _activeSocketBtn != null
             ? _activeSocketBtn.Position + _activeSocketBtn.Size * 0.5f
-            : new Vector2(204f, 116f);
+            : new Vector2(314f, 116f);
 
         // 1. Celestial Arc connecting support socket cluster
-        float arcRadius = 76f;
+        float arcRadius = 86f;
         float startAngle = -165f * (MathF.PI / 180f);
         float endAngle = -15f * (MathF.PI / 180f);
         Color arcColor = activeGem != null

@@ -324,11 +324,15 @@ text = "✕"
 [node name="TopSectionHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox"]
 custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 6
 
 [node name="DollCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox"]
 custom_minimum_size = Vector2(210, 170)
 layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.85
+size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="DollMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/DollCard"]
@@ -636,6 +640,8 @@ clip_text = true
 custom_minimum_size = Vector2(0, 170)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.15
+size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_card")
 
 [node name="BenchmarkMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard"]
@@ -769,7 +775,7 @@ theme_override_font_sizes/font_size = 8
 text = "INT: 14 (+7 Mana, +2% ES)"
 clip_text = true
 
-[node name="SmartDeltaDrawer" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox"]
+[node name="SmartDeltaDrawer" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox"]
 unique_name_in_owner = true
 clip_contents = true
 custom_minimum_size = Vector2(0, 140)
@@ -777,22 +783,22 @@ layout_mode = 2
 size_flags_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_sticky_drawer")
 
-[node name="DrawerMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer"]
+[node name="DrawerMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer"]
 layout_mode = 2
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 3
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 4
 
-[node name="DrawerVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin"]
+[node name="DrawerVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin"]
 layout_mode = 2
 theme_override_constants/separation = 1
 
-[node name="DrawerHeaderHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
+[node name="DrawerHeaderHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="TooltipTitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
+[node name="TooltipTitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -802,7 +808,7 @@ text = "Astral Plate of the Colossus"
 clip_text = true
 text_overrun_behavior = 3
 
-[node name="DeltaVerdictLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
+[node name="DeltaVerdictLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
@@ -810,7 +816,7 @@ theme_override_font_sizes/font_size = 10
 text = "▲ UPGRADE"
 horizontal_alignment = 2
 
-[node name="TooltipSubtitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
+[node name="TooltipSubtitleLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
@@ -819,30 +825,30 @@ text = "Astral Plate • Rare • ilvl 84 • Level 68"
 clip_text = true
 text_overrun_behavior = 3
 
-[node name="DrawerBodyHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
+[node name="DrawerBodyHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
-[node name="DeltaPreviewCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox"]
+[node name="DeltaPreviewCard" type="PanelContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(150, 0)
+custom_minimum_size = Vector2(125, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_delta_card")
 
-[node name="DeltaMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard"]
+[node name="DeltaMargin" type="MarginContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard"]
 layout_mode = 2
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 2
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 2
 
-[node name="DeltaVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin"]
+[node name="DeltaVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin"]
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 0
 
-[node name="DeltaEhpLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+[node name="DeltaEhpLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
@@ -850,7 +856,7 @@ theme_override_font_sizes/font_size = 14
 text = "▲ +840 EHP"
 clip_text = true
 
-[node name="DeltaEhpDetailLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+[node name="DeltaEhpDetailLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
@@ -858,7 +864,7 @@ theme_override_font_sizes/font_size = 8
 text = "5,240 → 6,080 (+16.0%)"
 clip_text = true
 
-[node name="DeltaDpsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+[node name="DeltaDpsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
@@ -866,7 +872,7 @@ theme_override_font_sizes/font_size = 14
 text = "▲ +12.4% DPS"
 clip_text = true
 
-[node name="DeltaDpsDetailLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+[node name="DeltaDpsDetailLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.62, 0.68, 1)
@@ -874,7 +880,7 @@ theme_override_font_sizes/font_size = 8
 text = "14,280.0 → 16,050.0 (+1,770.0)"
 clip_text = true
 
-[node name="DeltaSummaryLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
+[node name="DeltaSummaryLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/DeltaPreviewCard/DeltaMargin/DeltaVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.78, 0.8, 0.84, 1)
@@ -883,16 +889,16 @@ text = "Res: Fire +45 • Chaos -15"
 clip_text = true
 text_overrun_behavior = 3
 
-[node name="AffixColumnVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox"]
+[node name="AffixColumnVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 1
 
-[node name="AffixHeaderHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox"]
+[node name="AffixHeaderHBox" type="HBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="AffixHeaderLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixHeaderHBox"]
+[node name="AffixHeaderLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixHeaderHBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -901,7 +907,7 @@ theme_override_font_sizes/font_size = 8
 text = "4 MODS • 2P/2S • ★ T1-T2 ×4"
 clip_text = true
 
-[node name="AffixFilterToggle" type="Button" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixHeaderHBox"]
+[node name="AffixFilterToggle" type="Button" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixHeaderHBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(44, 14)
 layout_mode = 2
@@ -917,18 +923,18 @@ theme_override_styles/hover_pressed = SubResource("StyleBoxFlat_filter_toggle_on
 toggle_mode = true
 text = "★ T1/T2"
 
-[node name="AffixScroll" type="ScrollContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox"]
+[node name="AffixScroll" type="ScrollContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="AffixContentVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll"]
+[node name="AffixContentVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 1
 
-[node name="TooltipBaseStatsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
+[node name="TooltipBaseStatsLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.9, 1)
@@ -936,7 +942,7 @@ theme_override_font_sizes/font_size = 8
 text = "Armour: 1,120 (Quality +20%)"
 autowrap_mode = 3
 
-[node name="TooltipImplicitLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
+[node name="TooltipImplicitLabel" type="Label" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.45, 0.75, 1, 1)
@@ -944,7 +950,7 @@ theme_override_font_sizes/font_size = 8
 text = "✦ (Implicit) +12% to all Elemental Resistances"
 autowrap_mode = 3
 
-[node name="TooltipAffixListVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
+[node name="TooltipAffixListVBox" type="VBoxContainer" parent="MainPanel/RootMargin/MainVBox/TopSectionHBox/BenchmarkCard/BenchmarkMargin/BenchmarkVBox/SmartDeltaDrawer/DrawerMargin/DrawerVBox/DrawerBodyHBox/AffixColumnVBox/AffixScroll/AffixContentVBox"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

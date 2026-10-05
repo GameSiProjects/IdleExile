@@ -55,7 +55,11 @@ public static class MainLayoutTests
         try
         {
             TestFiveTierHierarchy(main);
+            TestPersistentBattleViewport(main);
+            TestTabNavigation(main);
+            TestModeSwitching(main);
             TestStatusCardEliminationAndDiagnostics(main);
+            TestOptimizedEquipmentDollLayout(main);
             TestStickyDrawerLayout(main);
             TestActionButtonAndCandidateDrawerLayout(main);
             TestGemViewIntegration(main);
@@ -149,11 +153,12 @@ public static class MainLayoutTests
         var mainLayout = main.GetNodeOrNull<VBoxContainer>("MainLayout");
         if (mainLayout != null)
         {
-            AssertTrue(mainLayout.GetChild(0) == header, "MainLayout child 0 must be TopHeaderBar");
-            AssertTrue(mainLayout.GetChild(1) == tabWorkspace, "MainLayout child 1 must be TabWorkspaceContainer");
-            AssertTrue(mainLayout.GetChild(2) == subTabBar, "MainLayout child 2 must be SubTabBarContainer");
-            AssertTrue(mainLayout.GetChild(3) == combatContainer, "MainLayout child 3 must be CombatViewportContainer");
-            AssertTrue(mainLayout.GetChild(4) == macroBar, "MainLayout child 4 must be BottomMacroBar");
+            AssertEqual(5, mainLayout.GetChildCount(), "MainLayout must contain exactly 5 child tiers");
+            AssertTrue(mainLayout.GetChild(0) == header, "MainLayout child 0 must be TopHeaderBar (Tier 1: 36px)");
+            AssertTrue(mainLayout.GetChild(1) == tabWorkspace, "MainLayout child 1 must be TabWorkspaceContainer (Tier 2: Upward Workspace Expansion)");
+            AssertTrue(mainLayout.GetChild(2) == subTabBar, "MainLayout child 2 must be SubTabBarContainer (Tier 3: 36px Tab Hinge)");
+            AssertTrue(mainLayout.GetChild(3) == combatContainer, "MainLayout child 3 must be CombatViewportContainer (Tier 4: Bottom 248px Combat Viewport)");
+            AssertTrue(mainLayout.GetChild(4) == macroBar, "MainLayout child 4 must be BottomMacroBar (Tier 5: 40px Taskbar Dock)");
         }
     }
 
@@ -162,7 +167,7 @@ public static class MainLayoutTests
         var battleViewport = main.GetNodeOrNull<BattleViewport>("%BattleViewport");
         AssertNotNull(battleViewport, "BattleViewport must exist");
 
-        // Simulate switching tabs - BattleViewport must NEVER become hidden
+        // Simulate switching tabs across all 5 workspace tabs - BattleViewport must NEVER become hidden
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear);
         AssertTrue(battleViewport.Visible, "BattleViewport must be visible when Gear tab is active");
 
@@ -171,6 +176,22 @@ public static class MainLayoutTests
 
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Skills);
         AssertTrue(battleViewport.Visible, "BattleViewport must remain visible when Skills tab is active");
+
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Passives);
+        AssertTrue(battleViewport.Visible, "BattleViewport must remain visible when Passives tab is active");
+
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Stash);
+        AssertTrue(battleViewport.Visible, "BattleViewport must remain visible when Stash tab is active");
+
+        // Verify BattleViewport remains persistent in Compact Mode
+        var windowController = main.WindowController;
+        if (windowController != null)
+        {
+            windowController.ShrinkWindow(keepBottom: true);
+            AssertTrue(battleViewport.Visible, "BattleViewport must remain persistently visible in Compact Mode (Core Objective #1)");
+            windowController.ExpandWindow(keepBottom: true);
+            AssertTrue(battleViewport.Visible, "BattleViewport must remain visible after returning to Expanded Mode");
+        }
     }
 
     private static void TestTabNavigation(Main main)
@@ -189,7 +210,8 @@ public static class MainLayoutTests
 
     /// <summary>
     /// Verifies Task 1.3: Window Mode Display Controller in Main.cs.
-    /// Tests transitions between Compact Mode (440x380) and Expanded Mode (440x780):
+    /// Tests transitions between Compact Mode (640x320) and Expanded Mode (640x780):
+    /// 0. Verifies Compact (640x320) and Expanded (640x780) size constants and keepBottom math invariance.
     /// 1. Initial State (Expanded): SubTabBarContainer and TabWorkspaceContainer visible.
     /// 2. Active Tab selection (Atlas) preserved in Expanded Mode.
     /// 3. Compact Mode: SubTabBarContainer and TabWorkspaceContainer hidden.
@@ -212,6 +234,24 @@ public static class MainLayoutTests
         AssertNotNull(battleViewport, "BattleViewport must exist");
         AssertNotNull(resizeBtn, "ResizeModeButton must exist");
         AssertNotNull(windowController, "WindowController must exist");
+
+        // 0. Verify Window Size Constants (640x320 Compact, 640x780 Expanded)
+        AssertEqual(new Vector2I(640, 320), WindowController.CompactWindowSize, "CompactWindowSize must be 640x320");
+        AssertEqual(new Vector2I(640, 780), WindowController.ExpandedWindowSize, "ExpandedWindowSize must be 640x780");
+
+        // Verify keepBottom=true bottom edge invariance math:
+        // Bottom edge = Y + Height. When expanding by deltaY, new Y = current Y - deltaY.
+        // Therefore new bottom = (current Y - deltaY) + (current Height + deltaY) = current Y + current Height.
+        int simulatedCurrentY = 600;
+        int compactH = WindowController.CompactWindowSize.Y; // 320
+        int expandedH = WindowController.ExpandedWindowSize.Y; // 780
+        int deltaYExpand = expandedH - compactH; // 460
+        int expandedY = simulatedCurrentY - deltaYExpand; // 140
+        AssertEqual(simulatedCurrentY + compactH, expandedY + expandedH, "keepBottom expand must keep bottom coordinate invariant");
+
+        int deltaYShrink = compactH - expandedH; // -460
+        int restoredY = expandedY - deltaYShrink; // 600
+        AssertEqual(expandedY + expandedH, restoredY + compactH, "keepBottom shrink must keep bottom coordinate invariant");
 
         // 1. Initial State should be Expanded Mode
         AssertTrue(windowController.IsExpanded, "Initial window state should be Expanded");

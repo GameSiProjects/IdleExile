@@ -383,7 +383,7 @@ text = "🎲 Craft Affixes (Reroll)"
 
 [node name="MapQueuePanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 62)
+custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_subpanel")
 
@@ -472,7 +472,7 @@ text = "Clear"
 
 [node name="QueueSlotsHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/MapQueuePanel/QueueMargin/QueueVBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 38)
 layout_mode = 2
 theme_override_constants/separation = 4
 
