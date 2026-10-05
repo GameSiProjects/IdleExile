@@ -254,13 +254,13 @@ public partial class MapHeaderBar : PanelContainer
     /// </summary>
     private void BuildDefaultHierarchy()
     {
-        CustomMinimumSize = new Vector2(440, 44);
+        CustomMinimumSize = new Vector2(640, 32);
 
         var margin = new MarginContainer();
-        margin.AddThemeConstantOverride("margin_left", 10);
-        margin.AddThemeConstantOverride("margin_right", 10);
-        margin.AddThemeConstantOverride("margin_top", 4);
-        margin.AddThemeConstantOverride("margin_bottom", 4);
+        margin.AddThemeConstantOverride("margin_left", 12);
+        margin.AddThemeConstantOverride("margin_right", 12);
+        margin.AddThemeConstantOverride("margin_top", 2);
+        margin.AddThemeConstantOverride("margin_bottom", 2);
         AddChild(margin);
 
         var headerVBox = new VBoxContainer();

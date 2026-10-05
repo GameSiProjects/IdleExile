@@ -190,8 +190,8 @@ Tài liệu này xác lập **Kế hoạch hành động chi tiết (Actionable 
   > 4. Kiểm tra biên dịch `dotnet build` sạch sẽ."*
 
 * **Tiêu chí nghiệm thu:**
-  - [ ] Khung sàn đấu hiển thị hoàn hảo ở kích thước 640px mà không bị méo tỷ lệ hay co giật đồ họa.
-  - [ ] Vitometer và Map Bar căn lề chuẩn mực.
+  - [x] Khung sàn đấu hiển thị hoàn hảo ở kích thước 640px mà không bị méo tỷ lệ hay co giật đồ họa.
+  - [x] Vitometer và Map Bar căn lề chuẩn mực.
 
 ---
 
@@ -292,7 +292,7 @@ Tài liệu này xác lập **Kế hoạch hành động chi tiết (Actionable 
 | :---: | :--- | :---: | :--- |
 | **Prompt 1** | Cấu Hình Cửa Sổ & Engine 640px | ✅ Hoàn thành | `project.godot`, `DesktopWindow.cs`, `WindowController.cs` |
 | **Prompt 2** | Đảo Tầng Scene Tree `Main.tscn` | ✅ Hoàn thành | `scenes/Main.tscn`, `src/UI/Main.cs` |
-| **Prompt 3** | Mở Rộng Viewport & Arena2D 640px | 📋 Sẵn sàng | `BattleViewport.tscn`, `Arena2D.cs` |
+| **Prompt 3** | Mở Rộng Viewport & Arena2D 640px | ✅ Hoàn thành | `BattleViewport.tscn`, `Arena2D.cs` |
 | **Prompt 4** | Camera Look-Ahead & Buffer 450px | 📋 Sẵn sàng | `ArenaCamera.cs`, `ExileMovementController.cs` |
 | **Prompt 5** | Tối Ưu Bố Cục 5 Sub-Tabs 640px | 📋 Sẵn sàng | `EquipmentView.cs`, `PassiveTreeView.cs`, `StashView.cs` |
 | **Prompt 6** | Kiểm Thử Tự Động Toàn Diện | 📋 Sẵn sàng | `src/UI/MainLayoutTests.cs` |

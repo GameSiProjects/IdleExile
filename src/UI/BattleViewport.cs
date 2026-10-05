@@ -9,12 +9,17 @@ using IdleExile.UI.Components;
 namespace IdleExile.UI;
 
 /// <summary>
-/// Controller for the Battle Viewport (440 x 300 px), displaying map telemetry,
+/// Controller for the Battle Viewport (640 x 248 px), displaying map telemetry,
 /// 2D arena combat presentation, player vitometer (Life/ES/Mana/Flasks), and loot toast notifications.
 /// Designed according to docs/07_combat_ui_and_viewport.md.
 /// </summary>
 public partial class BattleViewport : Control
 {
+    public const float ViewportWidth = 640f;
+    public const float ViewportHeight = 248f;
+    public const float ArenaViewportHeight = 172f;
+    public const float MapHeaderHeight = 32f;
+    public const float VitometerHeight = 44f;
     // --- Container References (Task 2.1) ---
     public PanelContainer? MapHeaderContainer { get; private set; }
     public SubViewportContainer? ArenaViewportContainer { get; private set; }
@@ -482,7 +487,7 @@ public partial class BattleViewport : Control
         _debugCoordLabel = new Label
         {
             Name = "DebugCoordLabel",
-            Text = "[DEBUG] P_E: (220.0, 40.0) | Idle | 0px/s | Dist: 0/2400px (0.0%)",
+            Text = "[DEBUG] P_E: (320.0, 86.0) | Idle | 0px/s | Dist: 0/2400px (0.0%)",
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Center
         };
@@ -493,7 +498,7 @@ public partial class BattleViewport : Control
         {
             Name = "DebugCoordinateOverlay",
             MouseFilter = MouseFilterEnum.Ignore,
-            Position = new Vector2(8, 44),
+            Position = new Vector2(8, 36),
             ZIndex = 50
         };
         _debugOverlayPanel.AddThemeStyleboxOverride("panel", style);

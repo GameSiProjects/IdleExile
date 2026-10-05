@@ -117,11 +117,11 @@ shadow_color = Color(0, 0, 0, 0.4)
 shadow_size = 4
 
 [node name="BattleViewport" type="Control"]
-custom_minimum_size = Vector2(440, 300)
+custom_minimum_size = Vector2(640, 248)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 440.0
-offset_bottom = 300.0
+offset_right = 640.0
+offset_bottom = 248.0
 script = ExtResource("1_viewport")
 
 [node name="BackgroundRect" type="ColorRect" parent="."]
@@ -144,17 +144,17 @@ theme_override_constants/separation = 0
 
 [node name="MapHeaderContainer" type="PanelContainer" parent="ViewportVBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 44)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_header")
 script = ExtResource("2_header")
 
 [node name="HeaderMargin" type="MarginContainer" parent="ViewportVBox/MapHeaderContainer"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 4
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 4
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 2
 
 [node name="HeaderVBox" type="VBoxContainer" parent="ViewportVBox/MapHeaderContainer/HeaderMargin"]
 layout_mode = 2
@@ -239,7 +239,7 @@ vertical_alignment = 1
 
 [node name="ArenaViewportContainer" type="SubViewportContainer" parent="ViewportVBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 208)
+custom_minimum_size = Vector2(0, 172)
 layout_mode = 2
 size_flags_vertical = 3
 stretch = true
@@ -247,7 +247,7 @@ stretch = true
 [node name="ArenaSubViewport" type="SubViewport" parent="ViewportVBox/ArenaViewportContainer"]
 unique_name_in_owner = true
 handle_input_locally = false
-size = Vector2i(440, 208)
+size = Vector2i(640, 172)
 render_target_update_mode = 3
 
 [node name="ArenaBackground" type="ColorRect" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport"]
@@ -270,7 +270,7 @@ unique_name_in_owner = true
 
 [node name="ExileNode" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
 unique_name_in_owner = true
-position = Vector2(220, 104)
+position = Vector2(320, 86)
 
 [node name="ProjectilePool" type="Node2D" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
 unique_name_in_owner = true
@@ -280,27 +280,27 @@ unique_name_in_owner = true
 
 [node name="FloatingCombatTextLayer" type="Control" parent="ViewportVBox/ArenaViewportContainer/ArenaSubViewport/Arena2D"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(440, 208)
+custom_minimum_size = Vector2(640, 172)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 440.0
-offset_bottom = 208.0
+offset_right = 640.0
+offset_bottom = 172.0
 mouse_filter = 2
 script = ExtResource("5_floating_text")
 
 [node name="VitometerPanel" type="PanelContainer" parent="ViewportVBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_vitometer")
 script = ExtResource("4_vitometer")
 
 [node name="VitometerMargin" type="MarginContainer" parent="ViewportVBox/VitometerPanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 10
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 4
 
 [node name="VitometerHBox" type="HBoxContainer" parent="ViewportVBox/VitometerPanel/VitometerMargin"]
 layout_mode = 2
@@ -423,15 +423,15 @@ horizontal_alignment = 2
 [node name="LootToastOverlay" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(280, 32)
+custom_minimum_size = Vector2(320, 32)
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -140.0
-offset_top = 48.0
-offset_right = 140.0
-offset_bottom = 80.0
+offset_left = -160.0
+offset_top = 36.0
+offset_right = 160.0
+offset_bottom = 68.0
 grow_horizontal = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_loot_toast")
 

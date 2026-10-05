@@ -91,10 +91,10 @@ public struct BossSlamTelegraph
 }
 
 /// <summary>
-/// 2D Top-Down Combat Arena renderer component for the Battle Viewport (440 x 208 px).
+/// 2D Top-Down Combat Arena renderer component for the Battle Viewport (640 x 172 px).
 /// Senior Game Design Shift:
 /// 1. 2D Top-Down / Angled Bird's-Eye (~60° Tilt) arena with stone paver flagstone floor & vignette.
-/// 2. Exile Character positioned at the Focal Center (220, 104) with 360° circular aura and dynamic auto-facing.
+/// 2. Exile Character positioned at the Focal Center (320, 86) with 360° circular aura and dynamic auto-facing.
 /// 3. Monster packs arranged in 2D formations (Swarm surround, flanks, elite with minions, Boss with overhead bar).
 /// 4. 360° Projectile multi-vector flight, PoE 5-elemental color coding, and visual clamping (max 12).
 /// 5. True 2D circular Boss Slam Telegraph indicator (shrinking red ring) with screen shake impact.
@@ -104,10 +104,12 @@ public partial class Arena2D : Node2D
     // ─────────────────────────────────────────────
     //  Constants & Dimensions
     // ─────────────────────────────────────────────
-    public const float ArenaWidth = 440f;
-    public const float ArenaHeight = 208f;
-    public static readonly Vector2 CenterPosition = new(ArenaWidth * 0.5f, ArenaHeight * 0.5f); // (220f, 104f)
-    public const float GroundBaselineY = 104f; // Legacy alias for CenterY in Top-Down
+    public const float ArenaWidth = 640f;
+    public const float ArenaHeight = 172f;
+    public static readonly Vector2 CenterPosition = new(ArenaWidth * 0.5f, ArenaHeight * 0.5f); // (320f, 86f)
+    public const float GroundBaselineY = 86f; // Legacy alias for CenterY in Top-Down
+    public const float CorridorTopY = 14f;
+    public const float CorridorBottomY = ArenaHeight - 14f; // 158f
     public const int MaxProjectiles = 12;
     public const int MaxMonsters = 16;
 
@@ -628,11 +630,11 @@ public partial class Arena2D : Node2D
         // Use Camera position for smooth relative scrolling in corridor and fixed arena lock (Task 2.6 & 2.8)
         float camX = Camera.CurrentPosition.X;
 
-        // 2. Playable Corridor Flagstone Tiles (between MinCorridorY=32 and MaxCorridorY=176)
+        // 2. Playable Corridor Flagstone Tiles (between CorridorTopY=14 and CorridorBottomY=158)
         float tileW = 36f;
         float tileH = 28f;
-        float topY = ExileMovementController.MinCorridorY;
-        float bottomY = ExileMovementController.MaxCorridorY;
+        float topY = CorridorTopY;
+        float bottomY = CorridorBottomY;
         int cols = Mathf.CeilToInt(ArenaWidth / tileW) + 2;
         int rows = Mathf.CeilToInt((bottomY - topY) / tileH) + 1;
 
@@ -706,7 +708,7 @@ public partial class Arena2D : Node2D
         // 5. Roadside Sconces / Torches (spaced every 140px along corridor in world X)
         float torchSpacing = 140f;
         int torchBase = Mathf.FloorToInt((camX - 140f) / torchSpacing);
-        for (int t = torchBase; t <= torchBase + 5; t++)
+        for (int t = torchBase; t <= torchBase + 7; t++)
         {
             float worldTorchX = t * torchSpacing;
             float screenX = Camera.WorldToScreen(new Vector2(worldTorchX, 0), CenterPosition).X;
@@ -747,10 +749,10 @@ public partial class Arena2D : Node2D
 
         // 8. Ambient drifting atmospheric dust motes
         Color moteColor = new(0.42f, 0.50f, 0.68f, 0.30f);
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 14; i++)
         {
-            float mx = (i * 55f + _floorTime * (10f + (i % 3) * 5f)) % ArenaWidth;
-            float my = (25f + (i * 24f) + Mathf.Sin(_floorTime * 1.5f + i) * 8f) % ArenaHeight;
+            float mx = (i * 48f + _floorTime * (10f + (i % 3) * 5f)) % ArenaWidth;
+            float my = (14f + (i * 11f) + Mathf.Sin(_floorTime * 1.5f + i) * 6f) % ArenaHeight;
             DrawCircle(new Vector2(mx, my), 1.2f, moteColor);
         }
 
@@ -786,8 +788,8 @@ public partial class Arena2D : Node2D
 
     private void DrawFogGate(float screenX, bool isSealed)
     {
-        float topY = ExileMovementController.MinCorridorY;
-        float bottomY = ExileMovementController.MaxCorridorY;
+        float topY = CorridorTopY;
+        float bottomY = CorridorBottomY;
         float shimmer = 0.7f + Mathf.Sin(_floorTime * 4.5f) * 0.3f;
 
         if (!isSealed)
@@ -2142,7 +2144,7 @@ public partial class Arena2D : Node2D
             else if (inst.Rarity == MonsterRarity.Boss)
             {
                 // Boss stands in commanding North-East or East position
-                spawnPos = new Vector2(320f, 95f);
+                spawnPos = new Vector2(CenterPosition.X + 130f, CenterPosition.Y);
             }
             else
             {
@@ -2362,7 +2364,7 @@ public partial class Arena2D : Node2D
         {
             return pos;
         }
-        return new Vector2(220f, 60f);
+        return new Vector2(CenterPosition.X, CenterPosition.Y - 26f);
     }
 
     private void SpawnDefaultPackPreview()
@@ -2376,7 +2378,7 @@ public partial class Arena2D : Node2D
         _monsters[0].MaxLife = 450f;
         _monsters[0].CurrentLife = 450f;
         _monsters[0].IsAlive = true;
-        _monsters[0].Position = new Vector2(330f, 65f);
+        _monsters[0].Position = new Vector2(450f, 55f);
         _monsters[0].Scale = 1.35f;
         _monsters[0].CustomColor = new Color(0.28f, 0.24f, 0.10f);
 
@@ -2387,7 +2389,7 @@ public partial class Arena2D : Node2D
         _monsters[1].MaxLife = 120f;
         _monsters[1].CurrentLife = 120f;
         _monsters[1].IsAlive = true;
-        _monsters[1].Position = new Vector2(110f, 65f);
+        _monsters[1].Position = new Vector2(190f, 55f);
         _monsters[1].Scale = 0.95f;
         _monsters[1].CustomColor = new Color(0.18f, 0.19f, 0.22f);
 
@@ -2398,7 +2400,7 @@ public partial class Arena2D : Node2D
         _monsters[2].MaxLife = 120f;
         _monsters[2].CurrentLife = 120f;
         _monsters[2].IsAlive = true;
-        _monsters[2].Position = new Vector2(100f, 145f);
+        _monsters[2].Position = new Vector2(180f, 125f);
         _monsters[2].Scale = 0.95f;
         _monsters[2].CustomColor = new Color(0.18f, 0.19f, 0.22f);
 
@@ -2409,7 +2411,7 @@ public partial class Arena2D : Node2D
         _monsters[3].MaxLife = 220f;
         _monsters[3].CurrentLife = 220f;
         _monsters[3].IsAlive = true;
-        _monsters[3].Position = new Vector2(335f, 145f);
+        _monsters[3].Position = new Vector2(460f, 125f);
         _monsters[3].Scale = 1.1f;
         _monsters[3].CustomColor = new Color(0.12f, 0.20f, 0.32f);
     }
