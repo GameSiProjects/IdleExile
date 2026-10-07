@@ -517,6 +517,7 @@ public partial class Main : Control
         // 3. Configure BattleViewport with the active map & start CombatEngine
         var rolledMods = modifiers ?? System.Array.Empty<RolledMapModifier>();
         var config = new MapRunConfig(map, rolledMods);
+        _battleViewport?.ResetForNewMap();
         _battleViewport?.SetMap(config, progressPercent: 0f, rarity: rarity);
         _battleViewport?.BindPlayer(Player, Loadout);
         _battleViewport?.SetViewportMode(Arena2D.ViewportMode.ExpeditionCombat);
@@ -767,6 +768,7 @@ public partial class Main : Control
                 {
                     _emergencyPortalButton.Text = "🚀 Launch Map";
                 }
+                Player.Position = new Vector2D(ExileMovementController.DefaultStartX, ExileMovementController.DefaultCenterY);
                 _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
                 _battleViewport?.SetSanctuaryStatus();
             }
@@ -810,6 +812,7 @@ public partial class Main : Control
         {
             _emergencyPortalButton.Text = "🚀 Launch Map";
         }
+        Player.Position = new Vector2D(ExileMovementController.DefaultStartX, ExileMovementController.DefaultCenterY);
         _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
         _battleViewport?.SetSanctuaryStatus();
 

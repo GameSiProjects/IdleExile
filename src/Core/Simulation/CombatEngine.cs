@@ -313,7 +313,6 @@ public sealed class CombatEngine
         CurrentConfig = config ?? throw new ArgumentNullException(nameof(config));
         MapModifiers = new MapModifierRuntime(config.Modifiers);
 
-        Spawner.BeginMap(config);
         Death.ResetForNewMap();
         DpsTracker.ResetForNewMap();
 
@@ -342,7 +341,10 @@ public sealed class CombatEngine
 
         OnMapStarted?.Invoke(config);
 
-        Movement.StartMap(2400f, ExilePosition);
+        var startPos = new Vector2D(ExileMovementController.DefaultStartX, ExileMovementController.DefaultCenterY);
+        ExilePosition = startPos;
+        Player.Position = startPos;
+        Movement.StartMap(2400f, startPos);
         Spawner.BeginMap(config, Movement.MapLength);
 
         var firstWave = Spawner.SpawnNextWave();

@@ -31,6 +31,7 @@ public static class ExileMovementControllerTests
         TestFogGateThresholdAndBossArenaEntry();
         TestPlayerDeathHaltsMovement();
         TestCombatEngine30HzIntegration();
+        TestMapResetAfterCompletionAndNewMapStart();
 
         Console.WriteLine("[Tests] All ExileMovementControllerTests PASSED successfully!");
     }
@@ -417,5 +418,48 @@ public static class ExileMovementControllerTests
         AssertTrue(engine.Movement.DistanceTraveled > 0f, "Exile must have traveled distance along corridor");
         AssertTrue(engine.ExilePosition.X > 40.0f, "ExilePosition must reflect movement along corridor");
         AssertEqual(player.Position.X, engine.Movement.Position.X, 0.001f, "Player.Position must synchronize with Movement.Position");
+    }
+
+    private static void AssertFalse(bool condition, string message)
+    {
+        if (condition)
+        {
+            throw new Exception($"Assertion failed: {message}");
+        }
+    }
+
+    private static void TestMapResetAfterCompletionAndNewMapStart()
+    {
+        var player = new PlayerState();
+        var controller = new ExileMovementController(player, mapLength: 2400.0f, baseSpeed: 100.0f);
+        controller.StartMap(2400.0f, new Vector2D(40.0f, 104.0f));
+
+        // Advance exile into the boss arena (at 2272px: 40px start + 2232px distance)
+        controller.Position = new Vector2D(2272.0f, 104.0f);
+        controller.Tick(0.1f, Array.Empty<MonsterInstance>(), player);
+        controller.Tick(0.1f, Array.Empty<MonsterInstance>(), player);
+
+        AssertTrue(controller.HasReachedFogGate, "Must have reached fog gate");
+        AssertTrue(controller.HasEnteredBossRoom, "Must have entered boss room");
+        AssertTrue(controller.CurrentState == ExileMovementState.InBossArena, "State must be InBossArena");
+        AssertTrue(player.Position.X >= 2272.0f, "Player position must be in boss arena");
+
+        // Complete the map
+        controller.SetCompleted();
+        AssertTrue(controller.CurrentState == ExileMovementState.Completed, "State must be Completed");
+
+        // Now start a new map without explicitly passing start position (common idle loop / queue scenario)
+        controller.StartMap(2400.0f);
+
+        // Verify all map & boss room state has been completely reset
+        AssertEqual(ExileMovementController.DefaultStartX, controller.Position.X, 0.001f, "Position.X must reset to DefaultStartX (40.0)");
+        AssertEqual(ExileMovementController.DefaultCenterY, controller.Position.Y, 0.001f, "Position.Y must reset to DefaultCenterY (104.0)");
+        AssertEqual(ExileMovementController.DefaultStartX, player.Position.X, 0.001f, "Player.Position.X must reset to DefaultStartX");
+        AssertEqual(ExileMovementController.DefaultCenterY, player.Position.Y, 0.001f, "Player.Position.Y must reset to DefaultCenterY");
+        AssertEqual(0.0f, controller.DistanceTraveled, 0.001f, "DistanceTraveled must reset to 0");
+        AssertFalse(controller.HasReachedFogGate, "HasReachedFogGate must be false");
+        AssertFalse(controller.IsFogGateSealed, "IsFogGateSealed must be false");
+        AssertFalse(controller.HasEnteredBossRoom, "HasEnteredBossRoom must be false");
+        AssertTrue(controller.CurrentState == ExileMovementState.Marching, "State must reset to Marching");
     }
 }

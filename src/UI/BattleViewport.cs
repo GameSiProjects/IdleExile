@@ -234,6 +234,23 @@ public partial class BattleViewport : Control
     }
 
     /// <summary>
+    /// Resets all viewport presentation components (Arena, Camera, FloatingText, Toasts, Progress)
+    /// to clean initial state for embarking on a new map run.
+    /// </summary>
+    public void ResetForNewMap(float mapLength = 2400f)
+    {
+        Arena?.ResetForNewMap(mapLength);
+        FloatingText?.ClearAll();
+        HideLootToast();
+        SetMapProgress(0f);
+        if (_dpsLabel != null)
+        {
+            _dpsLabel.Text = "DPS: 0 • Peak: 0";
+            _dpsLabel.Modulate = new Color(0.88f, 0.90f, 0.96f);
+        }
+    }
+
+    /// <summary>
     /// Configures the Map Header using a complete MapRunConfig (Task 2.2).
     /// </summary>
     public void SetMap(MapRunConfig config, float progressPercent = 0f, string rarity = "Normal", string? leagueEncounter = null)

@@ -160,7 +160,7 @@ public partial class Arena2D : Node2D
     public void SetMode(ViewportMode mode) => CurrentMode = mode;
 
     /// <summary>
-    /// Clears all combat projectiles, indicators, craters, and screen shakes when returning to Sanctuary.
+    /// Clears all combat projectiles, indicators, craters, and screen shakes when returning to Sanctuary or resetting map.
     /// </summary>
     public void ClearCombatEntities()
     {
@@ -178,6 +178,51 @@ public partial class Arena2D : Node2D
         _screenShakeTimer = 0f;
         _shakeOffset = Vector2.Zero;
         Position = Vector2.Zero;
+        IsFogGateSealed = false;
+        _activeMonsterCount = 0;
+        for (int i = 0; i < MaxMonsters; i++)
+        {
+            var m = _monsters[i];
+            if (m != null)
+            {
+                m.IsAlive = false;
+                m.IsAwakened = false;
+                m.AwakeningTimer = 0f;
+                m.AwakeningShockwaveRadius = 0f;
+                m.AttackLungeTimer = 0f;
+                m.AttackLungeOffset = Vector2.Zero;
+                m.DeathFadeTimer = 0f;
+                m.HitFlashTimer = 0f;
+                m.EncounterType = LeagueEncounterType.None;
+                m.IsDormant = false;
+                m.IsAggroed = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Completely resets the arena presentation state for a new map run.
+    /// Resets fog gate, camera tracking mode, exile position, active monsters, and combat entities.
+    /// </summary>
+    public void ResetForNewMap(float mapLength = 2400f)
+    {
+        MapLength = mapLength > 0f ? mapLength : 2400f;
+        IsFogGateSealed = false;
+        MovementState = ExileMovementState.Marching;
+        MovementSpeed = 0f;
+
+        Vector2 startWorldPos = new(ExileMovementController.DefaultStartX, ExileMovementController.DefaultCenterY);
+        ExileWorldPosition = startWorldPos;
+        ExilePosition = CenterPosition;
+        _exileFacingAngle = 0f;
+        _exileAttackRecoil = 0f;
+        TargetPosition = null;
+        TargetMonsterInstanceId = null;
+
+        Camera.Reset(startWorldPos);
+        ClearCombatEntities();
+
+        QueueRedraw();
     }
 
     // ─────────────────────────────────────────────
@@ -405,6 +450,7 @@ public partial class Arena2D : Node2D
             MovementSpeed = 0f;
             _exileFacingAngle = 0f; // Facing east toward Map Device at (320, 86)
             _exileAttackRecoil = 0f;
+            IsFogGateSealed = false;
             Camera.Reset(CenterPosition);
             QueueRedraw();
             return;

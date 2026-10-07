@@ -49,6 +49,7 @@ public static class CombatEngineTests
         TestFrontlineMonsterBlocksBacklineMonster();
         TestNonShotgunningRuleInVolley();
         TestSplitArrowProjectilesAbsorbedOnHitWithoutPiercingBehindEnemy();
+        TestStartMapResetsExileAndPlayerPositionsToCorridorStart();
 
         Console.WriteLine("[Tests] All CombatEngineTests PASSED successfully!");
     }
@@ -1120,6 +1121,50 @@ public static class CombatEngineTests
         AssertEqual(0, backlineHits, 0.01f, "Backline monster must take 0 hits because arrows are absorbed on frontline impact");
         AssertEqual(100f, backline.CurrentLife, 0.01f, "Backline monster must remain at 100% life");
         AssertEqual(0, engine.ActiveProjectiles.Count, 0.01f, "All projectiles must be completely absorbed on frontline impact");
+    }
+
+    private static void AssertFalse(bool condition, string message)
+    {
+        if (condition)
+        {
+            throw new Exception($"Assertion failed: {message}");
+        }
+    }
+
+    private static void TestStartMapResetsExileAndPlayerPositionsToCorridorStart()
+    {
+        var player = new PlayerState();
+        var loadout = new SkillLoadout();
+        var engine = new CombatEngine(player, loadout);
+
+        var mapDef = new MapDefinition("strand_t1", "The Twilight Strand", 1, 68, false, 0, 100, "Hillock", "");
+        var config1 = new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>());
+        engine.StartMap(config1);
+
+        // Move the exile all the way down into the boss arena (at 2272px: 40px start + 2232px distance)
+        engine.ExilePosition = new Vector2D(2272f, 104f);
+        engine.ProcessTick(0.1f);
+        engine.ProcessTick(0.1f);
+
+        AssertTrue(engine.Movement.HasEnteredBossRoom, "Movement must have entered boss room");
+        AssertTrue(player.Position.X >= 2272f, "Player position must be in boss room");
+
+        // Complete the map
+        engine.Movement.SetCompleted();
+
+        // Start a second map run (e.g. from queue or map device)
+        var config2 = new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>());
+        engine.StartMap(config2);
+
+        // Verify player & movement position are reset to corridor beginning (40, 104)
+        AssertEqual(ExileMovementController.DefaultStartX, engine.ExilePosition.X, 0.001f, "engine.ExilePosition.X must reset to DefaultStartX");
+        AssertEqual(ExileMovementController.DefaultCenterY, engine.ExilePosition.Y, 0.001f, "engine.ExilePosition.Y must reset to DefaultCenterY");
+        AssertEqual(ExileMovementController.DefaultStartX, player.Position.X, 0.001f, "player.Position.X must reset to DefaultStartX");
+        AssertEqual(ExileMovementController.DefaultCenterY, player.Position.Y, 0.001f, "player.Position.Y must reset to DefaultCenterY");
+        AssertFalse(engine.Movement.HasEnteredBossRoom, "Movement must not be in boss room on new map");
+        AssertFalse(engine.Movement.HasReachedFogGate, "Movement must not be at fog gate on new map");
+        AssertFalse(engine.Movement.IsFogGateSealed, "Fog gate must not be sealed on new map");
+        AssertEqual(0f, engine.Movement.DistanceTraveled, 0.001f, "DistanceTraveled must be 0 on new map");
     }
 }
 

@@ -38,6 +38,7 @@ public static class MainLayoutTests
             TestCameraLookAheadAndTransformations(existingMain);
             TestDualStateViewportAndCombatDpsMeter(existingMain);
             TestSanctuaryViewIntegration(existingMain);
+            TestArenaAndBattleViewportResetForNewMap(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -74,6 +75,7 @@ public static class MainLayoutTests
             TestCameraLookAheadAndTransformations(main);
             TestDualStateViewportAndCombatDpsMeter(main);
             TestSanctuaryViewIntegration(main);
+            TestArenaAndBattleViewportResetForNewMap(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -342,11 +344,14 @@ public static class MainLayoutTests
             AssertEqual(sizeBefore, windowController.WindowSize, "WindowController.WindowSize must remain unchanged when free resizing is blocked");
             AssertEqual(sizeBefore, testWindow.Size, "Native window.Size must be reverted back to in-game WindowSize");
 
-            // Simulate external attempt to maximize window
-            testWindow.Mode = Window.ModeEnum.Maximized;
-            windowController.EnforceWindowConstraints(testWindow);
-            AssertEqual(Window.ModeEnum.Windowed, testWindow.Mode, "Native window.Mode must be reverted to Windowed when maximization is blocked");
-            AssertEqual(sizeBefore, testWindow.Size, "Window size must remain invariant when maximization is blocked");
+            // Simulate external attempt to maximize window (only if non-headless display server)
+            if (DisplayServer.GetName() != "headless")
+            {
+                testWindow.Mode = Window.ModeEnum.Maximized;
+                windowController.EnforceWindowConstraints(testWindow);
+                AssertEqual(Window.ModeEnum.Windowed, testWindow.Mode, "Native window.Mode must be reverted to Windowed when maximization is blocked");
+                AssertEqual(sizeBefore, testWindow.Size, "Window size must remain invariant when maximization is blocked");
+            }
         }
 
         // 8. Verify dragging support on WindowController
@@ -1751,6 +1756,36 @@ public static class MainLayoutTests
         // Reset back to Gear tab
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
         GD.Print("[Tests] Prompt 5: Sanctuary View Integration PASSED!");
+    }
+
+    private static void TestArenaAndBattleViewportResetForNewMap(Main main)
+    {
+        var battleViewport = main.BattleViewport;
+        AssertNotNull(battleViewport, "BattleViewport must exist");
+        var arena = battleViewport.Arena;
+        AssertNotNull(arena, "Arena2D must exist");
+
+        // 1. Simulate advancing into boss room during combat
+        arena.UpdateExileWorldPosition(new Vector2(2232f, 104f), ExileMovementState.InBossArena);
+        arena.SetFogGateSealed(true);
+        arena.Camera.SetArenaLock(new Vector2(2232f, 86f));
+        battleViewport.SetMapProgress(100f);
+
+        AssertTrue(arena.IsFogGateSealed, "Fog gate should be sealed during boss phase");
+        AssertEqual(ArenaCameraMode.BossArenaLock, arena.Camera.Mode, "Camera should be locked to BossArenaLock");
+
+        // 2. Perform ResetForNewMap
+        battleViewport.ResetForNewMap();
+
+        // 3. Verify all presentation and camera state is restored for a new linear corridor run
+        AssertFalse(arena.IsFogGateSealed, "Fog gate must be reset to false on ResetForNewMap");
+        AssertEqual(ArenaCameraMode.CorridorFollow, arena.Camera.Mode, "Camera mode must be restored to CorridorFollow");
+        AssertFalse(arena.Camera.IsLocked, "Camera lock must be released on ResetForNewMap");
+        AssertEqual(new Vector2(40f, 104f), arena.ExileWorldPosition, "ExileWorldPosition must reset to corridor beginning (40, 104)");
+        AssertEqual(ExileMovementState.Marching, arena.MovementState, "MovementState must reset to Marching");
+        AssertEqual(0f, battleViewport.HeaderBar?.CurrentProgress ?? 0f, "Map progress must reset to 0%");
+
+        GD.Print("[Tests] Arena & BattleViewport ResetForNewMap PASSED!");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

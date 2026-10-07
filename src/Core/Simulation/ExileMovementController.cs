@@ -360,10 +360,11 @@ public sealed class ExileMovementController
     public void StartMap(float mapLength = DefaultMapLength, Vector2D? startPosition = null)
     {
         MapLength = mapLength > 0f ? mapLength : DefaultMapLength;
-        _startPosition = startPosition ?? Position;
+        _startPosition = startPosition ?? new Vector2D(DefaultStartX, DefaultCenterY);
         Position = _startPosition;
         _accumulatedTravelDistance = 0f;
         Velocity = Vector2D.Zero;
+        CurrentSpeed = 0f;
         HasReachedFogGate = false;
         IsFogGateSealed = false;
         HasEnteredBossRoom = false;
