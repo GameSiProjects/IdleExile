@@ -95,3 +95,11 @@ Bảng kỹ năng nội tại hoạt động độc lập với hệ thống tra
 ### 4.2. Masteries & Jewel Sockets
 * **Mastery Nodes:** Khi học trọn vẹn một cụm kỹ năng (Cluster), người chơi chọn 1 hiệu ứng đặc thù (ví dụ: *Life Mastery: +50 Maximum Life* hoặc *Fire Mastery: Đòn thiêu đốt hồi máu*).
 * **Jewel Sockets:** Các ô tròn trên bảng cho phép khảm các viên ngọc nhặt từ Map để tăng cường chỉ số hoặc biến đổi thuộc tính của các node lân cận.
+
+---
+
+## 5. Định Hình Meta & Phối Ghép Build Hoàn Chỉnh
+
+Để tìm hiểu chi tiết cách kết hợp giữa hệ thống Ngọc Kỹ Năng, Trang Bị và Cây Nội Tại nhằm tạo nên **6 Build Archetypes Chiến Lược** (Bleed Juggernaut, Ignite Elementalist, Crit Deadeye, Poison Claw Assassin, Righteous Fire Autobomber, Archmage Hierophant), xem tài liệu chi tiết:
+👉 **[13. Thiết Kế Hệ Thống Build Archetypes & Định Hình Meta Chiến Đấu (13_build_archetypes_specification.md)](13_build_archetypes_specification.md)**.
+

@@ -160,7 +160,7 @@ dotnet build
 
 | Feature / Subsystem | Status | Location |
 | :--- | :--- | :--- |
-| **GDD Documentation** | Complete | `docs/01_*.md` to `docs/12_*.md` |
+| **GDD Documentation** | Complete | `docs/01_*.md` to `docs/14_*.md` |
 | **Execution Task List** | Tracking | `TASKS.md` |
 | **Project & Engine Setup** | Complete | `project.godot`, `IdleExile.csproj`, `nuget.config` |
 | **Localization & English UI Standard** | Complete | `localization/translations.csv`, `src/UI/LocalizationService.cs` |

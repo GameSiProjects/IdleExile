@@ -237,7 +237,13 @@ Vũ khí tuân thủ quy tắc chuẩn: Tối đa **3 Prefixes (Tiền tố)** v
    * *Affixes mục tiêu:* `+Physical/Chaos Damage over Time Multiplier` + `% Increased Damage over Time`.
    * *Cơ chế kết hợp:* Chuyên trị các đòn Bleed, Poison (cộng dồn vô hạn số tầng độc).
 
+> [!NOTE]
+> **Tương Tác Giữa Vũ Khí & Build Archetypes:**  
+> Để nắm rõ cách 4 trường phái vũ khí này phối hợp với Ngọc kỹ năng và Cây nội tại trong 6 Đại Diện Build Archetypes chính của game (Juggernaut, Elementalist, Deadeye, Poison Assassin, Righteous Fire, Archmage), tham khảo tài liệu:  
+> 👉 **[13. Thiết Kế Hệ Thống Build Archetypes & Định Hình Meta Chiến Đấu (13_build_archetypes_specification.md)](13_build_archetypes_specification.md)**.
+
 ---
+
 
 ## 6. VÒNG LẶP CHẾ TẠO VŨ KHÍ (CRAFTING LOOPS & CURRENCY)
 

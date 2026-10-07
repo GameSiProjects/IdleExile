@@ -23,9 +23,9 @@ run/low_processor_usage_mode_sleep_usec=6900
 
 window/size/viewport_width=640
 window/size/viewport_height=780
-window/size/min_size=Vector2i(560, 320)
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/size/min_size=Vector2i(560, 320)
 
 [dotnet]
 

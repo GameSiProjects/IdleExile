@@ -85,5 +85,24 @@ Tài liệu thiết kế tổng thể cho dự án **Idle Exile** — một tự
     - 4 mốc phát hành lớn: M1 (Vertical Slice), M2 (Closed Alpha), M3 (Open Beta), M4 (Golden Master v1.0).
     - Phân tích chi tiết tiến độ, phụ thuộc kỹ thuật (dependencies) và ma trận quản trị rủi ro.
 
-13. **[Kế Hoạch Triển Khai Kỹ Thuật: Tiến Trình Kép & Hóa Thạch (`DUAL_PROGRESSION_AND_CRAFTING_PLAN.md`)](DUAL_PROGRESSION_AND_CRAFTING_PLAN.md)**
+13. **[13. Thiết Kế Hệ Thống Build Archetypes & Định Hình Meta Chiến Đấu (`13_build_archetypes_specification.md`)](13_build_archetypes_specification.md)**
+    - Triết lý thiết kế Archetype cho game "Zero APM, 100% Theorycrafting".
+    - Khung phân tích 4 Trục Toán Học (Delivery & Clear, Scaling Vectors, Defensive Triad, Resource/Automation Loops).
+    - Chi tiết 7 Đại Diện Build Archetypes Kinh Điển: Bleed Slammer (Juggernaut), Ignite Proliferation (Elementalist), Crit Projectile (Deadeye), Poison Claw (Assassin), Walking Calamity (Righteous Fire), Archmage Storm (Hierophant), Dread Necromancer (Minion Army).
+    - Ma trận khắc tinh bản đồ (Map Mod Friction) và kích thích kinh tế tái ngẫu nhiên (Reroll Currency Loops).
+    - Lộ trình đồng bộ dữ liệu `data/gems.json` và `data/passive_tree.json`.
+
+14. **[14. Thiết Kế Trang Bị Độc Bản Cho Niche Builds (`14_unique_items_and_niche_builds.md`)](14_unique_items_and_niche_builds.md)**
+    - Triết lý đồ Unique trong game Zero APM: Không chạy đua chỉ số thô, tập trung bẻ cong cơ chế và giải bài toán đánh đổi rủi ro (Downside).
+    - Ma trận 8 Trang bị Độc Bản đại diện cho 8 Niche Builds: Brutus' Lead Sprinkler (Str-Stacker), Heartbound Loop (CWDT Loop), Death's Oath (Chaos Walking Sim), Shavronne's Wrappings (Low-Life ES), One With Nothing (Hollow Palm Unarmed), Bino's Kitchen Knife (Poison Epidemic), Indigon (Infinite Mana Ramp), The Baron (Str-Stacking Zombie King).
+    - Cấu trúc dữ liệu JSON `data/uniques.json` và pipeline xử lý trong Core Simulation.
+
+15. **[Kế Hoạch Triển Khai Kỹ Thuật: Tiến Trình Kép & Hóa Thạch (`DUAL_PROGRESSION_AND_CRAFTING_PLAN.md`)](DUAL_PROGRESSION_AND_CRAFTING_PLAN.md)**
     - Checklist chi tiết 6 giai đoạn phát triển: JSON Data Pipeline, Auto-Mapping Queue, The Endless Abyss Engine, Streamlined Fossil Crafting Anvil, Viewport UI và Unit Tests.
+
+16. **[Kế Hoạch Triển Khai Kỹ Thuật: Hệ Thống Build Archetypes & Meta (`BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md`)](BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md)**
+    - Lộ trình 5 giai đoạn chi tiết hóa từ `13_build_archetypes_specification.md`.
+    - 5 Prompt thực thi độc lập (Ready-to-Execute Prompts) dành cho AI Agent hoặc Lập trình viên: Gems, Passives, Combat Engine, Affixes & Map Mods, Automated Unit Test Suite.
+
+
+
