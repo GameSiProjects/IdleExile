@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using IdleExile.Core.Models;
+using IdleExile.Core.Services;
 using IdleExile.Core.Simulation;
+using IdleExile.Core.State;
 
 namespace IdleExile.Core.Tests;
 
 /// <summary>
-/// Unit tests for Prompt 1: The Crucible Sanctuary & In-Combat DPS Snapshot models and state logic.
+/// Unit tests for The Crucible Sanctuary, In-Combat DPS Snapshot, and Thaumaturgic Smelter systems.
 /// </summary>
 public static class SanctuarySystemTests
 {
@@ -18,7 +20,7 @@ public static class SanctuarySystemTests
 
     public static void RunAll()
     {
-        Console.WriteLine("[Tests] Running SanctuarySystemTests (Prompt 1 & 2: Sanctuary & Combat DPS Meter)...");
+        Console.WriteLine("[Tests] Running SanctuarySystemTests (Prompts 1, 2 & 3: Sanctuary, DPS Meter, Smelter & Dust Economy)...");
 
         TestSanctuaryTierDefinitionModel();
         TestSanctuaryStateMutationsAndEvents();
@@ -27,6 +29,15 @@ public static class SanctuarySystemTests
         TestCombatDpsTrackerSlidingWindow();
         TestCombatDpsTrackerBreakdownAndAccuracy();
         TestCombatDpsTrackerReset();
+
+        // Prompt 3: Thaumaturgic Smelter & Dust Economy
+        TestSmelterCalculateDustYield();
+        TestSmelterProcessFilteredDrop();
+        TestSmelterTryInfuseNextMaps();
+        TestSmelterTryTransmuteToCurrency();
+        TestSmelterLootFilterEvaluation();
+        TestSmelterRecipesJsonDeserialization();
+        TestCombatEngineSmelterIntegration();
 
         Console.WriteLine("[Tests] All SanctuarySystemTests PASSED successfully!");
     }
@@ -239,6 +250,198 @@ public static class SanctuarySystemTests
         AssertEqual(0f, tracker.TotalDamageDealt, "TotalDamageDealt should be 0 after reset");
         AssertEqual(0f, tracker.CombatDuration, "CombatDuration should be 0 after reset");
         AssertEqual(0, tracker.TotalHits, "TotalHits should be 0 after reset");
+    }
+
+    private static void TestSmelterCalculateDustYield()
+    {
+        var smelter = new SmelterService();
+
+        // 1. Normal Item: ilvl 10, Normal (mult 1x), 0 affixes -> 10 * 1 * 1 = 10
+        var normalItem = new EquipmentItem("rusted_sword", "Rusted Sword", LootRarity.Normal, 10, AffixCount: 0);
+        AssertEqual(10, smelter.CalculateDustYield(normalItem), "Normal item yield mismatch");
+
+        // 2. Magic Item: ilvl 50, Magic (mult 3x), 2 affixes -> 50 * 3 * 2 = 300
+        var magicItem = new EquipmentItem("driftwood_wand", "Gleaming Wand", LootRarity.Magic, 50, AffixCount: 2);
+        AssertEqual(300, smelter.CalculateDustYield(magicItem), "Magic item yield mismatch");
+
+        // 3. Rare Item: ilvl 80, Rare (mult 10x), 6 affixes -> 80 * 10 * 6 = 4800
+        var rareItem = new EquipmentItem("astral_plate", "Glory Carapace", LootRarity.Rare, 80, AffixCount: 6);
+        AssertEqual(4800, smelter.CalculateDustYield(rareItem), "Rare item yield mismatch");
+
+        // 4. Unique Item: ilvl 84, Unique (mult 25x), 4 affixes -> 84 * 25 * 4 = 8400
+        var uniqueItem = new EquipmentItem("tabula_rasa", "Tabula Rasa", LootRarity.Unique, 84, AffixCount: 4);
+        AssertEqual(8400, smelter.CalculateDustYield(uniqueItem), "Unique item yield mismatch");
+
+        // 5. Tier speed/yield bonus (Tier 3: +50% -> 300 * 1.5 = 450; Tier 4: +100% -> 300 * 2.0 = 600)
+        AssertEqual(450, smelter.CalculateDustYield(magicItem, speedOrTierBonus: 0.5f), "Tier 3 yield bonus mismatch");
+        AssertEqual(600, smelter.CalculateDustYield(magicItem, speedOrTierBonus: 1.0f), "Tier 4 yield bonus mismatch");
+
+        // 6. LootDrop overload
+        var drop = LootDrop.Equipment("iron_cuirass", "Iron Cuirass", LootRarity.Magic);
+        int dropYield = smelter.CalculateDustYield(drop, itemLevel: 20);
+        // Magic estimate affix count = 1 -> 20 * 3 * 1 = 60
+        AssertEqual(60, dropYield, "LootDrop overload yield mismatch");
+    }
+
+    private static void TestSmelterProcessFilteredDrop()
+    {
+        var smelter = new SmelterService();
+        var state = new SanctuaryState();
+
+        int eventFiredCount = 0;
+        int lastDustGained = 0;
+        string? lastItemName = null;
+
+        smelter.OnItemSmelted += (dust, name) =>
+        {
+            eventFiredCount++;
+            lastDustGained = dust;
+            lastItemName = name;
+        };
+
+        var magicItem = new EquipmentItem("crude_bow", "Swift Bow", LootRarity.Magic, 40, AffixCount: 2);
+        // 40 * 3 * 2 = 240 dust
+
+        // When AutoSmeltActive is true
+        state.AutoSmeltActive = true;
+        int gained = smelter.ProcessFilteredDrop(magicItem, state);
+        AssertEqual(240, gained, "Gained dust mismatch");
+        AssertEqual(240L, state.ThaumaturgicDust, "State dust mismatch");
+        AssertEqual(1, eventFiredCount, "Event should have fired once");
+        AssertEqual(240, lastDustGained, "Event dust mismatch");
+        AssertEqual("Swift Bow", lastItemName, "Event item name mismatch");
+
+        // When AutoSmeltActive is false
+        state.AutoSmeltActive = false;
+        int disabledGained = smelter.ProcessFilteredDrop(magicItem, state);
+        AssertEqual(0, disabledGained, "Disabled auto-smelt should return 0 dust");
+        AssertEqual(240L, state.ThaumaturgicDust, "Dust should not change when auto-smelt is disabled");
+        AssertEqual(1, eventFiredCount, "Event should not fire when auto-smelt is disabled");
+    }
+
+    private static void TestSmelterTryInfuseNextMaps()
+    {
+        var smelter = new SmelterService();
+        var state = new SanctuaryState();
+
+        state.ThaumaturgicDust = 1000;
+        bool fail = smelter.TryInfuseNextMaps(state, cost: 2500);
+        AssertFalse(fail, "Should fail when dust is insufficient");
+        AssertEqual(1000L, state.ThaumaturgicDust, "Dust should remain unchanged on failure");
+
+        state.ThaumaturgicDust = 5000;
+        bool success = smelter.TryInfuseNextMaps(state, cost: 2500, mapCount: 5, bonusQuantity: 0.10f);
+        AssertTrue(success, "Should succeed when dust is sufficient");
+        AssertEqual(2500L, state.ThaumaturgicDust, "Dust should be deducted");
+        AssertEqual(5, state.InfusedMapsRemaining, "InfusedMapsRemaining should be 5");
+        AssertEqual(0.10f, state.InfusedQuantityBonus, "InfusedQuantityBonus should be 0.10f");
+    }
+
+    private static void TestSmelterTryTransmuteToCurrency()
+    {
+        var smelter = new SmelterService();
+        var state = new SanctuaryState();
+        var stash = new AffinityStashState();
+
+        state.ThaumaturgicDust = 5000;
+        bool fail = smelter.TryTransmuteToUnmaking(state, stash, cost: 10000);
+        AssertFalse(fail, "Should fail when dust is insufficient");
+        AssertEqual(0, stash.GetCurrencyCount(SmelterService.CurrencyOrbOfUnmaking), "No currency should be deposited on failure");
+
+        state.ThaumaturgicDust = 25000;
+        bool unmakingSuccess = smelter.TryTransmuteToUnmaking(state, stash, cost: 10000);
+        AssertTrue(unmakingSuccess, "Should succeed to transmute Orb of Unmaking");
+        AssertEqual(15000L, state.ThaumaturgicDust, "Dust should be deducted by 10000");
+        AssertEqual(1, stash.GetCurrencyCount(SmelterService.CurrencyOrbOfUnmaking), "Stash should have 1 Orb of Unmaking");
+
+        bool chaosSuccess = smelter.TryTransmuteToChaos(state, stash, cost: 10000);
+        AssertTrue(chaosSuccess, "Should succeed to transmute Chaos Orb");
+        AssertEqual(5000L, state.ThaumaturgicDust, "Dust should be deducted by 10000");
+        AssertEqual(1, stash.GetCurrencyCount(SmelterService.CurrencyChaosOrb), "Stash should have 1 Chaos Orb");
+    }
+
+    private static void TestSmelterLootFilterEvaluation()
+    {
+        // 1. Seeded items are never filtered
+        var seeded = LootDrop.Equipment("seeded_sword", "Starter Sword", LootRarity.Normal, isSeeded: true);
+        AssertFalse(SmelterService.IsFilteredOut(seeded), "Seeded items must not be filtered out");
+
+        // 2. Tier 1 drops (6-link, unique) are never filtered
+        var sixLink = LootDrop.Equipment("astral_plate_6l", "Astral Plate (6-Link)", LootRarity.Rare);
+        AssertFalse(SmelterService.IsFilteredOut(sixLink), "6-Link items must not be filtered out");
+
+        var unique = LootDrop.Equipment("tabula_rasa", "Tabula Rasa", LootRarity.Unique);
+        AssertFalse(SmelterService.IsFilteredOut(unique), "Unique items must not be filtered out");
+
+        // 3. Regular Rare is not filtered by default
+        var rare = LootDrop.Equipment("rare_plate", "Glorious Plate", LootRarity.Rare);
+        AssertFalse(SmelterService.IsFilteredOut(rare), "Standard rare equipment should not be filtered by default");
+
+        // 4. White / Normal equipment is filtered out
+        var normal = LootDrop.Equipment("iron_cuirass", "Iron Cuirass", LootRarity.Normal);
+        AssertTrue(SmelterService.IsFilteredOut(normal), "Normal equipment must be filtered out for auto-smelting");
+
+        // 5. Standard Magic equipment is filtered out
+        var magic = LootDrop.Equipment("magic_wand", "Driftwood Wand", LootRarity.Magic);
+        AssertTrue(SmelterService.IsFilteredOut(magic), "Standard magic equipment must be filtered out for auto-smelting");
+
+        // 6. Currency, Gem, Map drops are not equipment and must not be filtered out
+        var currency = LootDrop.Currency("chaos_orb", "Chaos Orb");
+        AssertFalse(SmelterService.IsFilteredOut(currency), "Currency drops must not be filtered out");
+    }
+
+    private static void TestSmelterRecipesJsonDeserialization()
+    {
+        string sampleJson = @"{
+            ""rarityMultipliers"": {
+                ""Normal"": 1.0,
+                ""Magic"": 3.0,
+                ""Rare"": 10.0,
+                ""Unique"": 25.0
+            },
+            ""defaultInfuseCost"": 2500,
+            ""defaultInfuseMapCount"": 5,
+            ""defaultInfuseBonusQuantity"": 0.10,
+            ""transmutationOptions"": [
+                {
+                    ""currencyId"": ""orb_of_unmaking"",
+                    ""name"": ""Orb of Unmaking"",
+                    ""dustCost"": 10000,
+                    ""quantity"": 1
+                }
+            ]
+        }";
+
+        var config = JsonSerializer.Deserialize<SmelterRecipeConfig>(sampleJson, JsonOptions);
+        AssertNotNull(config, "SmelterRecipeConfig should not be null");
+        AssertEqual(2500, config!.DefaultInfuseCost, "DefaultInfuseCost mismatch");
+        AssertEqual(1.0f, config.RarityMultipliers["Normal"], "Normal multiplier mismatch");
+        AssertEqual(1, config.TransmutationOptions.Count, "TransmutationOptions count mismatch");
+        AssertEqual("orb_of_unmaking", config.TransmutationOptions[0].CurrencyId, "CurrencyId mismatch");
+    }
+
+    private static void TestCombatEngineSmelterIntegration()
+    {
+        var player = new PlayerState();
+        var loadout = new SkillLoadout();
+        var engine = new CombatEngine(player, loadout);
+
+        // Verify PlayerState has Sanctuary
+        AssertNotNull(player.Sanctuary, "PlayerState must have a SanctuaryState instance");
+        AssertNotNull(engine.Smelter, "CombatEngine must have a SmelterService instance");
+
+        // Setup Infused Maps
+        player.Sanctuary.AddDust(5000);
+        bool infused = engine.Smelter.TryInfuseNextMaps(player.Sanctuary);
+        AssertTrue(infused, "TryInfuseNextMaps should succeed");
+        AssertEqual(5, player.Sanctuary.InfusedMapsRemaining, "InfusedMapsRemaining should be 5");
+
+        // Start a map: verify that an infused map is consumed
+        var mapDef = new MapDefinition("strand", "Strand Map", 1, 68, false, 10, 0, "Brine King", "A coastal strand.");
+        var config = new MapRunConfig(mapDef, Array.Empty<RolledMapModifier>());
+        engine.StartMap(config);
+
+        AssertEqual(4, player.Sanctuary.InfusedMapsRemaining, "Starting map must consume 1 infused map");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string message)

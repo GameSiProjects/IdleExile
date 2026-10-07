@@ -192,6 +192,9 @@ dotnet build
 | **Tab Micro-Animations (Task 6.1)** | Complete | `scenes/Main.tscn`, `src/UI/Main.cs`, `src/UI/MainLayoutTests.cs` |
 | **Edge Glow Alerts & Ting Sound (Task 6.2)** | Complete | `src/UI/Components/EdgeGlowAlert.cs`, `src/UI/Components/DropSoundSynthesizer.cs`, `src/UI/MainLayoutTests.cs` |
 | **In-Window Shortcuts (Task 6.3)** | Complete | `src/UI/Main.cs`, `src/UI/MainLayoutTests.cs`, `localization/translations.csv` |
+| **Crucible Sanctuary & Hub Tiers (Prompt 1)** | Complete | `data/sanctuary_tiers.json`, `src/Core/Models/SanctuaryState.cs` |
+| **In-Combat Real-Time DPS Meter (Prompt 2)** | Complete | `src/Core/Models/CombatDpsSnapshot.cs`, `src/Core/Simulation/CombatDpsTracker.cs` |
+| **Thaumaturgic Smelter & Dust Economy (Prompt 3)** | Complete | `data/smelter_recipes.json`, `src/Core/Services/SmelterService.cs`, `src/Core/Models/EquipmentItem.cs` |
 
 ---
 

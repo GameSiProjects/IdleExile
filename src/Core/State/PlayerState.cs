@@ -251,6 +251,9 @@ public sealed class PlayerState : ICombatEntity
     /// <summary>Specialized 4-tab Affinity Stash (Currency, Gear, Maps, Fossils) for player storage.</summary>
     public AffinityStashState Stash { get; } = new();
 
+    /// <summary>Runtime state for The Crucible Sanctuary (Hub tier, Thaumaturgic Dust, automation toggles, map infusions).</summary>
+    public SanctuaryState Sanctuary { get; } = new();
+
     /// <summary>Fired when player state is bootstrapped from an archetype.</summary>
     public event Action<StarterArchetypeDefinition>? OnBootstrapped;
 

@@ -1,0 +1,25 @@
+{
+  "rarityMultipliers": {
+    "Normal": 1.0,
+    "Magic": 3.0,
+    "Rare": 10.0,
+    "Unique": 25.0
+  },
+  "defaultInfuseCost": 2500,
+  "defaultInfuseMapCount": 5,
+  "defaultInfuseBonusQuantity": 0.10,
+  "transmutationOptions": [
+    {
+      "currencyId": "orb_of_unmaking",
+      "name": "Orb of Unmaking",
+      "dustCost": 10000,
+      "quantity": 1
+    },
+    {
+      "currencyId": "chaos_orb",
+      "name": "Chaos Orb",
+      "dustCost": 10000,
+      "quantity": 1
+    }
+  ]
+}

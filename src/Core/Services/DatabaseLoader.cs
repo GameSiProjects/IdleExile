@@ -25,6 +25,7 @@ public class DatabaseLoader
     public Dictionary<string, CurrencyDefinition> Currencies { get; private set; } = new();
     public Dictionary<string, FossilDefinition> Fossils { get; private set; } = new();
     public Dictionary<string, SanctuaryTierDefinition> SanctuaryTiers { get; private set; } = new();
+    public SmelterRecipeConfig? SmelterRecipes { get; private set; }
 
     public void LoadAll()
     {
@@ -38,8 +39,9 @@ public class DatabaseLoader
         LoadCurrencies();
         LoadFossils();
         LoadSanctuaryTiers();
+        LoadSmelterRecipes();
         ValidateWeaponBases();
-        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps, {Currencies.Count} currencies, {Fossils.Count} fossils, {SanctuaryTiers.Count} sanctuary tiers, PassiveTree: {PassiveTree?.Nodes.Count ?? 0} nodes.");
+        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps, {Currencies.Count} currencies, {Fossils.Count} fossils, {SanctuaryTiers.Count} sanctuary tiers, SmelterRecipes: {(SmelterRecipes != null ? "Yes" : "No")}, PassiveTree: {PassiveTree?.Nodes.Count ?? 0} nodes.");
     }
 
 
@@ -189,6 +191,18 @@ public class DatabaseLoader
 
         var list = JsonSerializer.Deserialize<List<SanctuaryTierDefinition>>(json, JsonOptions);
         SanctuaryTiers = list?.ToDictionary(s => s.Id) ?? new();
+    }
+
+    private void LoadSmelterRecipes()
+    {
+        string json = FileAccess.GetFileAsString("res://data/smelter_recipes.json");
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            GD.PrintErr("[DatabaseLoader] Could not read res://data/smelter_recipes.json");
+            return;
+        }
+
+        SmelterRecipes = JsonSerializer.Deserialize<SmelterRecipeConfig>(json, JsonOptions);
     }
 
     private void ValidateWeaponBases()

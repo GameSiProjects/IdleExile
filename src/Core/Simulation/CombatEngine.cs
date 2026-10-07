@@ -83,6 +83,9 @@ public sealed class CombatEngine
     /// <summary>Real-time in-combat DPS and telemetry tracker (Sliding Window 3.0s).</summary>
     public CombatDpsTracker DpsTracker { get; } = new();
 
+    /// <summary>Thaumaturgic Smelter service for automated junk filtering and dust economy.</summary>
+    public SmelterService Smelter { get; }
+
 
     // ─────────────────────────────────────────────
     //  Map Run Context
@@ -152,6 +155,9 @@ public sealed class CombatEngine
 
     /// <summary>Fired for each item dropped.</summary>
     public event Action<LootDrop>? OnLootDropped;
+
+    /// <summary>Fired when an item hidden by the loot filter is automatically smelted into Thaumaturgic Dust.</summary>
+    public event Action<LootDrop, int>? OnFilteredItemSmelted;
 
     /// <summary>Fired when the player suffers a fatal blow.</summary>
     public event Action<DeathRecap>? OnPlayerDied;
@@ -258,7 +264,8 @@ public sealed class CombatEngine
         DeathHandler? death = null,
         SeededDropCoordinator? dropCoordinator = null,
         TickManager? tickManager = null,
-        Random? random = null)
+        Random? random = null,
+        SmelterService? smelter = null)
     {
         Player = player ?? throw new ArgumentNullException(nameof(player));
         Loadout = loadout ?? throw new ArgumentNullException(nameof(loadout));
@@ -267,6 +274,7 @@ public sealed class CombatEngine
         Death = death ?? new DeathHandler();
         DropCoordinator = dropCoordinator ?? new SeededDropCoordinator();
         TickManager = tickManager ?? new TickManager();
+        Smelter = smelter ?? new SmelterService();
         _random = random ?? Random.Shared;
 
         Movement = new ExileMovementController(Player, Loadout);
@@ -308,6 +316,12 @@ public sealed class CombatEngine
         Spawner.BeginMap(config);
         Death.ResetForNewMap();
         DpsTracker.ResetForNewMap();
+
+        // Consume Thaumaturgic Dust map infusion if remaining
+        if (Player.Sanctuary.InfusedMapsRemaining > 0)
+        {
+            Player.Sanctuary.ConsumeInfusedMap();
+        }
 
         TotalMonstersKilledInMap = 0;
 
@@ -1363,20 +1377,94 @@ public sealed class CombatEngine
                 bool isFailSafe = CurrentConfig?.Map.IsFailSafe ?? false;
                 var drops = DropCoordinator.ProcessMonsterKill(dead, isFailSafe);
 
+                int monsterLvl = CurrentConfig?.EffectiveMonsterLevel ?? dead.MonsterLevel;
+                float tierSpeedBonus = Player.Sanctuary.CurrentTier switch
+                {
+                    3 => 0.5f,
+                    4 => 1.0f,
+                    _ => 0.0f
+                };
+
+                var shownDrops = new List<LootDrop>();
                 if (drops != null && drops.Count > 0)
                 {
                     foreach (var drop in drops)
                     {
-                        OnLootDropped?.Invoke(drop);
+                        if (SmelterService.IsFilteredOut(drop))
+                        {
+                            if (Player.Sanctuary.AutoSmeltActive)
+                            {
+                                int dust = Smelter.ProcessFilteredDrop(drop, Player.Sanctuary, monsterLvl, tierSpeedBonus);
+                                OnFilteredItemSmelted?.Invoke(drop, dust);
+                            }
+                            else
+                            {
+                                shownDrops.Add(drop);
+                                OnLootDropped?.Invoke(drop);
+                            }
+                        }
+                        else
+                        {
+                            shownDrops.Add(drop);
+                            OnLootDropped?.Invoke(drop);
+                        }
                     }
-                    OnLootBatchDropped?.Invoke(drops);
+
+                    if (shownDrops.Count > 0)
+                    {
+                        OnLootBatchDropped?.Invoke(shownDrops);
+                    }
+                }
+
+                // Ambient monster drops in mapping: roll chances for junk equipment that gets filtered & auto-smelted
+                if (dead.Rarity != MonsterRarity.Boss && !isFailSafe)
+                {
+                    float ambientDropChance = dead.Rarity switch
+                    {
+                        MonsterRarity.Rare => 0.40f,
+                        MonsterRarity.Magic => 0.15f,
+                        _ => 0.05f
+                    };
+
+                    float quantityMult = CurrentConfig != null ? (1.0f + CurrentConfig.TotalQuantity / 100f) : 1.0f;
+                    if ((float)_random.NextDouble() < ambientDropChance * quantityMult)
+                    {
+                        var ambientRarity = dead.Rarity == MonsterRarity.Rare
+                            ? (_random.NextDouble() < 0.25 ? LootRarity.Rare : LootRarity.Magic)
+                            : (_random.NextDouble() < 0.10 ? LootRarity.Magic : LootRarity.Normal);
+
+                        var ambientItem = LootDrop.Equipment(
+                            id: $"salvage_base_{dead.MonsterLevel}",
+                            displayName: $"{ambientRarity} Equipment (ilvl {monsterLvl})",
+                            rarity: ambientRarity
+                        );
+
+                        if (SmelterService.IsFilteredOut(ambientItem))
+                        {
+                            if (Player.Sanctuary.AutoSmeltActive)
+                            {
+                                int dust = Smelter.ProcessFilteredDrop(ambientItem, Player.Sanctuary, monsterLvl, tierSpeedBonus);
+                                OnFilteredItemSmelted?.Invoke(ambientItem, dust);
+                            }
+                            else
+                            {
+                                shownDrops.Add(ambientItem);
+                                OnLootDropped?.Invoke(ambientItem);
+                            }
+                        }
+                        else
+                        {
+                            shownDrops.Add(ambientItem);
+                            OnLootDropped?.Invoke(ambientItem);
+                        }
+                    }
                 }
 
                 // Fire Monster Killed Event
                 OnMonsterKilled?.Invoke(new MonsterKilledEventArgs(
                     Monster: dead,
                     ExpGranted: dead.BaseExperience,
-                    Drops: drops ?? Array.Empty<LootDrop>()
+                    Drops: shownDrops
                 ));
 
                 // Clean up monster runtime resources

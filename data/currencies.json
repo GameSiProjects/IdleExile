@@ -158,5 +158,15 @@
     "maxStackSize": 5000,
     "description": "Creates a mirrored, unmodifiable duplicate of a non-unique item.",
     "category": "HighValue"
+  },
+  {
+    "id": "orb_of_unmaking",
+    "name": "Orb of Unmaking",
+    "iconGlyph": "🔮",
+    "colorHex": "#A569BD",
+    "tier": 3,
+    "maxStackSize": 5000,
+    "description": "Grants one Atlas passive skill respec point.",
+    "category": "Basic"
   }
 ]

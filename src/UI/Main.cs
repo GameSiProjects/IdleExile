@@ -443,7 +443,7 @@ public partial class Main : Control
         _battleViewport?.SetMap(config, progressPercent: 0f, rarity: rarity);
         _battleViewport?.BindPlayer(Player, Loadout);
 
-        Engine = new CombatEngine(Player, Loadout, dropCoordinator: DropCoordinator);
+        Engine = new CombatEngine(Player, Loadout, dropCoordinator: DropCoordinator, smelter: new SmelterService(Db.SmelterRecipes));
         if (_passiveTreeView?.TreeState != null)
         {
             Engine.PassiveStats = _passiveTreeView.TreeState.BuildAggregatedOffensiveBucket();
@@ -622,6 +622,16 @@ public partial class Main : Control
                     _equipmentView?.AddCandidateItem(sampleArmour);
                 }
             }
+        };
+
+        Engine.OnFilteredItemSmelted += (drop, dust) =>
+        {
+#if DEBUG
+            if (OS.IsDebugBuild())
+            {
+                GD.Print($"[Smelter] Auto-smelted {drop.DisplayName} -> +{dust} Thaumaturgic Dust (Total: {Player.Sanctuary.ThaumaturgicDust:N0})");
+            }
+#endif
         };
 
         Engine.OnBossSlamTelegraphed += args =>
