@@ -1263,6 +1263,7 @@ public partial class Main : Control
         IdleExile.Core.Tests.PassiveTreeSystemTests.RunAll();
         IdleExile.Core.Tests.AffinityStashTests.RunAllTests();
         IdleExile.Core.Tests.EdgeGlowAlertTests.RunAll();
+        IdleExile.Core.Tests.SanctuarySystemTests.RunAll();
         IdleExile.UI.MainLayoutTests.RunAll(mainInstance);
         GD.Print("[Tests] All Core Unit Tests passed successfully!");
     }

@@ -207,8 +207,11 @@ Quái vật không rớt từ trên trời xuống ngẫu nhiên, mà được b
 * **Emergency Portal (Phím tắt: `Space`):**
   * Nút bấm biểu tượng cổng dịch chuyển màu xanh lam phát sáng ở thanh công cụ đáy.
   * Giúp người chơi tẩu thoát ngay về Hideout khi sắp chết ở Red Map nhằm tránh hình phạt mất 10% EXP.
-* **Combat Telemetry Drawer (`[?]` Inspector):**
-  * Nút nhỏ mở popup phân tích nhanh: *Effective DPS, Tỉ lệ né đòn thực tế (Entropy Rate), Nguyên nhân tử vong (Death Recap)*.```
+* **Combat Telemetry & Real-Time DPS Meter (`[?]` Inspector / Quick Footer):**
+  * Hiển thị chỉ số sát thương thực tế thời gian thực (`DPS: 142.5K • Peak: 389K`) tính theo thuật toán cửa sổ trượt 3.0s (xem chi tiết tại [15_game_hub_and_sanctuary.md](15_game_hub_and_sanctuary.md)).
+  * Khi bấm mở rộng hoặc di chuột: Hiển thị phân tách tỉ lệ % nguồn sát thương (Physical, Fire, Cold, Lightning, Chaos, DoT), tỷ lệ trúng đòn (Accuracy Rate) và tần suất đòn đánh (APS).
+  * Hỗ trợ chẩn đoán nguyên nhân tử vong (Death Recap) khi nhân vật bị hạ gục.
+
 
 ---
 

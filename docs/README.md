@@ -97,12 +97,22 @@ Tài liệu thiết kế tổng thể cho dự án **Idle Exile** — một tự
     - Ma trận 8 Trang bị Độc Bản đại diện cho 8 Niche Builds: Brutus' Lead Sprinkler (Str-Stacker), Heartbound Loop (CWDT Loop), Death's Oath (Chaos Walking Sim), Shavronne's Wrappings (Low-Life ES), One With Nothing (Hollow Palm Unarmed), Bino's Kitchen Knife (Poison Epidemic), Indigon (Infinite Mana Ramp), The Baron (Str-Stacking Zombie King).
     - Cấu trúc dữ liệu JSON `data/uniques.json` và pipeline xử lý trong Core Simulation.
 
-15. **[Kế Hoạch Triển Khai Kỹ Thuật: Tiến Trình Kép & Hóa Thạch (`DUAL_PROGRESSION_AND_CRAFTING_PLAN.md`)](DUAL_PROGRESSION_AND_CRAFTING_PLAN.md)**
-    - Checklist chi tiết 6 giai đoạn phát triển: JSON Data Pipeline, Auto-Mapping Queue, The Endless Abyss Engine, Streamlined Fossil Crafting Anvil, Viewport UI và Unit Tests.
+15. **[15. Thiết Kế Game Hub / Hideout & Bộ Đếm DPS Thực Chiến (`15_game_hub_and_sanctuary.md`)](15_game_hub_and_sanctuary.md)**
+    - Triết lý The Crucible Sanctuary (Hub trung tâm): Safe Haven, Zero APM, và trung tâm điều phối tự động.
+    - Hai trạng thái Viewport 2D (Active Expedition vs Sanctuary Idle).
+    - Các module chức năng: Crucible Map Device, The Crucible Anvil (Workspace thuần Currency & Fossil, không Deterministic Crafting), Thaumaturgic Smelter (Lò nung rác ra Bụi Giả Kim), Trạm Địa Chấn Biển Sâu (Abyss), Đài Cổ Tích Atlas.
+    - Bộ Đếm DPS Thời Gian Thực Khi Chiến Đấu (In-Combat Real-Time DPS Meter) sử dụng thuật toán cửa sổ trượt 3.0s thay thế cọc gỗ.
+    - Tiến trình phát triển Thánh Địa (Tier I đến Tier IV).
 
-16. **[Kế Hoạch Triển Khai Kỹ Thuật: Hệ Thống Build Archetypes & Meta (`BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md`)](BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md)**
-    - Lộ trình 5 giai đoạn chi tiết hóa từ `13_build_archetypes_specification.md`.
-    - 5 Prompt thực thi độc lập (Ready-to-Execute Prompts) dành cho AI Agent hoặc Lập trình viên: Gems, Passives, Combat Engine, Affixes & Map Mods, Automated Unit Test Suite.
+---
+
+## 🛠 Kế Hoạch Triển Khai Kỹ Thuật (Implementation Plans)
+
+* **[Kế Hoạch Triển Khai Kỹ Thuật: Tiến Trình Kép & Hóa Thạch (`DUAL_PROGRESSION_AND_CRAFTING_PLAN.md`)](DUAL_PROGRESSION_AND_CRAFTING_PLAN.md)**: Checklist chi tiết 6 giai đoạn phát triển: JSON Data Pipeline, Auto-Mapping Queue, The Endless Abyss Engine, Streamlined Fossil Crafting Anvil, Viewport UI và Unit Tests.
+* **[Kế Hoạch Triển Khai Kỹ Thuật: Hệ Thống Build Archetypes & Meta (`BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md`)](BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md)**: Lộ trình 5 giai đoạn chi tiết hóa từ `13_build_archetypes_specification.md` cùng 5 Ready-to-Execute Prompts.
+* **[Kế Hoạch Triển Khai Kỹ Thuật: Hub Thánh Địa & Bộ Đếm DPS Thực Chiến (`SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md`)](SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md)**: Lộ trình 5 giai đoạn triển khai The Crucible Sanctuary (Dual-State Viewport, The Crucible Anvil, Thaumaturgic Smelter) và In-Combat Real-Time DPS Meter với 5 Ready-to-Execute Prompts.
+
+
 
 
 

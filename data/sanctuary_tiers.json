@@ -1,0 +1,54 @@
+[
+  {
+    "id": "tier_1",
+    "tier": 1,
+    "name": "Hollow Crypt",
+    "requiredMapTier": 1,
+    "mapSlots": 4,
+    "queueSlots": 10,
+    "smelterUnlocked": false,
+    "abyssUnlocked": false,
+    "smelterSpeedBonus": 0.0,
+    "pinnacleTrophiesUnlocked": false,
+    "description": "A decaying crypt with an ancient weathered map device and a single flickering campfire."
+  },
+  {
+    "id": "tier_2",
+    "tier": 2,
+    "name": "Awakened Foundry",
+    "requiredMapTier": 6,
+    "mapSlots": 4,
+    "queueSlots": 10,
+    "smelterUnlocked": true,
+    "abyssUnlocked": true,
+    "smelterSpeedBonus": 0.0,
+    "pinnacleTrophiesUnlocked": false,
+    "description": "Restored flagstones with glowing runic conduits. Awakens the Abyssal Resonator and Thaumaturgic Smelter."
+  },
+  {
+    "id": "tier_3",
+    "tier": 3,
+    "name": "Eldritch Sanctum",
+    "requiredMapTier": 11,
+    "mapSlots": 4,
+    "queueSlots": 15,
+    "smelterUnlocked": true,
+    "abyssUnlocked": true,
+    "smelterSpeedBonus": 0.5,
+    "pinnacleTrophiesUnlocked": false,
+    "description": "Cosmic astral rift cracks through the stone vault. Expands map queue and accelerates Thaumaturgic smelting."
+  },
+  {
+    "id": "tier_4",
+    "tier": 4,
+    "name": "Celestial Void",
+    "requiredMapTier": 16,
+    "mapSlots": 5,
+    "queueSlots": 15,
+    "smelterUnlocked": true,
+    "abyssUnlocked": true,
+    "smelterSpeedBonus": 1.0,
+    "pinnacleTrophiesUnlocked": true,
+    "description": "A gilded transcendent sanctum bathed in celestial radiance. Unlocks the 5th map slot and pinnacle relics."
+  }
+]

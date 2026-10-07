@@ -24,6 +24,7 @@ public class DatabaseLoader
     public PassiveTreeDefinition? PassiveTree { get; private set; }
     public Dictionary<string, CurrencyDefinition> Currencies { get; private set; } = new();
     public Dictionary<string, FossilDefinition> Fossils { get; private set; } = new();
+    public Dictionary<string, SanctuaryTierDefinition> SanctuaryTiers { get; private set; } = new();
 
     public void LoadAll()
     {
@@ -36,9 +37,11 @@ public class DatabaseLoader
         LoadPassiveTree();
         LoadCurrencies();
         LoadFossils();
+        LoadSanctuaryTiers();
         ValidateWeaponBases();
-        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps, {Currencies.Count} currencies, {Fossils.Count} fossils, PassiveTree: {PassiveTree?.Nodes.Count ?? 0} nodes.");
+        GD.Print($"[DatabaseLoader] Loaded {Affixes.Count} affixes, {WeaponBases.Count} weapons, {ArmourBases.Count} armours, {AccessoryBases.Count} accessories, {Gems.Count} gems, {Maps.Count} maps, {Currencies.Count} currencies, {Fossils.Count} fossils, {SanctuaryTiers.Count} sanctuary tiers, PassiveTree: {PassiveTree?.Nodes.Count ?? 0} nodes.");
     }
+
 
     private void LoadAffixes()
     {
@@ -175,7 +178,21 @@ public class DatabaseLoader
         Fossils = list?.ToDictionary(f => f.Id) ?? new();
     }
 
+    private void LoadSanctuaryTiers()
+    {
+        string json = FileAccess.GetFileAsString("res://data/sanctuary_tiers.json");
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            GD.PrintErr("[DatabaseLoader] Could not read res://data/sanctuary_tiers.json");
+            return;
+        }
+
+        var list = JsonSerializer.Deserialize<List<SanctuaryTierDefinition>>(json, JsonOptions);
+        SanctuaryTiers = list?.ToDictionary(s => s.Id) ?? new();
+    }
+
     private void ValidateWeaponBases()
+
     {
         int missingCount = 0;
         foreach (var weapon in WeaponBases.Values)
