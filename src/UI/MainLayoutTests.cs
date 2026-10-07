@@ -36,6 +36,7 @@ public static class MainLayoutTests
             TestEdgeGlowAlerts(existingMain);
             TestInWindowShortcuts(existingMain);
             TestCameraLookAheadAndTransformations(existingMain);
+            TestDualStateViewportAndCombatDpsMeter(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -70,6 +71,7 @@ public static class MainLayoutTests
             TestEdgeGlowAlerts(main);
             TestInWindowShortcuts(main);
             TestCameraLookAheadAndTransformations(main);
+            TestDualStateViewportAndCombatDpsMeter(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -1560,7 +1562,91 @@ public static class MainLayoutTests
         }
 
         camera.Free();
-        GD.Print("[Tests] Prompt 4: Camera Look-Ahead (+80px) & 640px dimensions PASSED!");
+        GD.Print("[Tests] Camera Look-Ahead (+80px) & 640px dimensions PASSED!");
+    }
+
+    private static void TestDualStateViewportAndCombatDpsMeter(Main main)
+    {
+        var battleViewport = main.BattleViewport;
+        AssertNotNull(battleViewport, "BattleViewport must exist");
+        var arena = battleViewport.Arena;
+        AssertNotNull(arena, "Arena2D must exist inside BattleViewport");
+
+        // 1. Verify ViewportMode enum and initial Sanctuary state
+        battleViewport.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
+        AssertEqual(Arena2D.ViewportMode.SanctuaryIdle, battleViewport.CurrentMode, "CurrentMode should be SanctuaryIdle");
+        AssertEqual(Arena2D.ViewportMode.SanctuaryIdle, arena.CurrentMode, "Arena2D.CurrentMode should be SanctuaryIdle");
+
+        // 2. Process one step in Sanctuary mode
+        arena._Process(0.033);
+        AssertEqual(new Vector2(240f, Arena2D.GroundBaselineY), arena.ExilePosition, "Exile must be resting at (240, 86) in Sanctuary mode");
+        AssertEqual(ExileMovementState.Idle, arena.MovementState, "MovementState must be Idle in Sanctuary mode");
+        AssertEqual(0, arena.ActiveProjectileCount, "Projectiles must be 0 in Sanctuary mode");
+
+        // 3. Verify Sanctuary status label and DPS label in Quick Footer
+        battleViewport.SetSanctuaryStatus();
+        var statusLabel = main.GetNodeOrNull<Label>("%StatusLabel");
+        AssertNotNull(statusLabel, "StatusLabel must exist in Quick Footer");
+        AssertTrue(statusLabel.Text.Contains("Sanctuary Safe Haven (100% Recovered)"),
+            $"StatusLabel should show Sanctuary Safe Haven message, got '{statusLabel.Text}'");
+
+        var dpsLabel = main.GetNodeOrNull<Label>("%DpsLabel");
+        AssertNotNull(dpsLabel, "DpsLabel must exist in Quick Footer (%DpsLabel)");
+        AssertEqual("DPS: 0 • Peak: 0", dpsLabel.Text, "DpsLabel should show 0 in Sanctuary mode");
+
+        // 4. Switch to ExpeditionCombat mode
+        battleViewport.SetViewportMode(Arena2D.ViewportMode.ExpeditionCombat);
+        AssertEqual(Arena2D.ViewportMode.ExpeditionCombat, battleViewport.CurrentMode, "CurrentMode should be ExpeditionCombat");
+        AssertEqual(Arena2D.ViewportMode.ExpeditionCombat, arena.CurrentMode, "Arena2D.CurrentMode should be ExpeditionCombat");
+
+        // 5. Feed in live combat DPS snapshot and verify telemetry updates
+        var testSnapshot = new CombatDpsSnapshot(
+            CurrentDps: 142580f,
+            PeakDps: 389120f,
+            AverageDps: 118400f,
+            PhysicalPercent: 42.0f,
+            FirePercent: 38.0f,
+            ColdPercent: 0.0f,
+            LightningPercent: 15.0f,
+            ChaosPercent: 5.0f,
+            HitRateAps: 3.45f,
+            AccuracyPercent: 100f
+        );
+
+        battleViewport.UpdateDps(testSnapshot);
+        AssertEqual("DPS: 142,580 • Peak: 389,120", dpsLabel.Text, "DpsLabel must display formatted Current and Peak DPS");
+
+        // 6. Verify diagnostic tooltip breakdown
+        AssertNotNull(dpsLabel.TooltipText, "DpsLabel must have diagnostic breakdown tooltip");
+        AssertTrue(dpsLabel.TooltipText.Contains("COMBAT TELEMETRY & DPS BREAKDOWN"), "Tooltip must contain telemetry header");
+        AssertTrue(dpsLabel.TooltipText.Contains("Physical:      42.0%"), "Tooltip must list physical damage percentage");
+        AssertTrue(dpsLabel.TooltipText.Contains("Fire:          38.0%"), "Tooltip must list fire damage percentage");
+        AssertTrue(dpsLabel.TooltipText.Contains("Lightning:     15.0%"), "Tooltip must list lightning damage percentage");
+        AssertTrue(dpsLabel.TooltipText.Contains("Chaos:         5.0%"), "Tooltip must list chaos damage percentage");
+        AssertTrue(dpsLabel.TooltipText.Contains("Hit Rate:       3.45 APS"), "Tooltip must list hit rate APS");
+
+        // 7. Verify peak DPS gold modulation highlight
+        var peakSnapshot = new CombatDpsSnapshot(
+            CurrentDps: 400000f,
+            PeakDps: 400000f,
+            AverageDps: 200000f,
+            PhysicalPercent: 100f,
+            FirePercent: 0f,
+            ColdPercent: 0f,
+            LightningPercent: 0f,
+            ChaosPercent: 0f,
+            HitRateAps: 4.0f,
+            AccuracyPercent: 100f
+        );
+        battleViewport.UpdateDps(peakSnapshot);
+        AssertEqual("DPS: 400,000 • Peak: 400,000", dpsLabel.Text, "DpsLabel must update to peak value");
+        AssertEqual(new Color(1.0f, 0.88f, 0.35f), dpsLabel.Modulate, "DpsLabel must be highlighted in gold on peak DPS");
+
+        // Return to Sanctuary mode
+        battleViewport.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
+        battleViewport.SetSanctuaryStatus();
+
+        GD.Print("[Tests] Prompt 4: Dual-State Viewport & Combat DPS Meter PASSED!");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

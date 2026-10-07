@@ -195,6 +195,7 @@ dotnet build
 | **Crucible Sanctuary & Hub Tiers (Prompt 1)** | Complete | `data/sanctuary_tiers.json`, `src/Core/Models/SanctuaryState.cs` |
 | **In-Combat Real-Time DPS Meter (Prompt 2)** | Complete | `src/Core/Models/CombatDpsSnapshot.cs`, `src/Core/Simulation/CombatDpsTracker.cs` |
 | **Thaumaturgic Smelter & Dust Economy (Prompt 3)** | Complete | `data/smelter_recipes.json`, `src/Core/Services/SmelterService.cs`, `src/Core/Models/EquipmentItem.cs` |
+| **Dual-State Viewport & Combat DPS UI (Prompt 4)** | Complete | `src/UI/Components/Arena2D.cs`, `src/UI/BattleViewport.cs`, `scenes/Main.tscn` |
 
 ---
 

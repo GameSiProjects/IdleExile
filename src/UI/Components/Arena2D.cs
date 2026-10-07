@@ -127,6 +127,60 @@ public partial class Arena2D : Node2D
     public static readonly Color ColorBossAura = new(0.9f, 0.15f, 0.15f, 0.55f);
 
     // ─────────────────────────────────────────────
+    //  Dual-State Viewport Mode (Prompt 4 / Doc 15)
+    // ─────────────────────────────────────────────
+    public enum ViewportMode
+    {
+        ExpeditionCombat,
+        SanctuaryIdle
+    }
+
+    private ViewportMode _currentMode = ViewportMode.SanctuaryIdle;
+
+    /// <summary>
+    /// Dual-state viewport operating mode: ExpeditionCombat (live mapping/delving) vs SanctuaryIdle (safe haven hub).
+    /// </summary>
+    public ViewportMode CurrentMode
+    {
+        get => _currentMode;
+        set
+        {
+            _currentMode = value;
+            if (value == ViewportMode.SanctuaryIdle)
+            {
+                ClearCombatEntities();
+            }
+            QueueRedraw();
+        }
+    }
+
+    /// <summary>
+    /// Sets the viewport operating mode with visual cleanup.
+    /// </summary>
+    public void SetMode(ViewportMode mode) => CurrentMode = mode;
+
+    /// <summary>
+    /// Clears all combat projectiles, indicators, craters, and screen shakes when returning to Sanctuary.
+    /// </summary>
+    public void ClearCombatEntities()
+    {
+        for (int i = 0; i < MaxProjectiles; i++)
+        {
+            _projectiles[i].IsActive = false;
+            _projectilePendingHits[i]?.Clear();
+        }
+        for (int i = 0; i < MaxMeleeIndicators; i++)
+        {
+            _meleeIndicators[i].IsActive = false;
+        }
+        _telegraph.IsActive = false;
+        _slamCraters.Clear();
+        _screenShakeTimer = 0f;
+        _shakeOffset = Vector2.Zero;
+        Position = Vector2.Zero;
+    }
+
+    // ─────────────────────────────────────────────
     //  Top-Down Floor & Atmospheric State
     // ─────────────────────────────────────────────
     private float _floorTime;
@@ -340,6 +394,21 @@ public partial class Arena2D : Node2D
     {
         float dt = (float)delta;
         _floorTime += dt;
+
+        if (CurrentMode == ViewportMode.SanctuaryIdle)
+        {
+            // Sanctuary Idle: no combat simulation updates
+            _exileAuraPulsePhase += dt * 1.5f;
+            ExilePosition = new Vector2(240f, GroundBaselineY);
+            ExileWorldPosition = new Vector2(240f, GroundBaselineY);
+            MovementState = ExileMovementState.Idle;
+            MovementSpeed = 0f;
+            _exileFacingAngle = 0f; // Facing east toward Map Device at (320, 86)
+            _exileAttackRecoil = 0f;
+            Camera.Reset(CenterPosition);
+            QueueRedraw();
+            return;
+        }
 
         // 0. Update Camera Tracking & Arena Lock (Task 2.6 & Task 2.8)
         Vector2 bossCenterWorld = new(MapLength * ExileMovementController.BossArenaRatio, CenterPosition.Y);
@@ -594,6 +663,12 @@ public partial class Arena2D : Node2D
 
     public override void _Draw()
     {
+        if (CurrentMode == ViewportMode.SanctuaryIdle)
+        {
+            DrawSanctuaryChamber();
+            return;
+        }
+
         // 1. Draw Top-Down Flagstone Floor & Dungeon Tiles
         DrawTopDownFloor();
 
@@ -2425,4 +2500,299 @@ public partial class Arena2D : Node2D
         DamageType.Chaos => (ColorChaos, new Color(0.9f, 0.3f, 1.0f, 0.5f)),
         _ => (Colors.White, Colors.Transparent)
     };
+
+    // ─────────────────────────────────────────────
+    //  Rendering: The Crucible Sanctuary (Idle State)
+    // ─────────────────────────────────────────────
+    private void DrawSanctuaryChamber()
+    {
+        // 1. Ancient Granite & Marble Foundation Floor
+        DrawSanctuaryFloor();
+
+        // 2. The Ancient Crucible Map Device at Focal Center (320, 86)
+        DrawSanctuaryMapDevice(CenterPosition);
+
+        // 3. Eldritch Campfire with rising embers and warm light at (175, 96)
+        DrawEldritchCampfire(new Vector2(175f, 96f));
+
+        // 4. Exile Character in Resting/Meditation Pose at (240, 86)
+        DrawSanctuaryExile(new Vector2(240f, GroundBaselineY));
+
+        // 5. Ambient drifting celestial dust motes and vignette edges
+        DrawSanctuaryAtmosphere();
+    }
+
+    private void DrawSanctuaryFloor()
+    {
+        // 1. Base dark obsidian foundation
+        DrawRect(new Rect2(0, 0, ArenaWidth, ArenaHeight), new Color(0.024f, 0.026f, 0.035f, 1.0f));
+
+        float tileW = 40f;
+        float tileH = 28f;
+        float topY = CorridorTopY;
+        float bottomY = CorridorBottomY;
+        int cols = Mathf.CeilToInt(ArenaWidth / tileW) + 1;
+        int rows = Mathf.CeilToInt((bottomY - topY) / tileH) + 1;
+
+        Color groutColor = new(0.015f, 0.017f, 0.024f, 1.0f);
+        Color tileColorA = new(0.045f, 0.048f, 0.062f, 0.95f);
+        Color tileColorB = new(0.038f, 0.041f, 0.054f, 0.95f);
+
+        // Polished stone pavers
+        for (int c = 0; c < cols; c++)
+        {
+            float colOffset = (c % 2 == 1) ? (tileH * 0.5f) : 0f;
+            float x = c * tileW;
+
+            for (int r = -1; r <= rows; r++)
+            {
+                float y = topY + r * tileH + colOffset;
+                if (y + tileH < topY || y > bottomY) continue;
+
+                float drawY = Mathf.Max(y, topY);
+                float drawH = Mathf.Min(y + tileH, bottomY) - drawY;
+                if (drawH <= 0.5f) continue;
+
+                Rect2 tileRect = new(x + 0.5f, drawY + 0.5f, tileW - 1f, drawH - 1f);
+                Color col = ((c + r) % 2 == 0) ? tileColorA : tileColorB;
+                DrawRect(tileRect, col);
+            }
+
+            // Vertical grout seams
+            DrawLine(new Vector2(x, topY), new Vector2(x, bottomY), groutColor, 1.0f);
+        }
+
+        // Top & Bottom Sanctuary walls with gilded runic relief trim
+        Color wallBase = new(0.018f, 0.020f, 0.028f, 1.0f);
+        Color goldCurb = new(0.68f, 0.54f, 0.24f, 0.90f);
+        Color goldHighlight = new(0.85f, 0.72f, 0.35f, 0.45f);
+
+        DrawRect(new Rect2(0, 0, ArenaWidth, topY), wallBase);
+        DrawRect(new Rect2(0, bottomY, ArenaWidth, ArenaHeight - bottomY), wallBase);
+
+        DrawLine(new Vector2(0, topY), new Vector2(ArenaWidth, topY), goldCurb, 2.0f);
+        DrawLine(new Vector2(0, topY + 1f), new Vector2(ArenaWidth, topY + 1f), goldHighlight, 1.0f);
+
+        DrawLine(new Vector2(0, bottomY), new Vector2(ArenaWidth, bottomY), goldCurb, 2.0f);
+        DrawLine(new Vector2(0, bottomY - 1f), new Vector2(ArenaWidth, bottomY - 1f), goldHighlight, 1.0f);
+
+        // Central Sanctuary Ritual Dais (circular dais around Map Device at 320, 86)
+        Vector2 center = CenterPosition;
+        float daisRadius = 108f;
+        Color daisGold = new(0.72f, 0.58f, 0.25f, 0.50f);
+        Color arcaneJade = new(0.18f, 0.72f, 0.68f, 0.35f);
+        Color daisBase = new(0.032f, 0.035f, 0.048f, 0.90f);
+
+        DrawCircle(center, 70f, daisBase);
+        DrawArc(center, daisRadius, 0, Mathf.Tau, 48, daisGold, 2.0f);
+        DrawArc(center, 90f, 0, Mathf.Tau, 40, arcaneJade, 1.2f);
+        DrawArc(center, 70f, 0, Mathf.Tau, 36, daisGold, 1.5f);
+
+        // 8 Radial ley line conduits
+        for (int i = 0; i < 8; i++)
+        {
+            float angle = i * (Mathf.Tau / 8f);
+            Vector2 dir = new(Mathf.Cos(angle), Mathf.Sin(angle));
+            DrawLine(center + dir * 70f, center + dir * daisRadius, daisGold, 1.0f);
+        }
+
+        // 4 Pulsing runic ley nodes
+        float runePulse = 0.75f + Mathf.Sin(_floorTime * 2.0f) * 0.25f;
+        Color runeColor = new(0.25f, 0.85f, 0.80f, 0.45f * runePulse);
+        for (int i = 0; i < 4; i++)
+        {
+            float angle = i * (Mathf.Tau / 4f) + (Mathf.Pi / 4f);
+            Vector2 rPos = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * 80f;
+            DrawCircle(rPos, 3.2f, runeColor);
+        }
+    }
+
+    private void DrawSanctuaryMapDevice(Vector2 center)
+    {
+        // 1. Bronze-Gold Base Apparatus
+        DrawCircle(center, 46f, new Color(0.065f, 0.060f, 0.052f, 0.95f));
+        DrawArc(center, 46f, 0, Mathf.Tau, 36, new Color(0.85f, 0.68f, 0.26f, 0.92f), 2.5f);
+
+        // 2. Outer Rotating Mechanical Gear Ring (Clockwise)
+        float rot1 = _floorTime * 0.32f;
+        for (int i = 0; i < 8; i++)
+        {
+            float a = rot1 + i * (Mathf.Tau / 8f);
+            Vector2 dir = new(Mathf.Cos(a), Mathf.Sin(a));
+            DrawLine(center + dir * 44f, center + dir * 49f, new Color(0.92f, 0.74f, 0.32f, 0.95f), 2.5f);
+        }
+
+        // 3. Middle Counter-Rotating Astrolabe Ring (Counter-Clockwise)
+        float rot2 = -_floorTime * 0.20f;
+        DrawArc(center, 32f, 0, Mathf.Tau, 32, new Color(0.24f, 0.82f, 0.88f, 0.75f), 1.8f);
+        for (int i = 0; i < 6; i++)
+        {
+            float a = rot2 + i * (Mathf.Tau / 6f);
+            Vector2 dir = new(Mathf.Cos(a), Mathf.Sin(a));
+            DrawLine(center + dir * 28f, center + dir * 35f, new Color(0.35f, 0.90f, 0.95f, 0.80f), 1.2f);
+        }
+
+        // 4. Four Crucible Aperture Socket Slots (Where maps & fragments are slotted)
+        for (int i = 0; i < 4; i++)
+        {
+            float a = rot1 + i * (Mathf.Tau / 4f);
+            Vector2 sockPos = center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 23f;
+
+            // Socket dish & golden bezel
+            DrawCircle(sockPos, 5.5f, new Color(0.09f, 0.08f, 0.07f, 1.0f));
+            DrawArc(sockPos, 5.5f, 0, Mathf.Tau, 16, new Color(0.88f, 0.72f, 0.30f, 0.95f), 1.4f);
+
+            // Socket core ethereal gem shimmer
+            DrawCircle(sockPos, 2.8f, new Color(0.20f, 0.85f, 0.90f, 0.75f));
+            DrawCircle(sockPos, 1.2f, Colors.White);
+        }
+
+        // 5. Central Eldritch Gateway Aperture
+        DrawCircle(center, 14f, new Color(0.02f, 0.07f, 0.12f, 1.0f));
+        DrawArc(center, 14f, 0, Mathf.Tau, 24, new Color(0.92f, 0.75f, 0.32f, 0.95f), 1.8f);
+
+        // Swirling cosmic vortex wisps
+        float vortexPulse = 0.85f + Mathf.Sin(_floorTime * 3.5f) * 0.15f;
+        DrawCircle(center, 11f, new Color(0.12f, 0.45f, 0.75f, 0.40f * vortexPulse));
+
+        for (int i = 0; i < 3; i++)
+        {
+            float va = _floorTime * 1.6f + i * (Mathf.Tau / 3f);
+            Vector2 vDir = new(Mathf.Cos(va), Mathf.Sin(va));
+            DrawLine(center, center + vDir * 10f, new Color(0.40f, 0.92f, 1.0f, 0.75f * vortexPulse), 1.4f);
+        }
+
+        // Central white-hot singularity star
+        DrawCircle(center, 5.0f, new Color(0.75f, 0.95f, 1.0f, 0.95f));
+        DrawCircle(center, 2.2f, Colors.White);
+    }
+
+    private void DrawEldritchCampfire(Vector2 pos)
+    {
+        // 1. Stone Hearth (rough circular ring of coals)
+        DrawCircle(pos, 14f, new Color(0.12f, 0.12f, 0.15f, 1.0f));
+        DrawArc(pos, 14f, 0, Mathf.Tau, 18, new Color(0.36f, 0.32f, 0.28f, 0.85f), 1.5f);
+
+        // Hot ember charcoal bed
+        DrawCircle(pos, 9f, new Color(0.85f, 0.20f, 0.04f, 0.85f));
+
+        // 2. Warm Firelight Floor Wash
+        float flicker = 0.85f + Mathf.Sin(_floorTime * 10f) * 0.15f;
+        DrawCircle(pos, 46f, new Color(0.92f, 0.38f, 0.08f, 0.12f * flicker));
+        DrawCircle(pos, 24f, new Color(0.95f, 0.55f, 0.12f, 0.20f * flicker));
+
+        // 3. Dancing Eldritch Flame (Dual-tone: warm orange base + mystical cerulean/cyan core)
+        float flameFlickerX = Mathf.Sin(_floorTime * 12f) * 2.2f;
+        float flameHeight1 = 18f + Mathf.Cos(_floorTime * 8f) * 2.0f;
+        float flameHeight2 = 12f + Mathf.Sin(_floorTime * 14f) * 1.5f;
+
+        Vector2 topOuter = pos + new Vector2(flameFlickerX, -flameHeight1);
+        Vector2 topCore = pos + new Vector2(flameFlickerX * 0.6f, -flameHeight2);
+
+        // Outer warm flame
+        Vector2[] outerFlame =
+        [
+            pos + new Vector2(-7f, 2f),
+            pos + new Vector2(7f, 2f),
+            pos + new Vector2(5f, -8f),
+            topOuter,
+            pos + new Vector2(-5f, -8f)
+        ];
+        DrawColoredPolygon(outerFlame, new Color(0.98f, 0.38f, 0.08f, 0.85f));
+
+        // Inner mystical cyan-cerulean eldritch flame
+        Vector2[] innerFlame =
+        [
+            pos + new Vector2(-4f, 1f),
+            pos + new Vector2(4f, 1f),
+            pos + new Vector2(2.5f, -5f),
+            topCore,
+            pos + new Vector2(-2.5f, -5f)
+        ];
+        DrawColoredPolygon(innerFlame, new Color(0.20f, 0.85f, 1.0f, 0.90f));
+        DrawCircle(pos + new Vector2(0f, -2f), 3.0f, Colors.White);
+
+        // 4. Drifting Sparks and Embers rising upwards (-Y)
+        for (int i = 0; i < 10; i++)
+        {
+            float emberProg = Mathf.PosMod(_floorTime * 0.35f + i * 0.1f, 1.0f);
+            float emberY = pos.Y - emberProg * 45f;
+            float emberX = pos.X + Mathf.Sin(_floorTime * 2.2f + i * 1.8f) * (5f + emberProg * 8f);
+            float alpha = (1.0f - emberProg) * 0.85f;
+            Color col = (i % 2 == 0)
+                ? new Color(1.0f, 0.52f, 0.12f, alpha)
+                : new Color(0.30f, 0.85f, 1.0f, alpha);
+            DrawCircle(new Vector2(emberX, emberY), 1.2f, col);
+        }
+    }
+
+    private void DrawSanctuaryExile(Vector2 pos)
+    {
+        // Meditative gentle breathing bob
+        float breathe = Mathf.Sin(_floorTime * 2.0f) * 0.6f;
+        Vector2 bPos = pos + new Vector2(0, breathe);
+
+        // Facing east directly toward Map Device at (320, 86)
+        Vector2 facingDir = new(1f, 0f);
+        Vector2 normalDir = new(0f, 1f);
+
+        // 1. Soft Ground Shadow
+        DrawCircle(bPos + new Vector2(0, 3), 11f, new Color(0, 0, 0, 0.45f));
+
+        // 2. Compact Peaceful Sanctuary Aura (idle shimmer)
+        float auraPulse = 0.25f + Mathf.Sin(_exileAuraPulsePhase) * 0.08f;
+        Color auraInner = new(0.12f, 0.40f, 0.80f, auraPulse * 0.25f);
+        Color auraRing = new(0.35f, 0.70f, 1.0f, auraPulse + 0.20f);
+
+        DrawCircle(bPos, 15f, auraInner);
+        DrawArc(bPos, 15f, 0, Mathf.Tau, 24, auraRing, 1.2f);
+
+        // 3. Hooded Cloak & Mantle
+        Color cloakDark = new(0.10f, 0.12f, 0.17f, 1.0f);
+        Color cloakHighlight = new(0.24f, 0.30f, 0.42f, 1.0f);
+
+        Vector2[] mantlePoints =
+        [
+            bPos - facingDir * 7f - normalDir * 8f,
+            bPos - facingDir * 7f + normalDir * 8f,
+            bPos + facingDir * 4f + normalDir * 6f,
+            bPos + facingDir * 4f - normalDir * 6f
+        ];
+        DrawColoredPolygon(mantlePoints, cloakDark);
+
+        // Hood and Head
+        DrawCircle(bPos, 6.0f, cloakDark);
+        DrawCircle(bPos + facingDir * 1.5f, 4.0f, cloakHighlight);
+
+        // Serene Glowing Eyes looking east toward Map Device
+        Vector2 eyeOffset = facingDir * 3.5f;
+        Color eyeGlow = new(0.45f, 0.90f, 1.0f, 0.90f);
+        DrawCircle(bPos + eyeOffset + normalDir * 1.8f, 1.1f, eyeGlow);
+        DrawCircle(bPos + eyeOffset - normalDir * 1.8f, 1.1f, eyeGlow);
+        DrawCircle(bPos + eyeOffset + normalDir * 1.8f, 0.5f, Colors.White);
+        DrawCircle(bPos + eyeOffset - normalDir * 1.8f, 0.5f, Colors.White);
+
+        // Hands folded peacefully in meditation pose in front
+        DrawCircle(bPos + facingDir * 5f + normalDir * 3f, 2.2f, cloakDark);
+        DrawCircle(bPos + facingDir * 5f - normalDir * 3f, 2.2f, cloakDark);
+        DrawCircle(bPos + facingDir * 5f + normalDir * 3f, 1.4f, cloakHighlight);
+        DrawCircle(bPos + facingDir * 5f - normalDir * 3f, 1.4f, cloakHighlight);
+    }
+
+    private void DrawSanctuaryAtmosphere()
+    {
+        // Drifting ambient sanctuary dust motes
+        Color moteColor = new(0.38f, 0.65f, 0.85f, 0.25f);
+        for (int i = 0; i < 12; i++)
+        {
+            float mx = (i * 54f + _floorTime * 8f) % ArenaWidth;
+            float my = (14f + (i * 12f) + Mathf.Sin(_floorTime * 1.2f + i) * 5f) % ArenaHeight;
+            DrawCircle(new Vector2(mx, my), 1.2f, moteColor);
+        }
+
+        // Vignette edge shadows
+        Color vignetteEdge = new(0.015f, 0.018f, 0.025f, 0.65f);
+        DrawRect(new Rect2(0, 0, ArenaWidth, 6), vignetteEdge);
+        DrawRect(new Rect2(0, ArenaHeight - 6, ArenaWidth, 6), vignetteEdge);
+    }
 }

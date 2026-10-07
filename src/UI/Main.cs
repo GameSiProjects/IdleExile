@@ -15,6 +15,7 @@ public partial class Main : Control
     private Label? _statusLabel;
     private Label? _statsLabel;
     private Label? _charInfoLabel;
+    private Label? _dpsLabel;
     private CheckBox? _alwaysOnTopCheckBox;
     private BattleViewport? _battleViewport;
     private MapDeviceBar? _mapDeviceBar;
@@ -75,6 +76,7 @@ public partial class Main : Control
     public Control? MapDeviceMargin => _mapDeviceMargin;
     public EdgeGlowAlert? EdgeGlowAlert => _edgeGlowAlert;
     public Button? ResizeModeButton => _resizeModeButton;
+    public Label? DpsLabel => _dpsLabel;
 
     public DatabaseLoader Db { get; } = new();
     public PlayerState Player { get; } = new();
@@ -102,6 +104,14 @@ public partial class Main : Control
         _resizeModeButton = GetNodeOrNull<Button>("%ResizeModeButton");
         _screenCycleButton = GetNodeOrNull<Button>("%ScreenCycleButton");
         _battleViewport = GetNodeOrNull<BattleViewport>("%BattleViewport");
+        _dpsLabel = GetNodeOrNull<Label>("%DpsLabel");
+        if (_battleViewport != null)
+        {
+            _battleViewport.DpsLabel = _dpsLabel;
+            _battleViewport.StatusLabel = _statusLabel;
+            _battleViewport.CurrentMode = Arena2D.ViewportMode.SanctuaryIdle;
+            _battleViewport.SetSanctuaryStatus();
+        }
         _mapDeviceBar = GetNodeOrNull<MapDeviceBar>("%MapDeviceBar");
         _atlasView = GetNodeOrNull<AtlasView>("%AtlasView");
         _equipmentView = GetNodeOrNull<EquipmentView>("%EquipmentView");
@@ -442,6 +452,7 @@ public partial class Main : Control
         var config = new MapRunConfig(map, rolledMods);
         _battleViewport?.SetMap(config, progressPercent: 0f, rarity: rarity);
         _battleViewport?.BindPlayer(Player, Loadout);
+        _battleViewport?.SetViewportMode(Arena2D.ViewportMode.ExpeditionCombat);
 
         Engine = new CombatEngine(Player, Loadout, dropCoordinator: DropCoordinator, smelter: new SmelterService(Db.SmelterRecipes));
         if (_passiveTreeView?.TreeState != null)
@@ -490,6 +501,7 @@ public partial class Main : Control
             _battleViewport?.SetMapProgress(args.ClearProgress * 100f);
             if (Engine != null)
             {
+                _battleViewport?.UpdateDps(Engine.DpsTracker.GetSnapshot());
                 _battleViewport?.UpdateExileWorldPosition(
                     new Vector2(Engine.ExilePosition.X, Engine.ExilePosition.Y),
                     Engine.Movement.CurrentState,
@@ -684,10 +696,8 @@ public partial class Main : Control
             {
                 _mapDeviceBar?.SetPortalActive(false);
                 _atlasView?.SetPortalActive(false);
-                if (_statusLabel != null)
-                {
-                    _statusLabel.Text = "Crucible Online • Map Completed! Ready for next map";
-                }
+                _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
+                _battleViewport?.SetSanctuaryStatus();
             }
         };
 
@@ -720,11 +730,8 @@ public partial class Main : Control
         Engine?.TriggerEmergencyPortal();
         _mapDeviceBar?.SetPortalActive(false);
         _atlasView?.SetPortalActive(false);
-
-        if (_statusLabel != null)
-        {
-            _statusLabel.Text = "Crucible Online • Safely retreated to Hideout";
-        }
+        _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
+        _battleViewport?.SetSanctuaryStatus();
 
 #if DEBUG
         if (_statsLabel != null)
@@ -744,6 +751,11 @@ public partial class Main : Control
     public override void _Process(double delta)
     {
         Engine?.Update((float)delta);
+
+        if (Engine is { IsInCombat: true })
+        {
+            _battleViewport?.UpdateDps(Engine.DpsTracker.GetSnapshot());
+        }
 
         if (MapQueue.UpdateTick((float)delta, out var nextMap) && nextMap != null)
         {
@@ -785,10 +797,23 @@ public partial class Main : Control
         }
 
         var config = new MapRunConfig(mapDef, rolledMods);
+        _battleViewport.SetViewportMode(Arena2D.ViewportMode.ExpeditionCombat);
         _battleViewport.SetMap(config, progressPercent: 68.0f, rarity: "Rare", leagueEncounter: "Breach");
         _battleViewport.UpdateVitals(3450, 3450, 1200, 1200, 82, 820, 90.0, "EHP: 14.2k | Armour: 8.5k | Block: 75%");
         _battleViewport.SetGuardSkill(true, 480f, 500f, "Steelskin");
         _battleViewport.SpawnFloatingDamage(8420f, new Vector2(165, 120), DamageType.Cold, isCrit: true);
+        _battleViewport.UpdateDps(new CombatDpsSnapshot(
+            CurrentDps: 142580f,
+            PeakDps: 389120f,
+            AverageDps: 118400f,
+            PhysicalPercent: 42.0f,
+            FirePercent: 38.0f,
+            ColdPercent: 0.0f,
+            LightningPercent: 15.0f,
+            ChaosPercent: 5.0f,
+            HitRateAps: 3.45f,
+            AccuracyPercent: 100f
+        ));
 
         _mapDeviceBar?.SlotMap(mapDef, "Rare");
         _mapDeviceBar?.SetPortalActive(true);

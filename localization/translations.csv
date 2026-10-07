@@ -207,3 +207,5 @@ UI_SMELTER_TRANSMUTE_UNMAKING,"Transmute Orb of Unmaking (10,000 Dust)","Ngưng 
 UI_SMELTER_TRANSMUTE_CHAOS,"Transmute Chaos Orb (10,000 Dust)","Ngưng tụ Chaos Orb (10,000 Bụi)"
 UI_SMELTER_SMELTED_MSG,"Smelted {0} for +{1:N0} Thaumaturgic Dust!","Đã nung {0} nhận +{1:N0} Bụi Giả Kim!"
 UI_SMELTER_NOT_ENOUGH_DUST,"Not enough Thaumaturgic Dust ({0:N0} required).","Không đủ Bụi Giả Kim (cần {0:N0})."
+UI_SANCTUARY_SAFE_HAVEN,"Crucible Online • Sanctuary Safe Haven (100% Recovered)","Crucible Online • Thánh Địa An Toàn (Đã Hồi Phục 100%)"
+UI_DPS_FORMAT,"DPS: {0:N0} • Peak: {1:N0}","DPS: {0:N0} • Đỉnh: {1:N0}"

@@ -64,6 +64,43 @@ public partial class BattleViewport : Control
     private Label? _lootToastLabel;
     private double _toastRemainingDuration;
 
+    // --- Dual-State Viewport Mode (Prompt 4) ---
+    public Arena2D.ViewportMode CurrentMode
+    {
+        get => Arena?.CurrentMode ?? Arena2D.ViewportMode.SanctuaryIdle;
+        set
+        {
+            if (Arena != null)
+            {
+                Arena.CurrentMode = value;
+            }
+            if (value == Arena2D.ViewportMode.SanctuaryIdle)
+            {
+                SetSanctuaryStatus();
+            }
+        }
+    }
+
+    public void SetViewportMode(Arena2D.ViewportMode mode) => CurrentMode = mode;
+
+    // --- Quick Footer Telemetry Controls (Prompt 4) ---
+    private Label? _dpsLabel;
+    private Label? _statusLabel;
+
+    public Label? DpsLabel
+    {
+        get => _dpsLabel;
+        set => _dpsLabel = value;
+    }
+
+    public Label? StatusLabel
+    {
+        get => _statusLabel;
+        set => _statusLabel = value;
+    }
+
+    public CombatDpsSnapshot? LatestDpsSnapshot { get; private set; }
+
     public override void _Ready()
     {
         BindNodes();
@@ -127,6 +164,14 @@ public partial class BattleViewport : Control
 
         // 5. Loot Toast Elements
         _lootToastLabel = GetNodeOrNull<Label>("%LootToastLabel");
+
+        // 6. Quick Footer Telemetry Elements (Prompt 4)
+        _dpsLabel ??= GetNodeOrNull<Label>("%DpsLabel")
+                      ?? GetOwner<Control>()?.GetNodeOrNull<Label>("%DpsLabel")
+                      ?? GetParent()?.GetNodeOrNull<Label>("%DpsLabel");
+        _statusLabel ??= GetNodeOrNull<Label>("%StatusLabel")
+                         ?? GetOwner<Control>()?.GetNodeOrNull<Label>("%StatusLabel")
+                         ?? GetParent()?.GetNodeOrNull<Label>("%StatusLabel");
     }
 
     public override void _Process(double delta)
@@ -454,6 +499,82 @@ public partial class BattleViewport : Control
     /// Awakens the Map Boss with visual shockwave, roaring screen shake, and 96px Overhead Boss Bar (Task 2.8).
     /// </summary>
     public void AwakenBoss() => Arena?.AwakenBoss();
+
+    // ─────────────────────────────────────────────
+    //  Combat DPS Telemetry & Sanctuary State (Prompt 4)
+    // ─────────────────────────────────────────────
+    /// <summary>
+    /// Updates the real-time combat DPS counter on the Quick Footer bar (Prompt 4).
+    /// </summary>
+    public void UpdateDps(CombatDpsSnapshot snapshot)
+    {
+        LatestDpsSnapshot = snapshot;
+        if (_dpsLabel == null) return;
+
+        _dpsLabel.Text = $"DPS: {snapshot.CurrentDps:N0} • Peak: {snapshot.PeakDps:N0}";
+
+        // Golden glow when hitting or setting new peak DPS
+        if (snapshot.CurrentDps > 0f && snapshot.CurrentDps >= snapshot.PeakDps - 0.5f)
+        {
+            _dpsLabel.Modulate = new Color(1.0f, 0.88f, 0.35f);
+        }
+        else
+        {
+            _dpsLabel.Modulate = new Color(0.88f, 0.90f, 0.96f);
+        }
+
+        // Diagnostic hover tooltip with 5-element breakdown and attack metrics
+        _dpsLabel.TooltipText = FormatDpsDiagnosticTooltip(snapshot);
+    }
+
+    /// <summary>
+    /// Updates the real-time combat DPS counter from a CombatDpsTracker instance.
+    /// </summary>
+    public void UpdateDps(CombatDpsTracker tracker)
+    {
+        if (tracker == null) return;
+        UpdateDps(tracker.GetSnapshot());
+    }
+
+    /// <summary>
+    /// Builds the diagnostic breakdown tooltip for the Quick Footer DPS badge.
+    /// </summary>
+    public static string FormatDpsDiagnosticTooltip(CombatDpsSnapshot snapshot)
+    {
+        return $"COMBAT TELEMETRY & DPS BREAKDOWN\n" +
+               $"───────────────────────────────────\n" +
+               $"• Current DPS:    {snapshot.CurrentDps:N0} /s\n" +
+               $"• Peak Map DPS:   {snapshot.PeakDps:N0} /s\n" +
+               $"• Average DPS:    {snapshot.AverageDps:N0} /s\n" +
+               $"───────────────────────────────────\n" +
+               $"DAMAGE BREAKDOWN:\n" +
+               $"🗡 Physical:      {snapshot.PhysicalPercent:F1}%\n" +
+               $"🔥 Fire:          {snapshot.FirePercent:F1}%\n" +
+               $"❄ Cold:          {snapshot.ColdPercent:F1}%\n" +
+               $"⚡ Lightning:     {snapshot.LightningPercent:F1}%\n" +
+               $"🧪 Chaos:         {snapshot.ChaosPercent:F1}%\n" +
+               $"───────────────────────────────────\n" +
+               $"ATTACK METRICS:\n" +
+               $"• Accuracy:       {snapshot.AccuracyPercent:F1}%\n" +
+               $"• Hit Rate:       {snapshot.HitRateAps:F2} APS";
+    }
+
+    /// <summary>
+    /// Sets Sanctuary safe haven status in the Quick Footer and vitals telemetry (Prompt 4).
+    /// </summary>
+    public void SetSanctuaryStatus()
+    {
+        if (_statusLabel != null)
+        {
+            _statusLabel.Text = "Crucible Online • Sanctuary Safe Haven (100% Recovered)";
+        }
+        if (_dpsLabel != null)
+        {
+            _dpsLabel.Text = "DPS: 0 • Peak: 0";
+            _dpsLabel.Modulate = new Color(0.70f, 0.75f, 0.82f);
+            _dpsLabel.TooltipText = "The Crucible Sanctuary • Safe Haven\nAll vitals fully restored (100%). Zero combat threat.";
+        }
+    }
 
 #if DEBUG
     // ─────────────────────────────────────────────
