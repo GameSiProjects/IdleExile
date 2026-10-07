@@ -319,7 +319,7 @@ public partial class SanctuaryView : Control
             var item = Player.Gear.GetItem(slot);
             if (item != null)
             {
-                string label = $"[Equipped: {slot}] {item.Name} ({item.Rarity})";
+                string label = $"[{slot}] {item.Name}";
                 _targetItemOption.AddItem(label, idx);
                 _targetItemChoices.Add(item);
 
@@ -337,7 +337,7 @@ public partial class SanctuaryView : Control
         {
             foreach (var item in Player.Stash.GearItems)
             {
-                string label = $"[Stash] {item.Name} ({item.Rarity})";
+                string label = $"[Stash] {item.Name}";
                 _targetItemOption.AddItem(label, idx);
                 _targetItemChoices.Add(item);
                 if (_selectedTargetItem != null && _selectedTargetItem.InstanceId == item.InstanceId)
@@ -474,8 +474,8 @@ public partial class SanctuaryView : Control
     {
         var buttons = new (Button? btn, string id, string name)[]
         {
-            (_btnTransmute, TheCrucibleAnvilService.TransmuteId, "Transmute"),
-            (_btnAlteration, TheCrucibleAnvilService.AlterationId, "Alteration"),
+            (_btnTransmute, TheCrucibleAnvilService.TransmuteId, "Trans"),
+            (_btnAlteration, TheCrucibleAnvilService.AlterationId, "Alt"),
             (_btnChaos, TheCrucibleAnvilService.ChaosId, "Chaos"),
             (_btnExalt, TheCrucibleAnvilService.ExaltedId, "Exalt"),
             (_btnAnnul, TheCrucibleAnvilService.AnnulmentId, "Annul"),
@@ -490,6 +490,7 @@ public partial class SanctuaryView : Control
             bool canSlam = _selectedTargetItem != null && _anvilService.CanSlamCurrency(_selectedTargetItem, id);
 
             btn.Text = $"{name} ({count})";
+            btn.TooltipText = $"Slam {name} Orb (Available: {count})";
             btn.Disabled = !canSlam || count <= 0;
         }
     }
@@ -689,16 +690,19 @@ public partial class SanctuaryView : Control
 
         if (_btnInfuseMaps != null)
         {
+            _btnInfuseMaps.Text = "✨ Infuse 5 Maps (+10% IIQ) • 2.5k Dust";
             _btnInfuseMaps.Disabled = Player.Sanctuary.ThaumaturgicDust < SmelterService.DefaultInfuseCost;
         }
 
         if (_btnTransmuteUnmaking != null)
         {
+            _btnTransmuteUnmaking.Text = "🔮 Transmute Unmaking (10k Dust)";
             _btnTransmuteUnmaking.Disabled = Player.Sanctuary.ThaumaturgicDust < SmelterService.DefaultTransmuteCost;
         }
 
         if (_btnTransmuteChaos != null)
         {
+            _btnTransmuteChaos.Text = "🪙 Transmute Chaos Orb (10k Dust)";
             _btnTransmuteChaos.Disabled = Player.Sanctuary.ThaumaturgicDust < SmelterService.DefaultTransmuteCost;
         }
     }
@@ -783,11 +787,12 @@ public partial class SanctuaryView : Control
         {
             int depth = Player.Sanctuary.DeepestDepth;
             int packBonus = depth / 5;
-            _depthRecordLabel.Text = $"Deepest Depth: {depth}m (Pack Size: +{packBonus}%)";
+            _depthRecordLabel.Text = $"Deepest Depth: {depth}m (+{packBonus}% Pack Size)";
         }
 
         if (_btnDescendAbyss != null)
         {
+            _btnDescendAbyss.Text = "⛏ Descend to Abyss (250 Sulphite)";
             _btnDescendAbyss.Disabled = Player.Sanctuary.VoltaxicSulphite < 250;
         }
     }
@@ -840,30 +845,31 @@ public partial class SanctuaryView : Control
         }
 
         // Voidstones
-        UpdateVoidstoneLabel(_voidstone1Label, "🔵 Grasped (Maven)", Player.Sanctuary.MavenDefeated);
-        UpdateVoidstoneLabel(_voidstone2Label, "🟣 Decaying (Elder)", Player.Sanctuary.UberElderDefeated);
-        UpdateVoidstoneLabel(_voidstone3Label, "🔴 Polaric (Exarch)", Player.Sanctuary.SearingExarchDefeated);
-        UpdateVoidstoneLabel(_voidstone4Label, "🟢 Omniscient (Eater)", Player.Sanctuary.EaterOfWorldsDefeated);
+        UpdateVoidstoneLabel(_voidstone1Label, "🔵 Grasped", Player.Sanctuary.MavenDefeated);
+        UpdateVoidstoneLabel(_voidstone2Label, "🟣 Decaying", Player.Sanctuary.UberElderDefeated);
+        UpdateVoidstoneLabel(_voidstone3Label, "🔴 Polaric", Player.Sanctuary.SearingExarchDefeated);
+        UpdateVoidstoneLabel(_voidstone4Label, "🟢 Omniscient", Player.Sanctuary.EaterOfWorldsDefeated);
 
         // Pinnacle Bosses Buttons
-        UpdateBossButton(_btnBossEater, "Eater of Worlds", Player.Sanctuary.EaterOfWorldsDefeated);
-        UpdateBossButton(_btnBossExarch, "Searing Exarch", Player.Sanctuary.SearingExarchDefeated);
-        UpdateBossButton(_btnBossMaven, "The Maven", Player.Sanctuary.MavenDefeated);
-        UpdateBossButton(_btnBossElder, "Uber Elder", Player.Sanctuary.UberElderDefeated);
+        UpdateBossButton(_btnBossEater, "Eater", Player.Sanctuary.EaterOfWorldsDefeated);
+        UpdateBossButton(_btnBossExarch, "Exarch", Player.Sanctuary.SearingExarchDefeated);
+        UpdateBossButton(_btnBossMaven, "Maven", Player.Sanctuary.MavenDefeated);
+        UpdateBossButton(_btnBossElder, "Elder", Player.Sanctuary.UberElderDefeated);
     }
 
     private static void UpdateVoidstoneLabel(Label? lbl, string name, bool unlocked)
     {
         if (lbl == null) return;
-        lbl.Text = unlocked ? $"{name} [SLOTTED]" : $"{name} [LOCKED]";
+        lbl.Text = unlocked ? $"{name} ✓" : $"{name} ✗";
         lbl.Modulate = unlocked ? new Color(1.0f, 0.9f, 0.4f) : new Color(0.45f, 0.5f, 0.6f);
     }
 
     private static void UpdateBossButton(Button? btn, string name, bool defeated)
     {
         if (btn == null) return;
-        btn.Text = defeated ? $"{name}: [DEFEATED ⚔]" : $"{name}: [OPEN]";
+        btn.Text = defeated ? $"{name}: [DEAD]" : $"{name}: [OPEN]";
         btn.Modulate = defeated ? new Color(0.35f, 0.85f, 0.45f) : new Color(0.85f, 0.85f, 0.9f);
+        btn.TooltipText = defeated ? $"{name} Defeated! Voidstone unlocked." : $"Challenge {name} (Pinnacle Encounter)";
     }
 
     private void TogglePinnacleBoss(string bossId)

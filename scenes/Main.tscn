@@ -295,6 +295,7 @@ layout_mode = 2
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="SubTabBarContainer" type="PanelContainer" parent="MainLayout" unique_id=1187136315]

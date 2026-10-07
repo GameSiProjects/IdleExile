@@ -1683,6 +1683,15 @@ public static class MainLayoutTests
 
         // 2. Tab Navigation to Sanctuary
         main.SwitchWorkspaceTab(Main.WorkspaceTab.Sanctuary, animated: false);
+        var bgPanel = sanctuaryView.GetNodeOrNull<Control>("BgPanel");
+        AssertNotNull(bgPanel, "BgPanel must exist inside SanctuaryView");
+        AssertTrue(bgPanel.GetCombinedMinimumSize().X <= 640f,
+            $"Sanctuary BgPanel minimum width ({bgPanel.GetCombinedMinimumSize().X}px) must fit within 640px window");
+
+        var sanctuaryScroll = sanctuaryView.GetNodeOrNull<ScrollContainer>("BgPanel/ViewMargin/SanctuaryScroll");
+        AssertNotNull(sanctuaryScroll, "SanctuaryScroll must exist to provide vertical scroll and zero horizontal overflow");
+        AssertEqual((int)ScrollContainer.ScrollMode.Disabled, (int)sanctuaryScroll.HorizontalScrollMode, "Horizontal scroll must be disabled");
+
         AssertEqual(Main.WorkspaceTab.Sanctuary, main.ActiveTab, "ActiveTab must be Sanctuary");
         AssertTrue(sanctuaryView.Visible, "SanctuaryView must be visible when Sanctuary tab is active");
         AssertFalse(main.EquipmentView?.Visible ?? false, "EquipmentView must be hidden on Sanctuary tab");
