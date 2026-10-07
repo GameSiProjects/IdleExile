@@ -235,9 +235,15 @@ public static class MainLayoutTests
         AssertNotNull(resizeBtn, "ResizeModeButton must exist");
         AssertNotNull(windowController, "WindowController must exist");
 
-        // 0. Verify Window Size Constants (640x320 Compact, 640x780 Expanded)
+        // 0. Verify Window Size Constants and Resizable Restrictions
         AssertEqual(new Vector2I(640, 320), WindowController.CompactWindowSize, "CompactWindowSize must be 640x320");
         AssertEqual(new Vector2I(640, 780), WindowController.ExpandedWindowSize, "ExpandedWindowSize must be 640x780");
+        AssertFalse(windowController.Resizable, "WindowController must NOT allow free/manual window resizing by default");
+        AssertFalse(windowController.DesktopWindow.Resizable, "DesktopWindow must have resizable=false configured");
+        if (DisplayServer.GetName() != "headless" && windowController.DesktopWindow.Window != null)
+        {
+            AssertTrue(windowController.DesktopWindow.Window.Unresizable, "Window must be marked Unresizable in Godot Window settings");
+        }
 
         // Verify keepBottom=true bottom edge invariance math:
         // Bottom edge = Y + Height. When expanding by deltaY, new Y = current Y - deltaY.
@@ -312,6 +318,17 @@ public static class MainLayoutTests
         // Clean up state: return to Expanded Mode for subsequent tests/operations
         windowController.ExpandWindow(keepBottom: true);
         AssertTrue(windowController.IsExpanded, "Restored to Expanded mode for subsequent operations");
+
+        // 7. Verify unauthorized external OS resize is reverted
+        var testWindow = windowController.DesktopWindow.Window;
+        if (testWindow != null)
+        {
+            Vector2I sizeBefore = windowController.WindowSize;
+            // Simulate external OS resize event triggering OnNativeWindowSizeChanged
+            testWindow.Size = new Vector2I(800, 600);
+            AssertEqual(sizeBefore, windowController.WindowSize, "WindowController.WindowSize must remain unchanged when free resizing is blocked");
+            AssertEqual(sizeBefore, testWindow.Size, "Native window.Size must be reverted back to in-game WindowSize");
+        }
     }
 
     /// <summary>

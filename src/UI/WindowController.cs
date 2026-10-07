@@ -37,6 +37,9 @@ public partial class WindowController : Node
     public bool DefaultAlwaysOnTop { get; set; } = true;
 
     [Export]
+    public bool Resizable { get; set; } = false;
+
+    [Export]
     public WindowDockPosition DefaultDock { get; set; } = WindowDockPosition.BottomRight;
 
     public WindowResolutionMode CurrentMode { get; private set; } = WindowResolutionMode.Expanded;
@@ -59,7 +62,7 @@ public partial class WindowController : Node
                 WindowSize,
                 borderless: Borderless,
                 alwaysOnTop: DefaultAlwaysOnTop,
-                resizable: true
+                resizable: Resizable
             );
 
             window.SizeChanged += OnNativeWindowSizeChanged;
@@ -79,6 +82,21 @@ public partial class WindowController : Node
 
         var newSize = window.Size;
         if (newSize == WindowSize) return;
+
+        // If free/manual window resizing is disabled, prevent external OS resizing by restoring WindowSize
+        if (!Resizable)
+        {
+            _isInternalResizing = true;
+            try
+            {
+                window.Size = WindowSize;
+            }
+            finally
+            {
+                _isInternalResizing = false;
+            }
+            return;
+        }
 
         WindowResolutionMode inferredMode = newSize.Y < 500 ? WindowResolutionMode.Compact : WindowResolutionMode.Expanded;
         if (newSize.X >= 800)

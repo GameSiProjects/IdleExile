@@ -22,17 +22,20 @@ public class DesktopWindow
     private Window? _window;
     private Vector2I _windowSize;
     private int _currentScreen = 0;
+    private bool _resizable = false;
 
     public Window? Window => _window;
     public Vector2I WindowSize => _windowSize;
+    public bool Resizable => _resizable;
 
     /// <summary>
     /// Configure the game window for companion desktop overlay behavior.
     /// </summary>
-    public void SetupWindow(Window window, Vector2I size, bool borderless = false, bool alwaysOnTop = true, bool resizable = true)
+    public void SetupWindow(Window window, Vector2I size, bool borderless = false, bool alwaysOnTop = true, bool resizable = false)
     {
         _window = window;
         _windowSize = size;
+        _resizable = resizable;
 
         if (_window == null)
         {
@@ -42,6 +45,7 @@ public class DesktopWindow
         _window.Borderless = borderless;
         _window.AlwaysOnTop = alwaysOnTop;
         _window.Unresizable = !resizable;
+        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.ResizeDisabled, !resizable);
         _window.MinSize = new Vector2I(560, 320);
         _window.Size = _windowSize;
     }
