@@ -110,9 +110,5 @@ Tài liệu thiết kế tổng thể cho dự án **Idle Exile** — một tự
 
 * **[Kế Hoạch Triển Khai Kỹ Thuật: Tiến Trình Kép & Hóa Thạch (`DUAL_PROGRESSION_AND_CRAFTING_PLAN.md`)](DUAL_PROGRESSION_AND_CRAFTING_PLAN.md)**: Checklist chi tiết 6 giai đoạn phát triển: JSON Data Pipeline, Auto-Mapping Queue, The Endless Abyss Engine, Streamlined Fossil Crafting Anvil, Viewport UI và Unit Tests.
 * **[Kế Hoạch Triển Khai Kỹ Thuật: Hệ Thống Build Archetypes & Meta (`BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md`)](BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md)**: Lộ trình 5 giai đoạn chi tiết hóa từ `13_build_archetypes_specification.md` cùng 5 Ready-to-Execute Prompts.
-* **[Kế Hoạch Triển Khai Kỹ Thuật: Hub Thánh Địa & Bộ Đếm DPS Thực Chiến (`SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md`)](SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md)**: Lộ trình 5 giai đoạn triển khai The Crucible Sanctuary (Dual-State Viewport, The Crucible Anvil, Thaumaturgic Smelter) và In-Combat Real-Time DPS Meter với 5 Ready-to-Execute Prompts.
-
-
-
-
+* **[Kế Hoạch Triển Khai Kỹ Thuật: Hub Thánh Địa & Bộ Đếm DPS Thực Chiến (`SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md`)](SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md)** [COMPLETE ✓]: Lộ trình 5 giai đoạn triển khai The Crucible Sanctuary (Dual-State Viewport, The Crucible Anvil, Thaumaturgic Smelter) và In-Combat Real-Time DPS Meter với 5 Ready-to-Execute Prompts (Đã hiện thực hóa & kiểm thử hoàn tất 100%).
 

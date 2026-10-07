@@ -140,6 +140,16 @@
     "category": "Basic"
   },
   {
+    "id": "orb_of_annulment",
+    "name": "Orb of Annulment",
+    "iconGlyph": "💠",
+    "colorHex": "#85C1E9",
+    "tier": 3,
+    "maxStackSize": 5000,
+    "description": "Removes a random modifier from a magic or rare item.",
+    "category": "Reforging"
+  },
+  {
     "id": "vaal_orb",
     "name": "Vaal Orb",
     "iconGlyph": "🩸",

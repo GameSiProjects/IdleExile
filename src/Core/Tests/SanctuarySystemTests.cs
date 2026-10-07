@@ -39,6 +39,14 @@ public static class SanctuarySystemTests
         TestSmelterRecipesJsonDeserialization();
         TestCombatEngineSmelterIntegration();
 
+        // Prompt 5: The Crucible Anvil, Sulphite, Abyss & Pinnacle Hall
+        TestSanctuaryStateSulphiteAndAbyss();
+        TestSanctuaryStateVoidstonesAndBossTrophies();
+        TestCrucibleAnvilCurrencySlamTransmuteAndChaos();
+        TestCrucibleAnvilExaltAnnulAndDivine();
+        TestCrucibleAnvilVaalCorruption();
+        TestCrucibleAnvilFossilResonatorSlam();
+
         Console.WriteLine("[Tests] All SanctuarySystemTests PASSED successfully!");
     }
 
@@ -442,6 +450,177 @@ public static class SanctuarySystemTests
         engine.StartMap(config);
 
         AssertEqual(4, player.Sanctuary.InfusedMapsRemaining, "Starting map must consume 1 infused map");
+    }
+
+    private static void TestSanctuaryStateSulphiteAndAbyss()
+    {
+        var state = new SanctuaryState();
+        AssertEqual(6850, state.VoltaxicSulphite, "Default sulphite should be 6,850");
+        AssertEqual(10000, state.MaxVoltaxicSulphite, "Max sulphite should be 10,000");
+        AssertEqual(185, state.DeepestDepth, "Default deepest depth should be 185m");
+
+        state.AddSulphite(2000);
+        AssertEqual(8850, state.VoltaxicSulphite, "Sulphite should increase to 8,850");
+
+        state.AddSulphite(5000);
+        AssertEqual(10000, state.VoltaxicSulphite, "Sulphite should clamp to MaxVoltaxicSulphite");
+
+        bool consumeFail = state.TryConsumeSulphite(15000);
+        AssertFalse(consumeFail, "Cannot consume more sulphite than available");
+
+        bool consumeSuccess = state.TryConsumeSulphite(350);
+        AssertTrue(consumeSuccess, "Consuming 350 sulphite should succeed");
+        AssertEqual(9650, state.VoltaxicSulphite, "Sulphite should decrease to 9,650");
+
+        state.DescendAbyss(500);
+        AssertEqual(685, state.DeepestDepth, "Deepest depth should update to 185 + 500 = 685m");
+    }
+
+    private static void TestSanctuaryStateVoidstonesAndBossTrophies()
+    {
+        var state = new SanctuaryState();
+        AssertEqual(0, state.VoidstonesCount, "Default Voidstones count should be 0");
+        AssertFalse(state.EaterOfWorldsDefeated, "Default Eater of Worlds should be undefeated");
+        AssertFalse(state.SearingExarchDefeated, "Default Searing Exarch should be undefeated");
+        AssertFalse(state.MavenDefeated, "Default Maven should be undefeated");
+        AssertFalse(state.UberElderDefeated, "Default Uber Elder should be undefeated");
+
+        state.EaterOfWorldsDefeated = true;
+        AssertEqual(1, state.VoidstonesCount, "VoidstonesCount should be 1 after defeating Eater");
+
+        state.SearingExarchDefeated = true;
+        AssertEqual(2, state.VoidstonesCount, "VoidstonesCount should be 2 after defeating Exarch");
+
+        state.MavenDefeated = true;
+        state.UberElderDefeated = true;
+        AssertEqual(4, state.VoidstonesCount, "VoidstonesCount should be 4 after defeating all Pinnacle Bosses");
+        AssertTrue(state.MavenDefeated, "Maven should be defeated");
+        AssertTrue(state.UberElderDefeated, "Uber Elder should be defeated");
+    }
+
+    private static void TestCrucibleAnvilCurrencySlamTransmuteAndChaos()
+    {
+        var db = new DatabaseLoader();
+        db.LoadAll();
+        var player = new PlayerState();
+        var anvil = new TheCrucibleAnvilService(new Random(42));
+        var basePlate = new ArmourBaseDefinition("astral_plate", "Astral Plate", ArmourSlot.BodyArmour, 500, 0, 0, 0, 68, 180, 0);
+        var item = new ArmourItemInstance(basePlate, "Normal", quality: 20, itemLevel: 85);
+        player.Gear.Equip(GearSlot.BodyArmour, item);
+
+        // Deposit currencies
+        player.Stash.DepositCurrency(TheCrucibleAnvilService.TransmuteId, 10);
+        player.Stash.DepositCurrency(TheCrucibleAnvilService.ChaosId, 10);
+
+        AssertTrue(anvil.CanSlamCurrency(item, TheCrucibleAnvilService.TransmuteId), "Normal item can be slammed with Transmute");
+        AssertFalse(anvil.CanSlamCurrency(item, TheCrucibleAnvilService.ChaosId), "Normal item cannot be slammed with Chaos");
+
+        // 1. Slam Transmute: Normal -> Magic
+        var transmuteResult = anvil.SlamCurrency(item, TheCrucibleAnvilService.TransmuteId, db, player);
+        AssertTrue(transmuteResult.Success, "Transmute slam must succeed");
+        AssertEqual("Magic", item.Rarity, "Item rarity must become Magic");
+        AssertTrue(item.Affixes.Count >= 1 && item.Affixes.Count <= 2, "Magic item must have 1-2 affixes");
+        AssertEqual(9, player.Stash.GetCurrencyCount(TheCrucibleAnvilService.TransmuteId), "Transmute count must decrease by 1");
+
+        // 2. Make item Rare and slam Chaos
+        item.Rarity = "Rare";
+        item.Affixes.Clear();
+        item.Affixes.Add(new AffixDefinition("life_t1", "+{0} to Maximum Life", AffixType.Prefix, 1, 80, 100, 100, new[] { "life" }));
+        item.RecalculateStats();
+
+        AssertTrue(anvil.CanSlamCurrency(item, TheCrucibleAnvilService.ChaosId), "Rare item can be slammed with Chaos");
+        var chaosResult = anvil.SlamCurrency(item, TheCrucibleAnvilService.ChaosId, db, player);
+        AssertTrue(chaosResult.Success, "Chaos slam must succeed");
+        AssertEqual("Rare", item.Rarity, "Item must remain Rare");
+        AssertTrue(item.Affixes.Count >= 4 && item.Affixes.Count <= 6, "Chaos slam must generate 4-6 affixes");
+        AssertEqual(9, player.Stash.GetCurrencyCount(TheCrucibleAnvilService.ChaosId), "Chaos count must decrease by 1");
+    }
+
+    private static void TestCrucibleAnvilExaltAnnulAndDivine()
+    {
+        var db = new DatabaseLoader();
+        db.LoadAll();
+        var player = new PlayerState();
+        var anvil = new TheCrucibleAnvilService(new Random(123));
+        var basePlate = new ArmourBaseDefinition("astral_plate", "Astral Plate", ArmourSlot.BodyArmour, 500, 0, 0, 0, 68, 180, 0);
+        var item = new ArmourItemInstance(basePlate, "Rare", quality: 20, itemLevel: 85);
+        item.Affixes.Add(new AffixDefinition("life_t1", "+{0} to Maximum Life", AffixType.Prefix, 1, 80, 100, 100, new[] { "life" }));
+        item.Affixes.Add(new AffixDefinition("fire_res_t1", "+{0}% to Fire Resistance", AffixType.Suffix, 1, 80, 45, 45, new[] { "fire", "resistance" }));
+        item.RecalculateStats();
+        player.Gear.Equip(GearSlot.BodyArmour, item);
+
+        player.Stash.DepositCurrency(TheCrucibleAnvilService.ExaltedId, 5);
+        player.Stash.DepositCurrency(TheCrucibleAnvilService.AnnulmentId, 5);
+        player.Stash.DepositCurrency(TheCrucibleAnvilService.DivineId, 5);
+
+        // Exalt slam: adds 1 mod
+        int countBeforeExalt = item.Affixes.Count;
+        var exaltResult = anvil.SlamCurrency(item, TheCrucibleAnvilService.ExaltedId, db, player);
+        AssertTrue(exaltResult.Success, "Exalt slam must succeed");
+        AssertEqual(countBeforeExalt + 1, item.Affixes.Count, "Exalt must add 1 affix");
+        AssertEqual(4, player.Stash.GetCurrencyCount(TheCrucibleAnvilService.ExaltedId), "Exalted count must decrease");
+
+        // Annul slam: removes 1 mod
+        int countBeforeAnnul = item.Affixes.Count;
+        var annulResult = anvil.SlamCurrency(item, TheCrucibleAnvilService.AnnulmentId, db, player);
+        AssertTrue(annulResult.Success, "Annul slam must succeed");
+        AssertEqual(countBeforeAnnul - 1, item.Affixes.Count, "Annul must remove 1 affix");
+        AssertEqual(4, player.Stash.GetCurrencyCount(TheCrucibleAnvilService.AnnulmentId), "Annul count must decrease");
+
+        // Divine slam: rerolls values
+        var divineResult = anvil.SlamCurrency(item, TheCrucibleAnvilService.DivineId, db, player);
+        AssertTrue(divineResult.Success, "Divine slam must succeed");
+        AssertEqual(4, player.Stash.GetCurrencyCount(TheCrucibleAnvilService.DivineId), "Divine count must decrease");
+    }
+
+    private static void TestCrucibleAnvilVaalCorruption()
+    {
+        var db = new DatabaseLoader();
+        db.LoadAll();
+        var player = new PlayerState();
+        var anvil = new TheCrucibleAnvilService(new Random(999));
+        var basePlate = new ArmourBaseDefinition("astral_plate", "Astral Plate", ArmourSlot.BodyArmour, 500, 0, 0, 0, 68, 180, 0);
+        var item = new ArmourItemInstance(basePlate, "Rare", quality: 20, itemLevel: 85);
+        player.Stash.DepositCurrency(TheCrucibleAnvilService.VaalId, 5);
+        player.Stash.DepositCurrency(TheCrucibleAnvilService.ChaosId, 5);
+
+        AssertFalse(TheCrucibleAnvilService.IsCorrupted(item), "Item should not be corrupted initially");
+        AssertTrue(anvil.CanSlamCurrency(item, TheCrucibleAnvilService.VaalId), "Item can be slammed with Vaal Orb");
+
+        var vaalResult = anvil.SlamCurrency(item, TheCrucibleAnvilService.VaalId, db, player);
+        AssertTrue(vaalResult.Success, "Vaal slam must succeed");
+        AssertTrue(TheCrucibleAnvilService.IsCorrupted(item), "Item must become Corrupted");
+
+        // Corrupted item cannot receive any further currency slams
+        AssertFalse(anvil.CanSlamCurrency(item, TheCrucibleAnvilService.ChaosId), "Corrupted item cannot receive Chaos slam");
+        AssertFalse(anvil.CanSlamCurrency(item, TheCrucibleAnvilService.VaalId), "Corrupted item cannot be corrupted again");
+
+        var failChaosResult = anvil.SlamCurrency(item, TheCrucibleAnvilService.ChaosId, db, player);
+        AssertFalse(failChaosResult.Success, "Chaos slam on corrupted item must fail");
+    }
+
+    private static void TestCrucibleAnvilFossilResonatorSlam()
+    {
+        var db = new DatabaseLoader();
+        db.LoadAll();
+        var player = new PlayerState();
+        var anvil = new TheCrucibleAnvilService(new Random(777));
+        var basePlate = new ArmourBaseDefinition("astral_plate", "Astral Plate", ArmourSlot.BodyArmour, 500, 0, 0, 0, 68, 180, 0);
+        var item = new ArmourItemInstance(basePlate, "Normal", quality: 20, itemLevel: 85);
+        player.Gear.Equip(GearSlot.BodyArmour, item);
+
+        player.Stash.DepositFossil("pristine_fossil", 5);
+        player.Stash.DepositFossil("metallic_fossil", 5);
+
+        var fossils = new[] { "pristine_fossil", "metallic_fossil" };
+        AssertTrue(anvil.CanSlamFossils(item, fossils), "Can slam pristine and metallic fossils");
+
+        var resonatorResult = anvil.SlamFossils(item, fossils, db, player);
+        AssertTrue(resonatorResult.Success, "Resonator fossil slam must succeed");
+        AssertEqual("Rare", item.Rarity, "Resonator slam must make item Rare");
+        AssertTrue(item.Affixes.Count >= 4 && item.Affixes.Count <= 6, "Resonator slam must generate 4-6 affixes");
+        AssertEqual(4, player.Stash.GetFossilCount("pristine_fossil"), "Pristine fossil count must decrease");
+        AssertEqual(4, player.Stash.GetFossilCount("metallic_fossil"), "Metallic fossil count must decrease");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string message)

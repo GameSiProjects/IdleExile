@@ -1,0 +1,681 @@
+[gd_scene format=3 uid="uid://s4nctuaryv1ew7p9k"]
+
+[ext_resource type="Script" path="res://src/UI/Components/SanctuaryView.cs" id="1_sanctuary_view"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.0470588, 0.0509804, 0.0666667, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.22, 0.28, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+bg_color = Color(0.0627451, 0.0666667, 0.0862745, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.2, 0.26, 0.8)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 4.0
+content_margin_right = 6.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_delta_card"]
+bg_color = Color(0.035, 0.04, 0.055, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.28, 0.38, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_currency_btn"]
+bg_color = Color(0.09, 0.095, 0.125, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.24, 0.32, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_action_btn"]
+bg_color = Color(0.12, 0.14, 0.2, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.45, 0.7, 0.9)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sulphite_bg"]
+bg_color = Color(0.03, 0.04, 0.06, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.15, 0.2, 0.28, 0.8)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sulphite_fill"]
+bg_color = Color(0.85, 0.65, 0.15, 0.95)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[node name="SanctuaryView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_sanctuary_view")
+
+[node name="BgPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="ViewMargin" type="MarginContainer" parent="BgPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 4
+
+[node name="MainVBox" type="VBoxContainer" parent="BgPanel/ViewMargin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="HeaderHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TitleLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/HeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.35, 1)
+theme_override_font_sizes/font_size = 11
+text = "🏛 THE CRUCIBLE SANCTUARY"
+vertical_alignment = 1
+
+[node name="Bullet" type="Label" parent="BgPanel/ViewMargin/MainVBox/HeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.45, 0.55, 1)
+theme_override_font_sizes/font_size = 10
+text = "•"
+vertical_alignment = 1
+
+[node name="StatusSubtitleLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/HeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.35, 0.85, 0.5, 1)
+theme_override_font_sizes/font_size = 10
+text = "Crucible Online • Safe Haven (100% Recovered)"
+vertical_alignment = 1
+text_overrun_behavior = 3
+
+[node name="HubTierPill" type="Label" parent="BgPanel/ViewMargin/MainVBox/HeaderHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.95, 1)
+theme_override_font_sizes/font_size = 10
+text = "[Tier 2: Awakened Foundry]"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="GridSplitHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="LeftColumnVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="AnvilPanel" type="PanelContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="AnvilVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="AnvilHeaderHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+layout_mode = 2
+
+[node name="AnvilTitle" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/AnvilHeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.75, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "⚒ The Crucible Anvil"
+
+[node name="AnvilSubtitle" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/AnvilHeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.5, 0.55, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "(Pure Currency & Fossils • Zero Deterministic)"
+horizontal_alignment = 2
+
+[node name="TargetItemRow" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TargetItemPrompt" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/TargetItemRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 10
+text = "Target:"
+
+[node name="TargetItemOption" type="OptionButton" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/TargetItemRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 10
+
+[node name="TargetItemHeaderLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 10
+text = "No item selected"
+
+[node name="TargetItemAffixCountLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 9
+text = "Select item to slam"
+
+[node name="AffixScroll" type="ScrollContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="TargetItemAffixesContainer" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/AffixScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="CurrencyBarHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="BtnTransmute" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/CurrencyBarHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Trans"
+
+[node name="BtnAlteration" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/CurrencyBarHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Alt"
+
+[node name="BtnChaos" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/CurrencyBarHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Chaos"
+
+[node name="BtnExalt" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/CurrencyBarHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Exalt"
+
+[node name="BtnAnnul" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/CurrencyBarHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Annul"
+
+[node name="BtnDivine" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/CurrencyBarHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Divine"
+
+[node name="BtnVaal" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/CurrencyBarHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Vaal"
+
+[node name="ResonatorTrayHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="FossilPrompt" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/ResonatorTrayHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 9
+text = "Fossils:"
+
+[node name="FossilSlot1" type="OptionButton" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/ResonatorTrayHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+
+[node name="FossilSlot2" type="OptionButton" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/ResonatorTrayHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+
+[node name="FossilSlot3" type="OptionButton" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/ResonatorTrayHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+
+[node name="FossilSlot4" type="OptionButton" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/ResonatorTrayHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+
+[node name="BtnSlamResonator" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/ResonatorTrayHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "⚡ Slam"
+
+[node name="FossilBiasesLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 8
+text = "Socket 1-4 Fossils to bias modifiers & block groups."
+text_overrun_behavior = 3
+
+[node name="DeltaPreviewCard" type="PanelContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_delta_card")
+
+[node name="DeltaVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard"]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="DeltaTopHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard/DeltaVBox"]
+layout_mode = 2
+
+[node name="DeltaVerdictLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard/DeltaVBox/DeltaTopHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 9
+text = "[ ▲ UPGRADE ]"
+
+[node name="DeltaMessageLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard/DeltaVBox/DeltaTopHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 8
+text = "Slam completed."
+horizontal_alignment = 2
+text_overrun_behavior = 3
+
+[node name="DeltaValuesHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard/DeltaVBox"]
+layout_mode = 2
+
+[node name="DeltaEhpLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard/DeltaVBox/DeltaValuesHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 9
+text = "EHP: +240"
+
+[node name="DeltaDpsLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard/DeltaVBox/DeltaValuesHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.35, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 9
+text = "DPS: +1,240"
+horizontal_alignment = 2
+
+[node name="DeltaResistsLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AnvilPanel/AnvilVBox/DeltaPreviewCard/DeltaVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 8
+text = "Fire: 0% | Cold: 0% | Light: 0% | Chaos: 0%"
+text_overrun_behavior = 3
+
+[node name="AbyssPanel" type="PanelContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="AbyssVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="AbyssTitleHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox"]
+layout_mode = 2
+
+[node name="AbyssTitle" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox/AbyssTitleHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.2, 1)
+theme_override_font_sizes/font_size = 11
+text = "⛏ The Abyssal Resonator"
+
+[node name="AbyssSub" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox/AbyssTitleHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.5, 0.55, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "(Subterranean 20% Side Axis)"
+horizontal_alignment = 2
+
+[node name="SulphiteProgressBar" type="ProgressBar" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_sulphite_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_sulphite_fill")
+max_value = 10000.0
+value = 6850.0
+show_percentage = false
+
+[node name="SulphiteAmountLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.8, 0.5, 1)
+theme_override_font_sizes/font_size = 9
+text = "Voltaxic Sulphite: 6,850 / 10,000"
+
+[node name="AbyssActionsHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DepthRecordLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox/AbyssActionsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.7, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 9
+text = "Deepest Depth: 185m (+37%)"
+vertical_alignment = 1
+
+[node name="BtnDescendAbyss" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/LeftColumnVBox/AbyssPanel/AbyssVBox/AbyssActionsHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
+text = "⛏ Descend to Abyss"
+
+[node name="RightColumnVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="SmelterPanel" type="PanelContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="SmelterVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SmelterHeaderHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox"]
+layout_mode = 2
+
+[node name="SmelterTitle" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/SmelterHeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 0.85, 0.95, 1)
+theme_override_font_sizes/font_size = 11
+text = "🌪 Thaumaturgic Smelter"
+
+[node name="SmelterSub" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/SmelterHeaderHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.5, 0.55, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "(Dust Alchemy & Filter Breakdown)"
+horizontal_alignment = 2
+
+[node name="DustRowHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox"]
+layout_mode = 2
+
+[node name="DustAmountLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/DustRowHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.8, 0.35, 1)
+theme_override_font_sizes/font_size = 11
+text = "✨ Dust: 0"
+vertical_alignment = 1
+
+[node name="AutoSmeltCheckBox" type="CheckBox" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/DustRowHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+button_pressed = true
+text = "Auto-Smelt"
+
+[node name="InfusionVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="InfusionStatusLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/InfusionVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.9, 0.8, 1)
+theme_override_font_sizes/font_size = 9
+text = "Infusion Inactive (Standard IIQ)"
+
+[node name="BtnInfuseMaps" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/InfusionVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.3, 0.95, 0.8, 1)
+theme_override_font_sizes/font_size = 10
+theme_override_styles/normal = SubResource("StyleBoxFlat_action_btn")
+text = "✨ Infuse 5 Maps (+10% IIQ) • 2,500 Dust"
+
+[node name="TransmuteVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="BtnTransmuteUnmaking" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/TransmuteVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.6, 0.95, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "🔮 Transmute Orb of Unmaking (10,000 Dust)"
+
+[node name="BtnTransmuteChaos" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox/TransmuteVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.35, 1)
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "🪙 Transmute Chaos Orb (10,000 Dust)"
+
+[node name="SmelterToastLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/SmelterPanel/SmelterVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.55, 0.65, 1)
+theme_override_font_sizes/font_size = 9
+text = "Auto-Smelter running in background."
+text_overrun_behavior = 3
+
+[node name="RelicsPanel" type="PanelContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_card")
+
+[node name="RelicsVBox" type="VBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="RelicsHeaderHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox"]
+layout_mode = 2
+
+[node name="RelicsTitle" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/RelicsHeaderHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.75, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "🏆 Atlas Relics & Pinnacle Hall"
+
+[node name="HubTierLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.85, 0.45, 1)
+theme_override_font_sizes/font_size = 9
+text = "Sanctuary Tier 2: Awakened Foundry"
+
+[node name="HubPerksLabel" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 8
+text = "Map Device: 4 Slots • Queue: 10 Slots • Smelter & Abyss Active"
+text_overrun_behavior = 3
+
+[node name="VoidstonesHBox" type="HBoxContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="Voidstone1Label" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/VoidstonesHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.4, 0.7, 1, 1)
+theme_override_font_sizes/font_size = 8
+text = "🔵 Grasped"
+
+[node name="Voidstone2Label" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/VoidstonesHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.75, 0.45, 0.95, 1)
+theme_override_font_sizes/font_size = 8
+text = "🟣 Decaying"
+
+[node name="Voidstone3Label" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/VoidstonesHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.95, 0.4, 0.4, 1)
+theme_override_font_sizes/font_size = 8
+text = "🔴 Polaric"
+
+[node name="Voidstone4Label" type="Label" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/VoidstonesHBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.4, 0.9, 0.5, 1)
+theme_override_font_sizes/font_size = 8
+text = "🟢 Omniscient"
+
+[node name="BossGrid" type="GridContainer" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 2
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="BtnBossEater" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/BossGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Eater: [OPEN]"
+
+[node name="BtnBossExarch" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/BossGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Exarch: [OPEN]"
+
+[node name="BtnBossMaven" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/BossGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Maven: [OPEN]"
+
+[node name="BtnBossElder" type="Button" parent="BgPanel/ViewMargin/MainVBox/GridSplitHBox/RightColumnVBox/RelicsPanel/RelicsVBox/BossGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 8
+theme_override_styles/normal = SubResource("StyleBoxFlat_currency_btn")
+text = "Elder: [OPEN]"

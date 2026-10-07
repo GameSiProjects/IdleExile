@@ -254,3 +254,43 @@ Tài liệu này theo dõi tiến độ thực hiện các tính năng của **I
   - [ ] `AbyssDashboardView.cs`: Hiển thị Depth to bản, bình Sulphite và nút Lặn Sâu.
   - [ ] `MapQueueBarView.cs`: Khay 10 slots mini + nút bật tắt Continuous Run.
 
+---
+
+## 🏛️ Phase 6: The Crucible Sanctuary & Real-Time DPS Meter (Hub & Anvil)
+
+> **Chi tiết kế hoạch triển khai đầy đủ:** Xem tại [SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md](docs/SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md) và [15_game_hub_and_sanctuary.md](docs/15_game_hub_and_sanctuary.md).
+
+- [x] **Task 6.1: Pipeline Dữ Liệu Sanctuary Tiers & Core Models (Prompt 1)**
+  - [x] Cấu hình `data/sanctuary_tiers.json`: 4 bậc tiến trình (Hollow Crypt -> Awakened Foundry -> Eldritch Sanctum -> Celestial Void).
+  - [x] Tạo `src/Core/Models/SanctuaryState.cs`: Bậc hiện tại, lượng Thaumaturgic Dust, tự động nung, map infusion bonus, trữ lượng Sulphite (10,000 max), độ sâu kỷ lục và 4 Voidstones.
+  - [x] Tạo `src/Core/Models/CombatDpsSnapshot.cs`: Đo lường Current DPS, Peak DPS, Average DPS, % phân bổ 5 hệ sát thương và APS thực tế.
+  - [x] Nạp cấu hình tự động qua `DatabaseLoader.cs`.
+  - [x] *Vị trí:* `data/sanctuary_tiers.json`, `src/Core/Models/SanctuaryState.cs`, `src/Core/Models/CombatDpsSnapshot.cs`
+
+- [x] **Task 6.2: Bộ Đếm DPS Thực Chiến Sliding Window 3.0s (Prompt 2)**
+  - [x] Tạo `src/Core/Simulation/CombatDpsTracker.cs`: Quản lý hàng đợi thời gian thực `Queue<(float Timestamp, float Damage, DamageType Type)>`.
+  - [x] Thuật toán cửa sổ trượt 3.0s: Tự động dequeue đòn đánh cũ >3.0s, tính toán phân bổ 5 hệ sát thương chuẩn xác.
+  - [x] Tích hợp trực tiếp vào 30Hz `CombatEngine.cs` và `CombatAttackService.cs` (Zero-allocation struct reuse).
+  - [x] Tự động reset bộ đếm khi bước vào map mới qua `ResetForNewMap()`.
+  - [x] *Vị trí:* `src/Core/Simulation/CombatDpsTracker.cs`, `src/Core/Simulation/CombatEngine.cs`
+
+- [x] **Task 6.3: Lò Nung Thaumaturgic Smelter & Dust Economy (Prompt 3)**
+  - [x] Cấu hình công thức nung `data/smelter_recipes.json`.
+  - [x] Tạo `src/Core/Services/SmelterService.cs`: Tính toán Dust yield dựa trên ilvl, độ hiếm (Normal 1x, Magic 3x, Rare 10x, Unique 50x) và số affixes.
+  - [x] Chế độ tự động nung chảy trang bị bị Loot Filter ẩn (`ProcessFilteredDrop`).
+  - [x] Tiêu hao Dust cường hóa Map (`TryInfuseNextMaps`: 2,500 Dust cho +10% Quantity trong 5 maps) và đổi tiền tệ.
+  - [x] *Vị trí:* `data/smelter_recipes.json`, `src/Core/Services/SmelterService.cs`
+
+- [x] **Task 6.4: Dual-State Viewport & Hiển Thị DPS Thực Chiến (Prompt 4)**
+  - [x] Mở rộng `Arena2D.cs`: Chuyển đổi 2 trạng thái `ExpeditionCombat` vs `SanctuaryIdle`.
+  - [x] Trình diễn không gian tĩnh mịch Sanctuary: Nền đá hoa cương, cỗ máy Map Device xoay nhẹ ở tọa độ (320, 86), ngọn lửa trại Eldritch với than hồng bay lơ lửng, nhân vật thiền định (240, 86) với aura dịu nhẹ.
+  - [x] Tích hợp nhãn DPS trên thanh Quick Footer trong `BattleViewport.cs` kèm chẩn đoán tỷ lệ 5 hệ sát thương qua Tooltip.
+  - [x] *Vị trí:* `src/UI/Components/Arena2D.cs`, `src/UI/BattleViewport.cs`, `scenes/Main.tscn`
+
+- [x] **Task 6.5: Giao Diện Sanctuary View & The Crucible Anvil (Prompt 5)**
+  - [x] Tạo `src/Core/Services/TheCrucibleAnvilService.cs`: Hỗ trợ đập đồ thuần túy qua tiền tệ (*Transmute, Alteration, Chaos, Exalt, Annul, Divine, Vaal*) và 1-4 Fossils Resonators; tính toán Smart Stat Delta (`AnvilCraftResult`) tức thì. Tuyệt đối không có công thức ép mod cố định (Zero Deterministic Crafting).
+  - [x] Thiết kế 4 bảng điều khiển trên `scenes/SanctuaryView.tscn` và `src/UI/Components/SanctuaryView.cs`: The Crucible Anvil, Thaumaturgic Smelter, Abyssal Resonator (Sulphite gauge) và Atlas Relics / Hall of Fame (Voidstones).
+  - [x] Tích hợp Tab `[ 🏛 Sanctuary ]` vào `Main.cs`, bổ sung phím tắt cục bộ `H` (mở Sanctuary), `A` (focus Crucible Anvil) và phím `Space` đa ngữ cảnh (chạy map khi ở Sanctuary, Emergency Portal khi đang chiến đấu).
+  - [x] Bộ kiểm thử toàn diện `src/Core/Tests/SanctuarySystemTests.cs` (6/6 tests passed) và kiểm thử giao diện `src/UI/MainLayoutTests.cs`.
+  - [x] *Vị trí:* `src/Core/Services/TheCrucibleAnvilService.cs`, `scenes/SanctuaryView.tscn`, `src/UI/Components/SanctuaryView.cs`, `src/UI/Main.cs`, `src/Core/Tests/SanctuarySystemTests.cs`
+

@@ -14,6 +14,13 @@ public sealed class SanctuaryState
     private bool _autoSmeltActive = true;
     private int _infusedMapsRemaining;
     private float _infusedQuantityBonus;
+    private long _voltaxicSulphite = 6850;
+    private long _maxVoltaxicSulphite = 10000;
+    private int _deepestDepth = 185;
+    private bool _eaterOfWorldsDefeated;
+    private bool _searingExarchDefeated;
+    private bool _mavenDefeated;
+    private bool _uberElderDefeated;
 
     public int CurrentTier
     {
@@ -84,6 +91,108 @@ public sealed class SanctuaryState
         }
     }
 
+    public long VoltaxicSulphite
+    {
+        get => _voltaxicSulphite;
+        set
+        {
+            long clamped = Math.Clamp(value, 0, _maxVoltaxicSulphite);
+            if (_voltaxicSulphite != clamped)
+            {
+                _voltaxicSulphite = clamped;
+                OnSanctuaryUpdated?.Invoke();
+            }
+        }
+    }
+
+    public long MaxVoltaxicSulphite
+    {
+        get => _maxVoltaxicSulphite;
+        set
+        {
+            if (_maxVoltaxicSulphite != value)
+            {
+                _maxVoltaxicSulphite = Math.Max(1000, value);
+                if (_voltaxicSulphite > _maxVoltaxicSulphite)
+                {
+                    _voltaxicSulphite = _maxVoltaxicSulphite;
+                }
+                OnSanctuaryUpdated?.Invoke();
+            }
+        }
+    }
+
+    public int DeepestDepth
+    {
+        get => _deepestDepth;
+        set
+        {
+            if (_deepestDepth != value)
+            {
+                _deepestDepth = Math.Max(1, value);
+                OnSanctuaryUpdated?.Invoke();
+            }
+        }
+    }
+
+    public bool EaterOfWorldsDefeated
+    {
+        get => _eaterOfWorldsDefeated;
+        set
+        {
+            if (_eaterOfWorldsDefeated != value)
+            {
+                _eaterOfWorldsDefeated = value;
+                OnSanctuaryUpdated?.Invoke();
+            }
+        }
+    }
+
+    public bool SearingExarchDefeated
+    {
+        get => _searingExarchDefeated;
+        set
+        {
+            if (_searingExarchDefeated != value)
+            {
+                _searingExarchDefeated = value;
+                OnSanctuaryUpdated?.Invoke();
+            }
+        }
+    }
+
+    public bool MavenDefeated
+    {
+        get => _mavenDefeated;
+        set
+        {
+            if (_mavenDefeated != value)
+            {
+                _mavenDefeated = value;
+                OnSanctuaryUpdated?.Invoke();
+            }
+        }
+    }
+
+    public bool UberElderDefeated
+    {
+        get => _uberElderDefeated;
+        set
+        {
+            if (_uberElderDefeated != value)
+            {
+                _uberElderDefeated = value;
+                OnSanctuaryUpdated?.Invoke();
+            }
+        }
+    }
+
+    public int VoidstonesCount =>
+        (_eaterOfWorldsDefeated ? 1 : 0) +
+        (_searingExarchDefeated ? 1 : 0) +
+        (_mavenDefeated ? 1 : 0) +
+        (_uberElderDefeated ? 1 : 0);
+
     public event Action? OnSanctuaryUpdated;
 
     public void AddDust(long amount)
@@ -121,5 +230,26 @@ public sealed class SanctuaryState
             }
             OnSanctuaryUpdated?.Invoke();
         }
+    }
+
+    public void AddSulphite(long amount)
+    {
+        if (amount <= 0) return;
+        VoltaxicSulphite = Math.Min(_maxVoltaxicSulphite, _voltaxicSulphite + amount);
+    }
+
+    public bool TryConsumeSulphite(long cost)
+    {
+        if (cost <= 0) return true;
+        if (_voltaxicSulphite < cost) return false;
+        VoltaxicSulphite -= cost;
+        return true;
+    }
+
+    public bool DescendAbyss(int depthIncrease = 1, long cost = 250)
+    {
+        if (!TryConsumeSulphite(cost)) return false;
+        DeepestDepth += Math.Max(1, depthIncrease);
+        return true;
     }
 }

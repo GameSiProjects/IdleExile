@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://t1asv1ew2p3m" path="res://scenes/AtlasView.tscn" id="6_atlas_view"]
 [ext_resource type="PackedScene" uid="uid://dadfspwurkl7" path="res://scenes/PassiveTreeView.tscn" id="7_passive_tree_view"]
 [ext_resource type="PackedScene" uid="uid://deib4odeoe78i" path="res://scenes/StashView.tscn" id="8_stash_view"]
+[ext_resource type="PackedScene" path="res://scenes/SanctuaryView.tscn" id="10_sanctuary_view"]
 [ext_resource type="Script" path="res://src/UI/Components/EdgeGlowAlert.cs" id="9_edge_glow_alert"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_header"]
@@ -290,6 +291,12 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 
+[node name="SanctuaryView" parent="MainLayout/TabWorkspaceContainer" unique_id=2086660259 instance=ExtResource("10_sanctuary_view")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
 [node name="SubTabBarContainer" type="PanelContainer" parent="MainLayout" unique_id=1187136315]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
@@ -367,6 +374,18 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
 toggle_mode = true
 text = "📦 Stash"
+
+[node name="TabSanctuaryBtn" type="Button" parent="MainLayout/SubTabBarContainer/TabBarMargin/TabBarHBox" unique_id=1474962526]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "The Crucible Sanctuary • Anvil & Hub Overview (Hotkey: H)"
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBoxFlat_tab_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tab_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_tab_hover")
+toggle_mode = true
+text = "🏛 Sanctuary"
 
 [node name="CombatViewportContainer" type="PanelContainer" parent="MainLayout" unique_id=666968910]
 unique_name_in_owner = true

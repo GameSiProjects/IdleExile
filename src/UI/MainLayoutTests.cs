@@ -37,6 +37,7 @@ public static class MainLayoutTests
             TestInWindowShortcuts(existingMain);
             TestCameraLookAheadAndTransformations(existingMain);
             TestDualStateViewportAndCombatDpsMeter(existingMain);
+            TestSanctuaryViewIntegration(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -72,6 +73,7 @@ public static class MainLayoutTests
             TestInWindowShortcuts(main);
             TestCameraLookAheadAndTransformations(main);
             TestDualStateViewportAndCombatDpsMeter(main);
+            TestSanctuaryViewIntegration(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -143,7 +145,7 @@ public static class MainLayoutTests
 
         var emergencyPortalBtn = main.GetNodeOrNull<Button>("%EmergencyPortalButton");
         AssertNotNull(emergencyPortalBtn, "EmergencyPortalButton must exist");
-        AssertTrue(emergencyPortalBtn.Text.Contains("Emergency Portal"), "EmergencyPortalButton text must mention Emergency Portal");
+        AssertTrue(emergencyPortalBtn.Text.Contains("Emergency Portal") || emergencyPortalBtn.Text.Contains("Launch Map"), "EmergencyPortalButton text must mention Emergency Portal or Launch Map");
 
         var statusLabel = main.GetNodeOrNull<Label>("%StatusLabel");
         AssertNotNull(statusLabel, "StatusLabel must exist in macro telemetry");
@@ -1374,13 +1376,18 @@ public static class MainLayoutTests
 
         var windowController = main.WindowController;
 
-        // 1. Test Key.Space: Emergency Portal
-        bool handledSpace = main.HandleInWindowShortcut(Key.Space);
-        AssertTrue(handledSpace, "Space key must be handled by In-Window Shortcut dispatcher");
+        // 1. Test Key.Space: Contextual (In Sanctuary -> Launches Map; In Combat -> Emergency Portal)
+        // 1a. In Sanctuary: Space launches next map
+        bool handledSpaceLaunch = main.HandleInWindowShortcut(Key.Space);
+        AssertTrue(handledSpaceLaunch, "Space key in Sanctuary must launch map");
+        AssertTrue(main.Engine is { IsInCombat: true }, "Engine must be in combat after launching map");
+
+        // 1b. In Combat: Space triggers Emergency Portal
+        bool handledSpacePortal = main.HandleInWindowShortcut(Key.Space);
+        AssertTrue(handledSpacePortal, "Space key in combat must trigger Emergency Portal");
         var statusLabel = main.GetNodeOrNull<Label>("%StatusLabel");
         AssertNotNull(statusLabel, "StatusLabel must exist");
-        AssertTrue(statusLabel.Text.Contains("Safely retreated") || statusLabel.Text.Contains("Crucible Online"),
-            $"Space shortcut must trigger Emergency Portal. Status was: '{statusLabel.Text}'");
+        AssertFalse(main.Engine?.IsInCombat ?? false, "Engine must no longer be in combat after Emergency Portal");
 
         // 2. Start in Compact Mode
         windowController.ShrinkWindow(keepBottom: true);
@@ -1433,6 +1440,19 @@ public static class MainLayoutTests
         AssertTrue(handledK, "Key.K must be handled");
         AssertEqual(Main.WorkspaceTab.Skills, main.ActiveTab, "Key.K must switch ActiveTab to Skills");
         AssertTrue(windowController.IsExpanded, "Key.K must keep window expanded to display Skills");
+
+        // 7b. Test Key.H: Crucible Sanctuary Tab (Prompt 5)
+        bool handledH = main.HandleInWindowShortcut(Key.H);
+        AssertTrue(handledH, "Key.H must be handled");
+        AssertEqual(Main.WorkspaceTab.Sanctuary, main.ActiveTab, "Key.H must switch ActiveTab to Sanctuary");
+        AssertTrue(windowController.IsExpanded, "Key.H must keep window expanded to display Sanctuary");
+
+        // 7c. Test Key.A: Quick-Focus The Crucible Anvil (Prompt 5)
+        windowController.ShrinkWindow(keepBottom: true);
+        bool handledA = main.HandleInWindowShortcut(Key.A);
+        AssertTrue(handledA, "Key.A must be handled");
+        AssertEqual(Main.WorkspaceTab.Sanctuary, main.ActiveTab, "Key.A must auto-expand and switch to Sanctuary");
+        AssertTrue(windowController.IsExpanded, "Key.A must auto-expand window to display Crucible Anvil");
 
         // 8. Test Key.Tab and Key.F11: Quick Window Mode Switch
         // 8a. Currently expanded, press Key.Tab -> collapses to Compact
@@ -1647,6 +1667,62 @@ public static class MainLayoutTests
         battleViewport.SetSanctuaryStatus();
 
         GD.Print("[Tests] Prompt 4: Dual-State Viewport & Combat DPS Meter PASSED!");
+    }
+
+    private static void TestSanctuaryViewIntegration(Main main)
+    {
+        GD.Print("[Tests] Verifying Prompt 5: Sanctuary View Integration & 4-Panel Layout...");
+
+        // 1. Verify Sanctuary Tab Button & SanctuaryView Node
+        var tabSanctuary = main.TabSanctuaryBtn;
+        AssertNotNull(tabSanctuary, "TabSanctuaryBtn must exist on sub-tab hinge bar");
+        AssertTrue(tabSanctuary.Text.Contains("Sanctuary", StringComparison.OrdinalIgnoreCase), "TabSanctuaryBtn must contain 'Sanctuary' text");
+
+        var sanctuaryView = main.SanctuaryView;
+        AssertNotNull(sanctuaryView, "SanctuaryView must exist inside TabWorkspaceContainer");
+
+        // 2. Tab Navigation to Sanctuary
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Sanctuary, animated: false);
+        AssertEqual(Main.WorkspaceTab.Sanctuary, main.ActiveTab, "ActiveTab must be Sanctuary");
+        AssertTrue(sanctuaryView.Visible, "SanctuaryView must be visible when Sanctuary tab is active");
+        AssertFalse(main.EquipmentView?.Visible ?? false, "EquipmentView must be hidden on Sanctuary tab");
+        AssertFalse(main.GemView?.Visible ?? false, "GemView must be hidden on Sanctuary tab");
+        AssertFalse(main.PassiveTreeView?.Visible ?? false, "PassiveTreeView must be hidden on Sanctuary tab");
+        AssertFalse(main.StashView?.Visible ?? false, "StashView must be hidden on Sanctuary tab");
+
+        // 3. Verify Crucible Anvil Service & Smelter Service
+        AssertNotNull(sanctuaryView.AnvilService, "AnvilService must be initialized");
+        AssertNotNull(sanctuaryView.SmelterService, "SmelterService must be initialized");
+
+        // 4. Verify Anvil focus method
+        sanctuaryView.FocusAnvil();
+
+        // 5. Test Anvil currency slam on equipped item
+        var bodyArmour = main.Player.Gear.BodyArmour;
+        if (bodyArmour != null)
+        {
+            main.Player.Stash.DepositCurrency(IdleExile.Core.Services.TheCrucibleAnvilService.ChaosId, 5);
+            var initialChaos = main.Player.Stash.GetCurrencyCount(IdleExile.Core.Services.TheCrucibleAnvilService.ChaosId);
+
+            if (string.Equals(bodyArmour.Rarity, "Rare", StringComparison.OrdinalIgnoreCase))
+            {
+                var craftRes = sanctuaryView.AnvilService.SlamCurrency(bodyArmour, IdleExile.Core.Services.TheCrucibleAnvilService.ChaosId, main.Db, main.Player);
+                AssertTrue(craftRes.Success, "Chaos slam via AnvilService on Rare body armour must succeed");
+                AssertEqual(initialChaos - 1, main.Player.Stash.GetCurrencyCount(IdleExile.Core.Services.TheCrucibleAnvilService.ChaosId), "Stash chaos currency should decrease");
+                AssertTrue(craftRes.NewAffixes.Count >= 4, "Chaos rolled item must have at least 4 affixes");
+            }
+        }
+
+        // 6. Verify Voltaxic Sulphite & Abyssal Resonator State
+        AssertTrue(main.Player.Sanctuary.VoltaxicSulphite >= 0, "Voltaxic Sulphite must be non-negative");
+        AssertTrue(main.Player.Sanctuary.DeepestDepth >= 0, "Deepest Abyss depth must be non-negative");
+
+        // 7. Verify Voidstones & Pinnacle Hall
+        AssertTrue(main.Player.Sanctuary.VoidstonesCount >= 0 && main.Player.Sanctuary.VoidstonesCount <= 4, "Voidstones count must be between 0 and 4");
+
+        // Reset back to Gear tab
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Gear, animated: false);
+        GD.Print("[Tests] Prompt 5: Sanctuary View Integration PASSED!");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

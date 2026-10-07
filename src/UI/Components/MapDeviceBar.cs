@@ -53,7 +53,7 @@ public partial class MapDeviceBar : PanelContainer
     {
         if (@event is InputEventKey keyEvent && keyEvent.Pressed && !keyEvent.Echo)
         {
-            if (keyEvent.Keycode == Key.Space)
+            if (keyEvent.Keycode == Key.Space && _isPortalActive)
             {
                 OnEmergencyPortalPressed();
                 GetViewport()?.SetInputAsHandled();

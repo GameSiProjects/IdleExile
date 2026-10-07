@@ -24,6 +24,7 @@ public partial class Main : Control
     private GemView? _gemView;
     private PassiveTreeView? _passiveTreeView;
     private StashView? _stashView;
+    private SanctuaryView? _sanctuaryView;
     private Button? _gearNavButton;
     private Button? _resizeModeButton;
     private Button? _screenCycleButton;
@@ -33,6 +34,7 @@ public partial class Main : Control
     private Button? _tabAtlasBtn;
     private Button? _tabPassivesBtn;
     private Button? _tabStashBtn;
+    private Button? _tabSanctuaryBtn;
     private Control? _subTabBarContainer;
     private Control? _tabWorkspaceContainer;
     private Control? _combatViewportContainer;
@@ -50,7 +52,8 @@ public partial class Main : Control
         Skills,
         Atlas,
         Passives,
-        Stash
+        Stash,
+        Sanctuary
     }
 
     private WorkspaceTab _activeTab = WorkspaceTab.Gear;
@@ -73,9 +76,11 @@ public partial class Main : Control
     public AtlasView? AtlasView => _atlasView;
     public PassiveTreeView? PassiveTreeView => _passiveTreeView;
     public StashView? StashView => _stashView;
+    public SanctuaryView? SanctuaryView => _sanctuaryView;
     public Control? MapDeviceMargin => _mapDeviceMargin;
     public EdgeGlowAlert? EdgeGlowAlert => _edgeGlowAlert;
     public Button? ResizeModeButton => _resizeModeButton;
+    public Button? TabSanctuaryBtn => _tabSanctuaryBtn;
     public Label? DpsLabel => _dpsLabel;
 
     public DatabaseLoader Db { get; } = new();
@@ -118,6 +123,7 @@ public partial class Main : Control
         _gemView = GetNodeOrNull<GemView>("%GemView");
         _passiveTreeView = GetNodeOrNull<PassiveTreeView>("%PassiveTreeView");
         _stashView = GetNodeOrNull<StashView>("%StashView");
+        _sanctuaryView = GetNodeOrNull<SanctuaryView>("%SanctuaryView");
         _emergencyPortalButton = GetNodeOrNull<Button>("%EmergencyPortalButton");
         _subTabBarContainer = GetNodeOrNull<Control>("%SubTabBarContainer");
         _tabWorkspaceContainer = GetNodeOrNull<Control>("%TabWorkspaceContainer");
@@ -130,6 +136,7 @@ public partial class Main : Control
         _tabAtlasBtn = GetNodeOrNull<Button>("%TabAtlasBtn");
         _tabPassivesBtn = GetNodeOrNull<Button>("%TabPassivesBtn");
         _tabStashBtn = GetNodeOrNull<Button>("%TabStashBtn");
+        _tabSanctuaryBtn = GetNodeOrNull<Button>("%TabSanctuaryBtn");
         _gearNavButton = _tabGearBtn ?? GetNodeOrNull<Button>("%GearNavButton");
 
         if (_tabPassivesBtn != null)
@@ -172,7 +179,18 @@ public partial class Main : Control
 
         if (_emergencyPortalButton != null)
         {
-            _emergencyPortalButton.Pressed += OnEmergencyPortalTriggered;
+            _emergencyPortalButton.Text = "🚀 Launch Map";
+            _emergencyPortalButton.Pressed += () =>
+            {
+                if (Engine is { IsInCombat: true })
+                {
+                    OnEmergencyPortalTriggered();
+                }
+                else
+                {
+                    LaunchNextMapFromSanctuary();
+                }
+            };
         }
 
         // Wire Tab Navigation with exclusive ButtonGroup
@@ -182,12 +200,14 @@ public partial class Main : Control
         if (_tabAtlasBtn != null) _tabAtlasBtn.ButtonGroup = tabGroup;
         if (_tabPassivesBtn != null) _tabPassivesBtn.ButtonGroup = tabGroup;
         if (_tabStashBtn != null) _tabStashBtn.ButtonGroup = tabGroup;
+        if (_tabSanctuaryBtn != null) _tabSanctuaryBtn.ButtonGroup = tabGroup;
 
         if (_tabGearBtn != null) _tabGearBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Gear);
         if (_tabSkillsBtn != null) _tabSkillsBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Skills);
         if (_tabAtlasBtn != null) _tabAtlasBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Atlas);
         if (_tabPassivesBtn != null) _tabPassivesBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Passives);
         if (_tabStashBtn != null) _tabStashBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Stash);
+        if (_tabSanctuaryBtn != null) _tabSanctuaryBtn.Pressed += () => SwitchWorkspaceTab(WorkspaceTab.Sanctuary);
 
         if (_gearNavButton != null && _gearNavButton != _tabGearBtn)
         {
@@ -230,6 +250,16 @@ public partial class Main : Control
             MapQueue,
             Engine,
             () => _equipmentView?.CandidateItems ?? Enumerable.Empty<IGearItem>());
+
+        _sanctuaryView?.Initialize(Player, Db, MapQueue);
+        if (_sanctuaryView != null)
+        {
+            _sanctuaryView.OnToastRequested += (msg, col) => _battleViewport?.ShowLootToast(msg, col);
+            _sanctuaryView.OnDescendToAbyssRequested += () =>
+            {
+                _battleViewport?.ShowLootToast("⛏ Subterranean Endless Abyss initiated!", new Color(0.95f, 0.85f, 0.3f));
+            };
+        }
 
         if (_stashView != null)
         {
@@ -421,6 +451,26 @@ public partial class Main : Control
         _mapDeviceBar?.SetGoldenPulse(true);
         _atlasView?.SlotMap(mapDef, null, "Normal");
         _atlasView?.SetGoldenPulse(true);
+
+        // Seed starter crafting currencies and fossils for Sanctuary Anvil testing
+        Player.Stash.DepositCurrency("orb_of_transmutation", 50);
+        Player.Stash.DepositCurrency("orb_of_alteration", 50);
+        Player.Stash.DepositCurrency("chaos_orb", 30);
+        Player.Stash.DepositCurrency("exalted_orb", 5);
+        Player.Stash.DepositCurrency("orb_of_annulment", 10);
+        Player.Stash.DepositCurrency("divine_orb", 5);
+        Player.Stash.DepositCurrency("vaal_orb", 10);
+
+        Player.Stash.DepositFossil("pristine_fossil", 10);
+        Player.Stash.DepositFossil("metallic_fossil", 10);
+        Player.Stash.DepositFossil("scorched_fossil", 10);
+        Player.Stash.DepositFossil("frigid_fossil", 10);
+        Player.Stash.DepositFossil("dense_fossil", 10);
+        Player.Stash.DepositFossil("corroded_fossil", 10);
+
+        Player.Sanctuary.AddDust(14200);
+        _sanctuaryView?.RefreshTargetItemList();
+        _sanctuaryView?.RefreshView();
 
         GD.Print($"[Main] Character bootstrapped: {archetype.DisplayName}, Life: {Player.MaxLife}, ES: {Player.MaxEnergyShield}, Mana: {Player.MaxMana}");
         GD.Print($"[Main] Equipped Weapon: MainHand={Player.MainHand?.BaseDefinition.Name ?? "None"} ({Player.MainHand?.ComputedMinDamage}-{Player.MainHand?.ComputedMaxDamage} Phys, APS: {Player.MainHand?.ComputedAps}), OffHand={Player.OffHand?.BaseDefinition.Name ?? "None"}, DualWield={Player.IsDualWielding}");
@@ -696,6 +746,10 @@ public partial class Main : Control
             {
                 _mapDeviceBar?.SetPortalActive(false);
                 _atlasView?.SetPortalActive(false);
+                if (_emergencyPortalButton != null)
+                {
+                    _emergencyPortalButton.Text = "🚀 Launch Map";
+                }
                 _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
                 _battleViewport?.SetSanctuaryStatus();
             }
@@ -703,7 +757,12 @@ public partial class Main : Control
 
         Engine.StartMap(config);
 
-        // 4. Update status display
+        // 4. Update status display & buttons
+        if (_emergencyPortalButton != null)
+        {
+            _emergencyPortalButton.Text = "🌀 Emergency Portal";
+        }
+
         if (_statusLabel != null)
         {
             _statusLabel.Text = $"Portal Active • Mapping: {map.Name} (T{map.Tier}) • 30Hz Combat Engine Active";
@@ -730,6 +789,10 @@ public partial class Main : Control
         Engine?.TriggerEmergencyPortal();
         _mapDeviceBar?.SetPortalActive(false);
         _atlasView?.SetPortalActive(false);
+        if (_emergencyPortalButton != null)
+        {
+            _emergencyPortalButton.Text = "🚀 Launch Map";
+        }
         _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
         _battleViewport?.SetSanctuaryStatus();
 
@@ -746,6 +809,46 @@ public partial class Main : Control
 #endif
 
         GD.Print("[Main] Returned to Crucible via Emergency Portal.");
+    }
+
+    /// <summary>
+    /// Launches the next map from the Map Queue or slotted Atlas map (Prompt 5 / Task 5.5).
+    /// Used by contextual Spacebar hotkey or bottom action bar when not in combat.
+    /// </summary>
+    public void LaunchNextMapFromSanctuary()
+    {
+        // 1. If map queue has items, dequeue and launch next map
+        if (MapQueue.Count > 0)
+        {
+            var next = MapQueue.DequeueNext();
+            if (next != null)
+            {
+                GD.Print($"[Sanctuary] Launched queued map: {next.Map.Name} (T{next.Map.Tier})");
+                _atlasView?.SlotMap(next.Map, next.Modifiers, next.Rarity);
+                _mapDeviceBar?.SlotMap(next.Map, next.Rarity);
+                OnMapActivatedWithMods(next.Map, next.Modifiers, next.Rarity);
+                return;
+            }
+        }
+
+        // 2. Check if a map is already slotted in AtlasView or MapDeviceBar
+        var slottedMap = _atlasView?.SlottedMap ?? _mapDeviceBar?.SlottedMap;
+        if (slottedMap != null)
+        {
+            GD.Print($"[Sanctuary] Launched slotted map: {slottedMap.Name} (T{slottedMap.Tier})");
+            OnMapActivatedWithMods(slottedMap, _atlasView?.SlottedModifiers, _atlasView?.SlottedRarity ?? "Normal");
+            return;
+        }
+
+        // 3. Fallback to default Strand map if available in database
+        if (Db.Maps.TryGetValue("strand", out var defaultMap) || Db.Maps.TryGetValue("ruined_courtyard", out defaultMap))
+        {
+            GD.Print($"[Sanctuary] Launched default map: {defaultMap.Name} (T{defaultMap.Tier})");
+            OnMapActivatedWithMods(defaultMap, Array.Empty<RolledMapModifier>(), "Normal");
+            return;
+        }
+
+        _battleViewport?.ShowLootToast("No maps queued or slotted in Crucible!", new Color(1.0f, 0.4f, 0.4f));
     }
 
     public override void _Process(double delta)
@@ -842,6 +945,26 @@ public partial class Main : Control
             }
             _gemView?.RefreshView();
         }
+
+        // Seed starter crafting currencies and fossils for Sanctuary Anvil testing
+        Player.Stash.DepositCurrency("orb_of_transmutation", 50);
+        Player.Stash.DepositCurrency("orb_of_alteration", 50);
+        Player.Stash.DepositCurrency("chaos_orb", 30);
+        Player.Stash.DepositCurrency("exalted_orb", 5);
+        Player.Stash.DepositCurrency("orb_of_annulment", 10);
+        Player.Stash.DepositCurrency("divine_orb", 5);
+        Player.Stash.DepositCurrency("vaal_orb", 10);
+
+        Player.Stash.DepositFossil("pristine_fossil", 10);
+        Player.Stash.DepositFossil("metallic_fossil", 10);
+        Player.Stash.DepositFossil("scorched_fossil", 10);
+        Player.Stash.DepositFossil("frigid_fossil", 10);
+        Player.Stash.DepositFossil("dense_fossil", 10);
+        Player.Stash.DepositFossil("corroded_fossil", 10);
+
+        Player.Sanctuary.AddDust(14200);
+        _sanctuaryView?.RefreshTargetItemList();
+        _sanctuaryView?.RefreshView();
     }
 
     /// <summary>
@@ -854,6 +977,7 @@ public partial class Main : Control
         WorkspaceTab.Atlas => _mapDeviceMargin,
         WorkspaceTab.Passives => _passiveTreeView,
         WorkspaceTab.Stash => _stashView,
+        WorkspaceTab.Sanctuary => _sanctuaryView,
         _ => null
     };
 
@@ -906,6 +1030,7 @@ public partial class Main : Control
         if (_tabAtlasBtn != null) _tabAtlasBtn.ButtonPressed = (tab == WorkspaceTab.Atlas);
         if (_tabPassivesBtn != null) _tabPassivesBtn.ButtonPressed = (tab == WorkspaceTab.Passives);
         if (_tabStashBtn != null) _tabStashBtn.ButtonPressed = (tab == WorkspaceTab.Stash);
+        if (_tabSanctuaryBtn != null) _tabSanctuaryBtn.ButtonPressed = (tab == WorkspaceTab.Sanctuary);
 
         // Cancel any in-flight tab transition tween
         if (_tabTransitionTween != null && _tabTransitionTween.IsValid())
@@ -962,6 +1087,10 @@ public partial class Main : Control
 
             case WorkspaceTab.Stash:
                 _stashView?.RefreshView();
+                break;
+
+            case WorkspaceTab.Sanctuary:
+                _sanctuaryView?.RefreshView();
                 break;
         }
 
@@ -1141,9 +1270,31 @@ public partial class Main : Control
 
         switch (keycode)
         {
-            // Emergency Escape Portal
+            // Contextual Spacebar: In Combat -> Emergency Portal; In Sanctuary -> Launch Next Map (Prompt 5)
             case Key.Space:
-                OnEmergencyPortalTriggered();
+                if (Engine is { IsInCombat: true })
+                {
+                    OnEmergencyPortalTriggered();
+                }
+                else
+                {
+                    LaunchNextMapFromSanctuary();
+                }
+                return true;
+
+            // Crucible Sanctuary Tab (Prompt 5)
+            case Key.H:
+                ToggleOrSwitchWorkspaceTab(WorkspaceTab.Sanctuary);
+                return true;
+
+            // Quick-Focus The Crucible Anvil (Prompt 5)
+            case Key.A:
+                if (!_windowController.IsExpanded)
+                {
+                    _windowController.ExpandWindow(keepBottom: true);
+                }
+                SwitchWorkspaceTab(WorkspaceTab.Sanctuary);
+                _sanctuaryView?.FocusAnvil();
                 return true;
 
             // Gear & Inventory Tab (Supports both standard PoE 'I' and 'G')

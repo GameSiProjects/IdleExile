@@ -37,6 +37,7 @@ Welcome, Agent! This file outlines the architectural principles, tech stack, con
 ```
 IdleExile/
 ├── AGENTS.md                         # This guide
+├── TASKS.md                          # Implementation task execution tracker
 ├── project.godot                     # Godot engine config (Window, low processor mode, gl_compat, i18n)
 ├── IdleExile.csproj                  # .NET 8 C# project config
 ├── nuget.config                      # Local Godot NuGet package source configuration
@@ -49,35 +50,61 @@ IdleExile/
 │
 ├── data/                             # SOURCE OF TRUTH for all balance & content
 │   ├── affixes.json                  # Prefixes & Suffixes definitions and tier roll ranges
+│   ├── currencies.json               # Currency definitions (Transmute, Chaos, Exalt, Annul, etc.)
+│   ├── fossils.json                  # Fossils and affix modifier weight modulations
 │   ├── gems.json                     # Active & Support Gems, tags, stat multipliers
-│   └── maps.json                     # Map tiers (T0-T16+) and Map Modifiers
+│   ├── maps.json                     # Map tiers (T0-T16+) and Map Modifiers
+│   ├── passive_tree.json             # Passive skill web nodes, stats, and graph links
+│   ├── sanctuary_tiers.json          # Hub Sanctuary tiers progression (T1-T4)
+│   └── smelter_recipes.json          # Thaumaturgic Smelter yield coefficients and costs
 │
-├── docs/                             # Complete Game Design Documentation (GDD)
+├── docs/                             # Complete Game Design Documentation (GDD) & Plans
 │   ├── README.md                     # Documentation index
-│   ├── 01_game_overview.md           # Pillars, loop, minimalist lore
-│   ├── 02_mapping_system.md          # Immediate mapping, itemized maps, atlas
-│   ├── 03_combat_and_stats.md        # Damage formulas, defensive layers, ticks
-│   ├── 04_gems_and_passives.md       # PoE 2 gem sockets, skill matrix, passive web
-│   ├── 05_items_and_crafting.md      # Affixes, currency economy, loot filter
-│   └── 06_godot_technical_spec.md   # C# architecture, window profile, offline math, i18n
+│   ├── 01_game_overview.md ... 15_game_hub_and_sanctuary.md
+│   └── SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md
 │
 ├── scenes/                           # Godot scene files (.tscn)
-│   └── Main.tscn                     # Main companion UI layout
+│   ├── Main.tscn                     # Main companion UI layout (Docked, resizable)
+│   ├── BattleViewport.tscn           # 2D Combat Arena & Vitometer Viewport
+│   ├── EquipmentView.tscn            # 10-slot gear drawer with smart tooltip delta
+│   ├── GemView.tscn                  # Decoupled gem sockets & support linking
+│   ├── AtlasView.tscn                # Crucible Map Device & 10-slot Map Queue
+│   ├── PassiveTreeView.tscn          # Interactive passive tree graph & allocations
+│   ├── StashView.tscn                # Affinity Stash tabs (Currency, Fossils, Maps)
+│   └── SanctuaryView.tscn            # The Crucible Sanctuary 4-panel workspace & Anvil
 │
 └── src/
-    ├── Core/                         # PURE C# LOGIC (No Godot Node dependencies!)
+    ├── Core/                         # PURE C# LOGIC (Zero Godot Node dependencies!)
     │   ├── Models/                   # Strongly-typed records and enums
-    │   │   ├── AffixDefinition.cs
-    │   │   ├── GemDefinition.cs
-    │   │   └── MapDefinition.cs
-    │   ├── Services/                 # Business logic, calculations, database loading
-    │   │   └── DatabaseLoader.cs
-    │   ├── Simulation/               # Tick engine, combat, offline progress calculation
-    │   └── State/                    # Player character state, inventory, atlas progress
+    │   │   ├── AffixDefinition.cs, CombatDpsSnapshot.cs, EquipmentItem.cs,
+    │   │   ├── GemDefinition.cs, ICombatEntity.cs, MapDefinition.cs, SanctuaryState.cs
+    │   ├── Services/                 # Pure C# domain logic & calculation engines
+    │   │   ├── DatabaseLoader.cs, DamageCalculator.cs, DefensiveLayers.cs,
+    │   │   ├── CombatAttackService.cs, EquipmentComparisonService.cs,
+    │   │   ├── GemCompatibilityValidator.cs, SmelterService.cs,
+    │   │   ├── SpatialCombatService.cs, TheCrucibleAnvilService.cs
+    │   ├── Simulation/               # Tick engine (30Hz), combat telemetry & queues
+    │   │   ├── CombatEngine.cs, CombatDpsTracker.cs, MapQueueManager.cs,
+    │   │   ├── TickManager.cs, WaveSpawner.cs, ActionTimeAccumulator.cs, etc.
+    │   ├── State/                    # Player character state, inventory, stash, atlas
+    │   │   ├── PlayerState.cs, EquippedGearState.cs, SkillLoadout.cs,
+    │   │   └── AffinityStashState.cs, PassiveTreeState.cs
+    │   └── Tests/                    # Headless pure C# automated test suites
+    │       ├── SanctuarySystemTests.cs, UnifiedCombatSystemTests.cs,
+    │       └── SpatialGeometryTests.cs, CombatSimulationTests.cs
     │
     └── UI/                           # Godot Node C# Scripts (Views, Tooltips, Controls)
-        ├── LocalizationService.cs    # Godot TranslationServer wrapper (Loc.Tr, Loc.Format, Loc.SetLocale)
-        └── Main.cs                   # Top-level window & scene controller
+        ├── LocalizationService.cs    # Godot TranslationServer wrapper (Loc.Tr, Loc.Format)
+        ├── DesktopWindow.cs          # Multi-monitor desktop docking & positioning
+        ├── WindowController.cs       # Compact/Expanded mode & keepBottom window expansion
+        ├── BattleViewport.cs         # Top-level viewport coordinator
+        ├── Main.cs                   # Top-level controller & in-window shortcuts
+        ├── MainLayoutTests.cs        # Headless UI layout and shortcut automated tests
+        └── Components/               # Modular UI controls
+            ├── Arena2D.cs, ArenaCamera.cs, AtlasView.cs, DropSoundSynthesizer.cs,
+            ├── EdgeGlowAlert.cs, EquipmentView.cs, FloatingTextManager.cs,
+            ├── GemView.cs, MapHeaderBar.cs, PassiveTreeView.cs,
+            ├── SanctuaryView.cs, StashView.cs, VitometerView.cs
 ```
 
 ---
@@ -196,6 +223,7 @@ dotnet build
 | **In-Combat Real-Time DPS Meter (Prompt 2)** | Complete | `src/Core/Models/CombatDpsSnapshot.cs`, `src/Core/Simulation/CombatDpsTracker.cs` |
 | **Thaumaturgic Smelter & Dust Economy (Prompt 3)** | Complete | `data/smelter_recipes.json`, `src/Core/Services/SmelterService.cs`, `src/Core/Models/EquipmentItem.cs` |
 | **Dual-State Viewport & Combat DPS UI (Prompt 4)** | Complete | `src/UI/Components/Arena2D.cs`, `src/UI/BattleViewport.cs`, `scenes/Main.tscn` |
+| **Sanctuary View & Crucible Anvil (Prompt 5)** | Complete | `src/Core/Services/TheCrucibleAnvilService.cs`, `scenes/SanctuaryView.tscn`, `src/UI/Components/SanctuaryView.cs`, `src/UI/Main.cs` |
 
 ---
 
