@@ -281,6 +281,9 @@ public static class MainLayoutTests
         AssertTrue(battleViewport.Visible, "BattleViewport must remain PERSISTENTLY visible in Compact mode!");
         AssertTrue(resizeBtn.Text.Contains("Expand"), $"Resize button should indicate Expand when compact, was: {resizeBtn.Text}");
         AssertTrue(main.ActiveTab == Main.WorkspaceTab.Atlas, "ActiveTab should remain preserved as Atlas in memory");
+        AssertEqual(Window.ContentScaleModeEnum.Disabled, main.GetWindow().ContentScaleMode, "ContentScaleMode must be Disabled to prevent shrinking in compact mode");
+        AssertEqual(new Vector2(640, 248), battleViewport.CustomMinimumSize, "BattleViewport custom minimum size must remain 640x248 in Compact mode");
+        AssertEqual(Vector2.One, battleViewport.Scale, "BattleViewport must never be scaled down (Scale must be 1.0)");
 
         // 4. Re-expand to Expanded Mode -> Verifies active tab restoration
         windowController.ExpandWindow(keepBottom: true);

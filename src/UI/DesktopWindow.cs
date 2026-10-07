@@ -46,6 +46,8 @@ public class DesktopWindow
         _window.AlwaysOnTop = alwaysOnTop;
         _window.Unresizable = !resizable;
         DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.ResizeDisabled, !resizable);
+        _window.ContentScaleMode = Window.ContentScaleModeEnum.Disabled;
+        _window.ContentScaleAspect = Window.ContentScaleAspectEnum.Ignore;
         _window.MinSize = new Vector2I(560, 320);
         _window.Size = _windowSize;
     }
