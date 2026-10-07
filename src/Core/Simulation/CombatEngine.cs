@@ -80,6 +80,10 @@ public sealed class CombatEngine
     /// <summary>Ailment tracker for debuffs and DoTs currently on the player.</summary>
     public AilmentTracker PlayerAilments => Player.Ailments;
 
+    /// <summary>Real-time in-combat DPS and telemetry tracker (Sliding Window 3.0s).</summary>
+    public CombatDpsTracker DpsTracker { get; } = new();
+
+
     // ─────────────────────────────────────────────
     //  Map Run Context
     // ─────────────────────────────────────────────
@@ -303,8 +307,10 @@ public sealed class CombatEngine
 
         Spawner.BeginMap(config);
         Death.ResetForNewMap();
+        DpsTracker.ResetForNewMap();
 
         TotalMonstersKilledInMap = 0;
+
         CurrentMapRunTime = 0f;
         IsMapComplete = false;
         IsInCombat = true;
@@ -448,6 +454,9 @@ public sealed class CombatEngine
         //  Phase 5: Death & Drop Phase
         // ═════════════════════════════════════════════
         ExecutePhase5_DeathAndDrop(deltaTime);
+
+        // Advance sliding-window Combat DPS tracker
+        DpsTracker.Update(CurrentMapRunTime, deltaTime);
     }
 
     // ─────────────────────────────────────────────
@@ -538,6 +547,15 @@ public sealed class CombatEngine
                     if (dotResult.TotalDoTDamage > 0f)
                     {
                         float dealt = monster.TakeRawDamage(dotResult.TotalDoTDamage);
+                        float ratio = dotResult.TotalDoTDamage > 0.001f ? dealt / dotResult.TotalDoTDamage : 1f;
+
+                        if (dotResult.PhysicalDoTDamage > 0f)
+                            DpsTracker.RecordDoT(CurrentMapRunTime, dotResult.PhysicalDoTDamage * ratio, DamageType.Physical);
+                        if (dotResult.FireDoTDamage > 0f)
+                            DpsTracker.RecordDoT(CurrentMapRunTime, dotResult.FireDoTDamage * ratio, DamageType.Fire);
+                        if (dotResult.ChaosDoTDamage > 0f)
+                            DpsTracker.RecordDoT(CurrentMapRunTime, dotResult.ChaosDoTDamage * ratio, DamageType.Chaos);
+
                         OnDamageDealt?.Invoke(new DamageDealtEventArgs(
                             Target: monster,
                             Hit: null,
@@ -962,6 +980,18 @@ public sealed class CombatEngine
         if (!target.IsAlive) return;
 
         var result = CombatAttackService.ExecuteHit(attacker, target, payload, target.Defenses, _random);
+
+        // Record real-time DPS and accuracy telemetry for player attacks
+        if (attacker is PlayerState)
+        {
+            bool isHit = !result.Defense.Evaded;
+            DpsTracker.RecordAttackAttempt(CurrentMapRunTime, isHit);
+
+            if (isHit && result.DamageDealt > 0f)
+            {
+                DpsTracker.RecordHit(CurrentMapRunTime, result.Hit, result.DamageDealt);
+            }
+        }
 
         // If using fallback Default Attack, gain mana on hit to assist recovery
         if (isDefaultAttack && attacker is PlayerState)

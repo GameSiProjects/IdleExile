@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using IdleExile.Core.Models;
+using IdleExile.Core.Simulation;
 
 namespace IdleExile.Core.Tests;
 
@@ -17,12 +18,15 @@ public static class SanctuarySystemTests
 
     public static void RunAll()
     {
-        Console.WriteLine("[Tests] Running SanctuarySystemTests (Prompt 1: Data Architecture & Core Models)...");
+        Console.WriteLine("[Tests] Running SanctuarySystemTests (Prompt 1 & 2: Sanctuary & Combat DPS Meter)...");
 
         TestSanctuaryTierDefinitionModel();
         TestSanctuaryStateMutationsAndEvents();
         TestCombatDpsSnapshotIntegrity();
         TestSanctuaryTiersJsonDeserialization();
+        TestCombatDpsTrackerSlidingWindow();
+        TestCombatDpsTrackerBreakdownAndAccuracy();
+        TestCombatDpsTrackerReset();
 
         Console.WriteLine("[Tests] All SanctuarySystemTests PASSED successfully!");
     }
@@ -155,7 +159,90 @@ public static class SanctuarySystemTests
         AssertEqual("Hollow Crypt", list[0].Name, "Name mismatch in deserialized tier");
     }
 
+    private static void TestCombatDpsTrackerSlidingWindow()
+    {
+        var tracker = new CombatDpsTracker { WindowDuration = 3.0f };
+
+        tracker.RecordDamage(0.5f, 150f, DamageType.Fire);
+        tracker.RecordDamage(1.0f, 150f, DamageType.Physical);
+        tracker.RecordDamage(2.0f, 300f, DamageType.Cold);
+
+        tracker.Update(2.0f, 2.0f);
+
+        // Within 2.0s effective window: 600 total / 2.0s = 300 DPS
+        AssertEqual(300f, tracker.CurrentDps, "CurrentDps at 2s should be 300");
+        AssertEqual(300f, tracker.PeakDps, "PeakDps at 2s should be 300");
+        AssertEqual(600f, tracker.TotalDamageDealt, "TotalDamageDealt should be 600");
+
+        // Advance to t = 4.0s (delta = 2.0s). Event at 0.5s is evicted (4.0 - 0.5 = 3.5 > 3.0)
+        tracker.Update(4.0f, 2.0f);
+
+        // Remaining events: 150 at 1.0s + 300 at 2.0s = 450 total. Over full 3.0s window = 150 DPS
+        AssertEqual(150f, tracker.CurrentDps, "CurrentDps at 4s should be 150");
+        AssertEqual(300f, tracker.PeakDps, "PeakDps should remain at peak 300");
+
+        // Advance to t = 6.0s. All earlier events evicted.
+        tracker.Update(6.0f, 2.0f);
+        AssertEqual(0f, tracker.CurrentDps, "CurrentDps at 6s should drop to 0");
+        AssertEqual(300f, tracker.PeakDps, "PeakDps should remain at peak 300 even when quiet");
+        AssertEqual(600f, tracker.TotalDamageDealt, "TotalDamageDealt should remain 600");
+    }
+
+    private static void TestCombatDpsTrackerBreakdownAndAccuracy()
+    {
+        var tracker = new CombatDpsTracker { WindowDuration = 3.0f };
+
+        var hit = new HitResult(
+            Damage: new HitDamageBreakdown(100f, 100f, 0f, 0f, 0f),
+            TotalDamage: 200f,
+            IsCrit: true,
+            CritMultiplier: 150f,
+            InflictedAilments: Array.Empty<AilmentInstance>()
+        );
+
+        tracker.RecordHit(1.0f, hit, 200f);
+        tracker.RecordDoT(1.5f, 50f, DamageType.Chaos);
+
+        tracker.RecordAttackAttempt(1.0f, wasHit: true);
+        tracker.RecordAttackAttempt(1.2f, wasHit: false);
+
+        tracker.Update(2.0f, 2.0f);
+
+        var snapshot = tracker.GetSnapshot();
+
+        // Total = 250: 100 Phys (40%), 100 Fire (40%), 50 Chaos (20%)
+        AssertEqual(40f, snapshot.PhysicalPercent, "PhysicalPercent mismatch");
+        AssertEqual(40f, snapshot.FirePercent, "FirePercent mismatch");
+        AssertEqual(20f, snapshot.ChaosPercent, "ChaosPercent mismatch");
+        AssertEqual(0f, snapshot.ColdPercent, "ColdPercent mismatch");
+
+        // Accuracy: 1 hit out of 2 attempts = 50%
+        AssertEqual(50f, snapshot.AccuracyPercent, "AccuracyPercent mismatch");
+
+        // Total damage = 250, effective window = 2.0s -> 125 DPS
+        AssertEqual(125f, snapshot.CurrentDps, "CurrentDps mismatch");
+        AssertEqual(125f, snapshot.PeakDps, "PeakDps mismatch");
+    }
+
+    private static void TestCombatDpsTrackerReset()
+    {
+        var tracker = new CombatDpsTracker();
+        tracker.RecordDamage(1.0f, 500f, DamageType.Fire);
+        tracker.Update(1.0f, 1.0f);
+
+        AssertTrue(tracker.CurrentDps > 0f, "CurrentDps should be positive before reset");
+
+        tracker.ResetForNewMap();
+
+        AssertEqual(0f, tracker.CurrentDps, "CurrentDps should be 0 after reset");
+        AssertEqual(0f, tracker.PeakDps, "PeakDps should be 0 after reset");
+        AssertEqual(0f, tracker.TotalDamageDealt, "TotalDamageDealt should be 0 after reset");
+        AssertEqual(0f, tracker.CombatDuration, "CombatDuration should be 0 after reset");
+        AssertEqual(0, tracker.TotalHits, "TotalHits should be 0 after reset");
+    }
+
     private static void AssertEqual<T>(T expected, T actual, string message)
+
     {
         if (!EqualityComparer<T>.Default.Equals(expected, actual))
         {
