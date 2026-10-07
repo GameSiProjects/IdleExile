@@ -1,6 +1,6 @@
 # TASKS.md — Kế Hoạch Triển Khai Idle Exile (Task Execution Tracker)
 
-Tài liệu này theo dõi tiến độ thực hiện các tính năng của **Idle Exile**, đặc biệt tập trung vào việc hiện thực hóa **Combat Engine (C# Core)**, **Giao Diện Chiến Đấu (Battle Viewport UI)** theo thiết kế tại [07_combat_ui_and_viewport.md](file:///e:/Projects/Antigravity/IdleExile/docs/07_combat_ui_and_viewport.md) và kế hoạch nâng cấp giao diện tại [UI_OVERHAUL_IMPLEMENTATION_PLAN.md](file:///e:/Projects/Antigravity/IdleExile/docs/UI_OVERHAUL_IMPLEMENTATION_PLAN.md).
+Tài liệu này theo dõi tiến độ thực hiện các tính năng của **Idle Exile**, đặc biệt tập trung vào việc hiện thực hóa **Combat Engine (C# Core)**, **Giao Diện Chiến Đấu (Battle Viewport UI)** theo thiết kế tại [07_combat_ui_and_viewport.md](file:///e:/Projects/Antigravity/IdleExile/docs/design/07_combat_ui_and_viewport.md).
 
 ---
 
@@ -232,7 +232,7 @@ Tài liệu này theo dõi tiến độ thực hiện các tính năng của **I
 
 ## ⛏️ Phase 5: Dual-Axis Progression & Streamlined Fossil Crafting
 
-> **Chi tiết kế hoạch triển khai đầy đủ:** Xem tại [DUAL_PROGRESSION_AND_CRAFTING_PLAN.md](docs/DUAL_PROGRESSION_AND_CRAFTING_PLAN.md).
+> **Chi tiết kế hoạch triển khai đầy đủ:** Xem tại [DUAL_PROGRESSION_AND_CRAFTING_PLAN.md](docs/technical/DUAL_PROGRESSION_AND_CRAFTING_PLAN.md).
 
 - [ ] **Task 5.1: Pipeline Dữ Liệu Hóa Thạch & Vực Sâu**
   - [ ] Tạo `data/fossils.json` (7 loại Hóa thạch cơ bản + hệ số trọng số tag Affix).
@@ -258,7 +258,7 @@ Tài liệu này theo dõi tiến độ thực hiện các tính năng của **I
 
 ## 🏛️ Phase 6: The Crucible Sanctuary & Real-Time DPS Meter (Hub & Anvil)
 
-> **Chi tiết kế hoạch triển khai đầy đủ:** Xem tại [SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md](docs/SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md) và [15_game_hub_and_sanctuary.md](docs/15_game_hub_and_sanctuary.md).
+> **Chi tiết đặc tả thiết kế đầy đủ:** Xem tại [15_game_hub_and_sanctuary.md](docs/design/15_game_hub_and_sanctuary.md).
 
 - [x] **Task 6.1: Pipeline Dữ Liệu Sanctuary Tiers & Core Models (Prompt 1)**
   - [x] Cấu hình `data/sanctuary_tiers.json`: 4 bậc tiến trình (Hollow Crypt -> Awakened Foundry -> Eldritch Sanctum -> Celestial Void).

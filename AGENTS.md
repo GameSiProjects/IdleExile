@@ -58,10 +58,10 @@ IdleExile/
 │   ├── sanctuary_tiers.json          # Hub Sanctuary tiers progression (T1-T4)
 │   └── smelter_recipes.json          # Thaumaturgic Smelter yield coefficients and costs
 │
-├── docs/                             # Complete Game Design Documentation (GDD) & Plans
-│   ├── README.md                     # Documentation index
-│   ├── 01_game_overview.md ... 15_game_hub_and_sanctuary.md
-│   └── SANCTUARY_AND_DPS_METER_IMPLEMENTATION_PLAN.md
+├── docs/                             # Complete Game Design Documentation (GDD) & Technical Plans
+│   ├── README.md                     # Master navigation map & quick-reference table
+│   ├── design/                       # Game Design Specs (01_game_overview.md to 15_game_hub_and_sanctuary.md)
+│   └── technical/                    # Technical specs & implementation plans (06_godot_technical_spec.md, roadmaps)
 │
 ├── scenes/                           # Godot scene files (.tscn)
 │   ├── Main.tscn                     # Main companion UI layout (Docked, resizable)
@@ -187,7 +187,7 @@ dotnet build
 
 | Feature / Subsystem | Status | Location |
 | :--- | :--- | :--- |
-| **GDD Documentation** | Complete | `docs/01_*.md` to `docs/14_*.md` |
+| **GDD Documentation** | Complete | `docs/design/` (01 to 15) |
 | **Execution Task List** | Tracking | `TASKS.md` |
 | **Project & Engine Setup** | Complete | `project.godot`, `IdleExile.csproj`, `nuget.config` |
 | **Localization & English UI Standard** | Complete | `localization/translations.csv`, `src/UI/LocalizationService.cs` |

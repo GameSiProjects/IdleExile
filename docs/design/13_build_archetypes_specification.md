@@ -4,7 +4,8 @@
 **Dự án:** *Idle Exile*  
 **Vị trí:** Senior Game Systems & Combat Designer  
 **Form Factor:** Mini-Window Desktop Companion (`640 x 320` px Compact đến `640 x 780` px Expanded)  
-**Tài liệu liên quan:** [03_combat_and_stats.md](03_combat_and_stats.md), [04_gems_and_passives.md](04_gems_and_passives.md), [05_items_and_crafting.md](05_items_and_crafting.md), [09_weapon_equipment_system.md](09_weapon_equipment_system.md), [10_starter_skills_design.md](10_starter_skills_design.md)
+**Tài liệu liên quan:** [03_combat_and_stats.md](03_combat_and_stats.md), [04_gems_and_passives.md](04_gems_and_passives.md), [05_items_and_crafting.md](05_items_and_crafting.md), [09_weapon_equipment_system.md](09_weapon_equipment_system.md), [10_starter_skills_design.md](10_starter_skills_design.md)  
+**Kế hoạch triển khai kỹ thuật:** [BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md](../technical/BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md)
 
 ---
 

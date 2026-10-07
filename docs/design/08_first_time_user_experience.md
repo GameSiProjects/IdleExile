@@ -4,6 +4,8 @@ Tài liệu này quy định chi tiết thiết kế luồng trải nghiệm ng�
 
 Mục tiêu cốt lõi: Đưa người chơi tiếp cận ngay lập tức với tinh hoa của *Path of Exile* (chiều sâu build, phối ghép ngọc, nhặt đồ dopamine) trên form-factor **cửa sổ mini 440 x 780 px**, đồng thời triệt tiêu hoàn toàn sự mệt mỏi của cốt truyện 10 Act và các rào cản thao tác tay (Zero APM).
 
+**Kế hoạch triển khai kỹ thuật:** [FTUE_IMPLEMENTATION_PLAN.md](../technical/FTUE_IMPLEMENTATION_PLAN.md)
+
 ---
 
 ## 1. Triết Lý Thiết Kế & Các Chỉ Số Đo Lường (Design Pillars & KPIs)

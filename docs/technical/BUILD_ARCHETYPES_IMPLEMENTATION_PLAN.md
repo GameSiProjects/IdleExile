@@ -1,6 +1,6 @@
 # BUILD_ARCHETYPES_IMPLEMENTATION_PLAN.md — Kế Hoạch Triển Khai Kỹ Thuật Hệ Thống Build Archetypes & Meta
 
-Tài liệu này chi tiết hóa lộ trình kỹ thuật và phân rã các tác vụ phát triển thành **từng Prompt thực thi độc lập (Ready-to-Execute Prompts)** để hiện thực hóa toàn bộ **7 Build Archetypes Chiến Lược** theo đặc tả tại [13_build_archetypes_specification.md](13_build_archetypes_specification.md).
+Tài liệu này chi tiết hóa lộ trình kỹ thuật và phân rã các tác vụ phát triển thành **từng Prompt thực thi độc lập (Ready-to-Execute Prompts)** để hiện thực hóa toàn bộ **7 Build Archetypes Chiến Lược** theo đặc tả tại [13_build_archetypes_specification.md](../design/13_build_archetypes_specification.md).
 
 ---
 

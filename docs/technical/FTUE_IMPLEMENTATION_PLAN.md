@@ -1,6 +1,6 @@
 # FTUE_IMPLEMENTATION_PLAN.md — Kế Hoạch Triển Khai Kỹ Thuật FTUE
 
-Tài liệu này chi tiết hóa lộ trình kỹ thuật và phân rã công việc (Work Breakdown Structure - WBS) để hiện thực hóa luồng trải nghiệm người chơi ban đầu (**First Time User Experience - FTUE**) theo đặc tả tại [08_first_time_user_experience.md](08_first_time_user_experience.md).
+Tài liệu này chi tiết hóa lộ trình kỹ thuật và phân rã công việc (Work Breakdown Structure - WBS) để hiện thực hóa luồng trải nghiệm người chơi ban đầu (**First Time User Experience - FTUE**) theo đặc tả tại [08_first_time_user_experience.md](../design/08_first_time_user_experience.md).
 
 ---
 

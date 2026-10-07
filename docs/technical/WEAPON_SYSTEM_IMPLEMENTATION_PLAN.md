@@ -1,6 +1,6 @@
 # WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md — Kế Hoạch Triển Khai Kỹ Thuật Hệ Thống Trang Bị Vũ Khí
 
-Tài liệu này chi tiết hóa lộ trình kỹ thuật và phân rã cấu trúc công việc (Work Breakdown Structure - WBS) để hiện thực hóa **Hệ Thống Trang Bị Vũ Khí (Weapon Equipment System)** theo đặc tả tại [09_weapon_equipment_system.md](09_weapon_equipment_system.md).
+Tài liệu này chi tiết hóa lộ trình kỹ thuật và phân rã cấu trúc công việc (Work Breakdown Structure - WBS) để hiện thực hóa **Hệ Thống Trang Bị Vũ Khí (Weapon Equipment System)** theo đặc tả tại [09_weapon_equipment_system.md](../design/09_weapon_equipment_system.md).
 
 ---
 

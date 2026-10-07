@@ -4,7 +4,7 @@
 **Dự án:** *Idle Exile*  
 **Vị trí:** Senior Game Systems & Combat Designer  
 **Form Factor:** Mini-Window Desktop Companion (`440 x 780` px)  
-**Kế hoạch triển khai:** [WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md](WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md)
+**Kế hoạch triển khai:** [WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md](../technical/WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md)
 
 ---
 
@@ -355,4 +355,4 @@ Nhằm loại bỏ hiện tượng Garbage Collection (GC) trong combat loop 30H
 * Các thuộc tính `ComputedMinDamage`, `ComputedMaxDamage`, `ComputedAps`, `ComputedCritChance` được lưu trữ sẵn (cached) để `DamageCalculator.cs` truy xuất tức thì ở mỗi tick tấn công.
 
 ---
-*Tài liệu này là đặc tả thiết kế hoàn chỉnh của hệ thống trang bị vũ khí trong Idle Exile. Xem chi tiết các bước lập trình, cấu trúc file và kiểm thử tại [WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md](WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md).*
+*Tài liệu này là đặc tả thiết kế hoàn chỉnh của hệ thống trang bị vũ khí trong Idle Exile. Xem chi tiết các bước lập trình, cấu trúc file và kiểm thử tại [WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md](../technical/WEAPON_SYSTEM_IMPLEMENTATION_PLAN.md).*
