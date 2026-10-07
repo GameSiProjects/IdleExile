@@ -31,7 +31,7 @@ public class DesktopWindow
     /// <summary>
     /// Configure the game window for companion desktop overlay behavior.
     /// </summary>
-    public void SetupWindow(Window window, Vector2I size, bool borderless = false, bool alwaysOnTop = true, bool resizable = false)
+    public void SetupWindow(Window window, Vector2I size, bool borderless = true, bool alwaysOnTop = true, bool resizable = false)
     {
         _window = window;
         _windowSize = size;
@@ -45,11 +45,29 @@ public class DesktopWindow
         _window.Borderless = borderless;
         _window.AlwaysOnTop = alwaysOnTop;
         _window.Unresizable = !resizable;
+        DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.Borderless, borderless);
         DisplayServer.WindowSetFlag(DisplayServer.WindowFlags.ResizeDisabled, !resizable);
         _window.ContentScaleMode = Window.ContentScaleModeEnum.Disabled;
         _window.ContentScaleAspect = Window.ContentScaleAspectEnum.Ignore;
         _window.MinSize = new Vector2I(560, 320);
+        _window.MaxSize = _windowSize;
         _window.Size = _windowSize;
+
+        if (OperatingSystem.IsWindows())
+        {
+            try
+            {
+                IntPtr hWnd = GetNativeWindowHandle();
+                if (hWnd != IntPtr.Zero)
+                {
+                    Win32.DisableMaximizeAndResize(hWnd);
+                }
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[DesktopWindow] Win32 DisableMaximize error: {ex.Message}");
+            }
+        }
     }
 
     /// <summary>
@@ -58,7 +76,7 @@ public class DesktopWindow
     /// </summary>
     public void SetWindowSize(Vector2I newSize, bool keepBottom = true)
     {
-        if (_windowSize == newSize)
+        if (_windowSize == newSize && _window != null && _window.Size == newSize)
         {
             return;
         }
@@ -69,6 +87,7 @@ public class DesktopWindow
 
         if (_window != null)
         {
+            _window.MaxSize = newSize;
             _window.Size = newSize;
         }
 
@@ -122,7 +141,8 @@ public class DesktopWindow
         {
             try
             {
-                IntPtr hWnd = Win32.GetForegroundWindow();
+                long nativeHandle = DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
+                IntPtr hWnd = nativeHandle != 0 ? new IntPtr(nativeHandle) : Win32.GetForegroundWindow();
                 if (hWnd != IntPtr.Zero)
                 {
                     Win32.SetAlwaysOnTop(hWnd, enabled);
@@ -268,11 +288,34 @@ public class DesktopWindow
         return info;
     }
 
+    /// <summary>
+    /// Retrieves the native Win32 window handle (HWND) for the Godot window.
+    /// </summary>
+    public static IntPtr GetNativeWindowHandle()
+    {
+        if (!OperatingSystem.IsWindows()) return IntPtr.Zero;
+        try
+        {
+            long handle = DisplayServer.WindowGetNativeHandle(DisplayServer.HandleType.WindowHandle);
+            if (handle != 0) return new IntPtr(handle);
+        }
+        catch
+        {
+            // Fallback to foreground window
+        }
+        return Win32.GetForegroundWindow();
+    }
+
     // ─── Win32 Native P/Invoke Integration ───────────────────────────────
 
     public static class Win32
     {
         public const int GWL_EXSTYLE = -20;
+        public const int GWL_STYLE = -16;
+
+        public const uint WS_MAXIMIZEBOX = 0x00010000;
+        public const uint WS_MINIMIZEBOX = 0x00020000;
+        public const uint WS_THICKFRAME = 0x00040000;
 
         public const uint WS_EX_LAYERED = 0x00080000;
         public const uint WS_EX_TRANSPARENT = 0x00000020;
@@ -345,6 +388,16 @@ public class DesktopWindow
 
         [DllImport("shell32.dll")]
         public static extern uint SHAppBarMessage(uint dwMessage, ref APPBARDATA pData);
+
+        public static void DisableMaximizeAndResize(IntPtr hWnd)
+        {
+            if (!OperatingSystem.IsWindows() || hWnd == IntPtr.Zero) return;
+
+            IntPtr stylePtr = GetWindowLongPtr(hWnd, GWL_STYLE);
+            long style = stylePtr.ToInt64();
+            style &= ~(WS_MAXIMIZEBOX | WS_THICKFRAME);
+            SetWindowLongPtr(hWnd, GWL_STYLE, new IntPtr(style));
+        }
 
         public static void SetClickThrough(IntPtr hWnd, bool enabled)
         {

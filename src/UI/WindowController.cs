@@ -31,7 +31,7 @@ public partial class WindowController : Node
     public Vector2I WindowSize { get; set; } = ExpandedWindowSize;
 
     [Export]
-    public bool Borderless { get; set; } = false;
+    public bool Borderless { get; set; } = true;
 
     [Export]
     public bool DefaultAlwaysOnTop { get; set; } = true;
@@ -73,6 +73,47 @@ public partial class WindowController : Node
         }
     }
 
+    /// <summary>
+    /// Enforces that the window stays strictly within WindowSize and Windowed mode if Resizable is false.
+    /// </summary>
+    public void EnforceWindowConstraints(Window? window = null)
+    {
+        if (_isInternalResizing) return;
+        window ??= _desktopWindow.Window ?? (IsInsideTree() ? GetWindow() : null);
+        if (window == null) return;
+
+        if (!Resizable)
+        {
+            if (window.Mode != Window.ModeEnum.Windowed && window.Mode != Window.ModeEnum.Minimized)
+            {
+                _isInternalResizing = true;
+                try
+                {
+                    window.Mode = Window.ModeEnum.Windowed;
+                    window.MaxSize = WindowSize;
+                    window.Size = WindowSize;
+                }
+                finally
+                {
+                    _isInternalResizing = false;
+                }
+            }
+            else if (window.Size != WindowSize)
+            {
+                _isInternalResizing = true;
+                try
+                {
+                    window.MaxSize = WindowSize;
+                    window.Size = WindowSize;
+                }
+                finally
+                {
+                    _isInternalResizing = false;
+                }
+            }
+        }
+    }
+
     private void OnNativeWindowSizeChanged()
     {
         if (_isInternalResizing) return;
@@ -80,23 +121,15 @@ public partial class WindowController : Node
         var window = _desktopWindow.Window ?? (IsInsideTree() ? GetWindow() : null);
         if (window == null) return;
 
-        var newSize = window.Size;
-        if (newSize == WindowSize) return;
-
-        // If free/manual window resizing is disabled, prevent external OS resizing by restoring WindowSize
+        // If free/manual window resizing is disabled, prevent external OS resizing or maximizing by restoring WindowSize
         if (!Resizable)
         {
-            _isInternalResizing = true;
-            try
-            {
-                window.Size = WindowSize;
-            }
-            finally
-            {
-                _isInternalResizing = false;
-            }
+            EnforceWindowConstraints(window);
             return;
         }
+
+        var newSize = window.Size;
+        if (newSize == WindowSize) return;
 
         WindowResolutionMode inferredMode = newSize.Y < 500 ? WindowResolutionMode.Compact : WindowResolutionMode.Expanded;
         if (newSize.X >= 800)
@@ -202,6 +235,23 @@ public partial class WindowController : Node
     }
 
     /// <summary>
+    /// Begins dragging the window using global mouse coordinates.
+    /// </summary>
+    public void StartDragging()
+    {
+        IsDragging = true;
+        DragOffset = DisplayServer.MouseGetPosition() - DisplayServer.WindowGetPosition();
+    }
+
+    /// <summary>
+    /// Ends window dragging.
+    /// </summary>
+    public void StopDragging()
+    {
+        IsDragging = false;
+    }
+
+    /// <summary>
     /// Processes mouse input for smooth window dragging across screens when borderless or dragging from titlebar.
     /// </summary>
     public bool HandleInput(InputEvent @event, Func<Vector2, bool>? isPointerOverInteractive = null)
@@ -220,13 +270,12 @@ public partial class WindowController : Node
                     return false;
                 }
 
-                IsDragging = true;
-                DragOffset = DisplayServer.MouseGetPosition() - DisplayServer.WindowGetPosition();
+                StartDragging();
                 return true;
             }
             else
             {
-                IsDragging = false;
+                StopDragging();
                 return true;
             }
         }
@@ -245,9 +294,25 @@ public partial class WindowController : Node
 
     public override void _Process(double delta)
     {
-        if (IsDragging && !Input.IsMouseButtonPressed(MouseButton.Left))
+        if (!Resizable)
         {
-            IsDragging = false;
+            EnforceWindowConstraints();
+        }
+
+        if (IsDragging)
+        {
+            if (!Input.IsMouseButtonPressed(MouseButton.Left))
+            {
+                IsDragging = false;
+            }
+            else
+            {
+                Vector2I newPos = DisplayServer.MouseGetPosition() - DragOffset;
+                if (newPos != DisplayServer.WindowGetPosition())
+                {
+                    DisplayServer.WindowSetPosition(newPos);
+                }
+            }
         }
     }
 }

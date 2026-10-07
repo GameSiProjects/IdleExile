@@ -40,6 +40,8 @@ public partial class Main : Control
     private Control? _combatViewportContainer;
     private Control? _mapDeviceMargin;
     private EdgeGlowAlert? _edgeGlowAlert;
+    private Button? _closeButton;
+    private Control? _topHeaderBar;
     private readonly WindowController _windowController = new();
 
 #if DEBUG
@@ -80,6 +82,8 @@ public partial class Main : Control
     public Control? MapDeviceMargin => _mapDeviceMargin;
     public EdgeGlowAlert? EdgeGlowAlert => _edgeGlowAlert;
     public Button? ResizeModeButton => _resizeModeButton;
+    public Button? CloseButton => _closeButton;
+    public Control? TopHeaderBar => _topHeaderBar;
     public Button? TabSanctuaryBtn => _tabSanctuaryBtn;
     public Label? DpsLabel => _dpsLabel;
 
@@ -108,6 +112,8 @@ public partial class Main : Control
         _alwaysOnTopCheckBox = GetNodeOrNull<CheckBox>("%AlwaysOnTopCheck");
         _resizeModeButton = GetNodeOrNull<Button>("%ResizeModeButton");
         _screenCycleButton = GetNodeOrNull<Button>("%ScreenCycleButton");
+        _closeButton = GetNodeOrNull<Button>("%CloseButton");
+        _topHeaderBar = GetNodeOrNull<Control>("%TopHeaderBar");
         _battleViewport = GetNodeOrNull<BattleViewport>("%BattleViewport");
         _dpsLabel = GetNodeOrNull<Label>("%DpsLabel");
         if (_battleViewport != null)
@@ -175,6 +181,17 @@ public partial class Main : Control
         if (_screenCycleButton != null)
         {
             _screenCycleButton.Pressed += OnScreenCyclePressed;
+        }
+
+        if (_closeButton != null)
+        {
+            _closeButton.Pressed += OnCloseButtonPressed;
+            _closeButton.TooltipText = Loc.Tr("UI_WINDOW_CLOSE_TOOLTIP");
+        }
+
+        if (_topHeaderBar != null)
+        {
+            _topHeaderBar.GuiInput += OnTopHeaderBarGuiInput;
         }
 
         if (_emergencyPortalButton != null)
@@ -1202,6 +1219,34 @@ public partial class Main : Control
     {
         // When equipment view is closed via [X], shrink window back to Compact Mode
         _windowController.ShrinkWindow(keepBottom: true);
+    }
+
+    private void OnCloseButtonPressed()
+    {
+        GetTree().Quit();
+    }
+
+    private void OnTopHeaderBarGuiInput(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mouseButton && mouseButton.ButtonIndex == MouseButton.Left)
+        {
+            if (mouseButton.Pressed)
+            {
+                if (mouseButton.DoubleClick)
+                {
+                    // Double-clicking companion header toggles Compact/Expanded mode
+                    _windowController.ToggleExpand(keepBottom: true);
+                }
+                else
+                {
+                    _windowController.StartDragging();
+                }
+            }
+            else
+            {
+                _windowController.StopDragging();
+            }
+        }
     }
 
     /// <summary>

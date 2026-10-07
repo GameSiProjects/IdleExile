@@ -138,6 +138,35 @@ border_width_bottom = 1
 border_color = Color(0.22, 0.26, 0.35, 0.8)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_btn_hover"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.65, 0.16, 0.16, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.35, 0.35, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_close_btn_pressed"]
+content_margin_left = 6.0
+content_margin_top = 2.0
+content_margin_right = 6.0
+content_margin_bottom = 2.0
+bg_color = Color(0.45, 0.1, 0.1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.8, 0.2, 0.2, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
@@ -235,7 +264,7 @@ text = "Pin"
 [node name="ResizeModeButton" type="Button" parent="MainLayout/TopHeaderBar/HeaderMargin/HeaderHBox/ControlsHBox" unique_id=711598757]
 unique_name_in_owner = true
 layout_mode = 2
-tooltip_text = "Toggle Size: Compact (440x380) / Expanded (440x780)"
+tooltip_text = "Toggle Size: Compact (640x320) / Expanded (640x780)"
 theme_override_font_sizes/font_size = 11
 text = "⤡ Min"
 
@@ -245,6 +274,15 @@ layout_mode = 2
 tooltip_text = "Move to Next Monitor (Multi-Monitor)"
 theme_override_font_sizes/font_size = 11
 text = "🖥"
+
+[node name="CloseButton" type="Button" parent="MainLayout/TopHeaderBar/HeaderMargin/HeaderHBox/ControlsHBox" unique_id=1847192847]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Close Idle Exile (Alt+F4)"
+theme_override_font_sizes/font_size = 11
+theme_override_styles/hover = SubResource("StyleBoxFlat_close_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_close_btn_pressed")
+text = "✕"
 
 [node name="TabWorkspaceContainer" type="MarginContainer" parent="MainLayout" unique_id=318750000]
 unique_name_in_owner = true

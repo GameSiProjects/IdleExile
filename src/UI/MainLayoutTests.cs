@@ -105,6 +105,10 @@ public static class MainLayoutTests
         var screenBtn = main.GetNodeOrNull<Button>("%ScreenCycleButton");
         AssertNotNull(screenBtn, "ScreenCycleButton must exist");
 
+        var closeBtn = main.GetNodeOrNull<Button>("%CloseButton");
+        AssertNotNull(closeBtn, "CloseButton must exist in TopHeaderBar");
+        AssertEqual("✕", closeBtn.Text, "CloseButton text must be '✕'");
+
         // Tier 2: TabWorkspaceContainer (Workspace expands above Combat Viewport)
         var tabWorkspace = main.GetNodeOrNull<Control>("%TabWorkspaceContainer");
         AssertNotNull(tabWorkspace, "Tier 2: TabWorkspaceContainer must exist");
@@ -244,9 +248,11 @@ public static class MainLayoutTests
         AssertEqual(new Vector2I(640, 780), WindowController.ExpandedWindowSize, "ExpandedWindowSize must be 640x780");
         AssertFalse(windowController.Resizable, "WindowController must NOT allow free/manual window resizing by default");
         AssertFalse(windowController.DesktopWindow.Resizable, "DesktopWindow must have resizable=false configured");
+        AssertTrue(windowController.Borderless, "WindowController must have Borderless=true by default for companion overlay");
         if (DisplayServer.GetName() != "headless" && windowController.DesktopWindow.Window != null)
         {
             AssertTrue(windowController.DesktopWindow.Window.Unresizable, "Window must be marked Unresizable in Godot Window settings");
+            AssertTrue(windowController.DesktopWindow.Window.Borderless, "Window must be marked Borderless in Godot Window settings");
         }
 
         // Verify keepBottom=true bottom edge invariance math:
@@ -326,7 +332,7 @@ public static class MainLayoutTests
         windowController.ExpandWindow(keepBottom: true);
         AssertTrue(windowController.IsExpanded, "Restored to Expanded mode for subsequent operations");
 
-        // 7. Verify unauthorized external OS resize is reverted
+        // 7. Verify unauthorized external OS resize and maximization is reverted
         var testWindow = windowController.DesktopWindow.Window;
         if (testWindow != null)
         {
@@ -335,7 +341,20 @@ public static class MainLayoutTests
             testWindow.Size = new Vector2I(800, 600);
             AssertEqual(sizeBefore, windowController.WindowSize, "WindowController.WindowSize must remain unchanged when free resizing is blocked");
             AssertEqual(sizeBefore, testWindow.Size, "Native window.Size must be reverted back to in-game WindowSize");
+
+            // Simulate external attempt to maximize window
+            testWindow.Mode = Window.ModeEnum.Maximized;
+            windowController.EnforceWindowConstraints(testWindow);
+            AssertEqual(Window.ModeEnum.Windowed, testWindow.Mode, "Native window.Mode must be reverted to Windowed when maximization is blocked");
+            AssertEqual(sizeBefore, testWindow.Size, "Window size must remain invariant when maximization is blocked");
         }
+
+        // 8. Verify dragging support on WindowController
+        AssertFalse(windowController.IsDragging, "Window should not be dragging initially");
+        windowController.StartDragging();
+        AssertTrue(windowController.IsDragging, "StartDragging must mark WindowController.IsDragging as true");
+        windowController.StopDragging();
+        AssertFalse(windowController.IsDragging, "StopDragging must mark WindowController.IsDragging as false");
     }
 
     /// <summary>
