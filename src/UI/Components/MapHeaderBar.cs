@@ -676,7 +676,10 @@ public partial class MapHeaderBar : PanelContainer
                 : new Color(0.75f, 0.75f, 0.80f);
         }
 
-        UpdateBossIndicator(CurrentProgress);
+        if (!IsInSanctuary)
+        {
+            UpdateBossIndicator(CurrentProgress);
+        }
     }
 
     private void UpdateTierBadge(int tier, int? effectiveMonsterLevel)

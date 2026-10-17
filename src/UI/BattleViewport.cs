@@ -65,6 +65,10 @@ public partial class BattleViewport : Control
     private double _toastRemainingDuration;
 
     // --- Dual-State Viewport Mode (Prompt 4) ---
+    public MapRunConfig? CurrentMapConfig { get; private set; }
+    public string CurrentRarity { get; private set; } = "Normal";
+    public string? CurrentLeagueEncounter { get; private set; }
+
     public Arena2D.ViewportMode CurrentMode
     {
         get => Arena?.CurrentMode ?? Arena2D.ViewportMode.SanctuaryIdle;
@@ -77,6 +81,10 @@ public partial class BattleViewport : Control
             if (value == Arena2D.ViewportMode.SanctuaryIdle)
             {
                 SetSanctuaryStatus(BoundPlayer?.Sanctuary);
+            }
+            else if (value == Arena2D.ViewportMode.ExpeditionCombat && CurrentMapConfig != null)
+            {
+                SetMap(CurrentMapConfig, progressPercent: HeaderBar?.CurrentProgress ?? 0f, rarity: CurrentRarity, leagueEncounter: CurrentLeagueEncounter);
             }
         }
     }
@@ -258,7 +266,18 @@ public partial class BattleViewport : Control
     /// </summary>
     public void SetMap(MapRunConfig config, float progressPercent = 0f, string rarity = "Normal", string? leagueEncounter = null)
     {
-        HeaderBar?.SetMap(config, progressPercent, rarity, leagueEncounter);
+        CurrentMapConfig = config;
+        CurrentRarity = rarity;
+        CurrentLeagueEncounter = leagueEncounter;
+
+        if (HeaderBar != null)
+        {
+            HeaderBar.SetMap(config, progressPercent, rarity, leagueEncounter);
+        }
+        else
+        {
+            UpdateMapInfo(config.Map.Name, config.Map.Tier, rarity, config.TotalQuantity, 0, config.TotalPackSize - config.Map.BasePackSize, progressPercent);
+        }
     }
 
     /// <summary>
@@ -341,10 +360,6 @@ public partial class BattleViewport : Control
         BoundPlayer = player;
         BoundLoadout = loadout;
         Vitometer?.Bind(player, loadout);
-        if (CurrentMode == Arena2D.ViewportMode.SanctuaryIdle)
-        {
-            SetSanctuaryStatus(player.Sanctuary);
-        }
     }
 
     /// <summary>
@@ -593,6 +608,7 @@ public partial class BattleViewport : Control
     /// </summary>
     public void SetSanctuaryStatus(SanctuaryState? sanctuary = null, int queueCount = 0, string? tierName = null)
     {
+        CurrentMapConfig = null;
         sanctuary ??= BoundPlayer?.Sanctuary;
 
         if (_statusLabel != null)

@@ -281,7 +281,7 @@ public partial class Main : Control
 
         Player.Sanctuary.OnSanctuaryUpdated += () =>
         {
-            if (_battleViewport?.CurrentMode == Arena2D.ViewportMode.SanctuaryIdle)
+            if (_battleViewport?.CurrentMode == Arena2D.ViewportMode.SanctuaryIdle && !(Engine?.IsInCombat ?? false))
             {
                 _battleViewport.SetSanctuaryStatus(Player.Sanctuary, MapQueue.Count);
             }
@@ -289,7 +289,7 @@ public partial class Main : Control
 
         MapQueue.OnQueueChanged += () =>
         {
-            if (_battleViewport?.CurrentMode == Arena2D.ViewportMode.SanctuaryIdle)
+            if (_battleViewport?.CurrentMode == Arena2D.ViewportMode.SanctuaryIdle && !(Engine?.IsInCombat ?? false))
             {
                 _battleViewport.SetSanctuaryStatus(Player.Sanctuary, MapQueue.Count);
             }
@@ -512,12 +512,12 @@ public partial class Main : Control
         GD.Print($"[Main] Inventory: {Player.Inventory.Count} items, {Player.MapInventory.Count} maps");
     }
 
-    private void OnMapActivated(MapDefinition map)
+    public void OnMapActivated(MapDefinition map)
     {
         OnMapActivatedWithMods(map, System.Array.Empty<RolledMapModifier>(), "Normal");
     }
 
-    private void OnMapActivatedWithMods(MapDefinition map, IReadOnlyList<RolledMapModifier>? modifiers, string rarity = "Normal")
+    public void OnMapActivatedWithMods(MapDefinition map, IReadOnlyList<RolledMapModifier>? modifiers, string rarity = "Normal")
     {
         // 1. Advance FTUE Step 1 -> Step 2 (FirstCombatWave)
         if (Ftue.CurrentStep == FtueStep.AwaitingFirstMapActivate)
@@ -534,10 +534,10 @@ public partial class Main : Control
         // 3. Configure BattleViewport with the active map & start CombatEngine
         var rolledMods = modifiers ?? System.Array.Empty<RolledMapModifier>();
         var config = new MapRunConfig(map, rolledMods);
+        _battleViewport?.SetViewportMode(Arena2D.ViewportMode.ExpeditionCombat);
         _battleViewport?.ResetForNewMap();
         _battleViewport?.SetMap(config, progressPercent: 0f, rarity: rarity);
         _battleViewport?.BindPlayer(Player, Loadout);
-        _battleViewport?.SetViewportMode(Arena2D.ViewportMode.ExpeditionCombat);
 
         Engine = new CombatEngine(Player, Loadout, dropCoordinator: DropCoordinator, smelter: new SmelterService(Db.SmelterRecipes));
         if (_passiveTreeView?.TreeState != null)
@@ -819,7 +819,7 @@ public partial class Main : Control
         GD.Print($"[Main] Map activated: {map.Name} (T{map.Tier}). CombatEngine 30Hz running.");
     }
 
-    private void OnEmergencyPortalTriggered()
+    public void OnEmergencyPortalTriggered()
     {
         MapQueue.CancelCountdown();
         Engine?.TriggerEmergencyPortal();

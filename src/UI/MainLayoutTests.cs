@@ -40,6 +40,7 @@ public static class MainLayoutTests
             TestSanctuaryViewIntegration(existingMain);
             TestArenaAndBattleViewportResetForNewMap(existingMain);
             TestBattleViewportSanctuaryHeader(existingMain);
+            TestBattleViewportMapHeaderDuringMapping(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -78,6 +79,7 @@ public static class MainLayoutTests
             TestSanctuaryViewIntegration(main);
             TestArenaAndBattleViewportResetForNewMap(main);
             TestBattleViewportSanctuaryHeader(main);
+            TestBattleViewportMapHeaderDuringMapping(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -1875,6 +1877,63 @@ public static class MainLayoutTests
         AssertTrue(bossIndicatorLabel.Text.Contains("SAFE"), "Boss indicator must return to SAFE");
 
         GD.Print("[Tests] Battle View Header Sanctuary Telemetry PASSED!");
+    }
+
+    private static void TestBattleViewportMapHeaderDuringMapping(Main main)
+    {
+        GD.Print("[Tests] Verifying Battle View Header Map Telemetry during active mapping...");
+
+        var battleViewport = main.BattleViewport;
+        AssertNotNull(battleViewport, "BattleViewport must exist");
+        var header = battleViewport.HeaderBar;
+        AssertNotNull(header, "HeaderBar must exist on BattleViewport");
+
+        // 1. Initial State: Sanctuary Safe Haven
+        battleViewport.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
+        battleViewport.SetSanctuaryStatus(main.Player.Sanctuary, main.MapQueue.Count);
+        AssertTrue(header.IsInSanctuary, "Header must start in Sanctuary mode before mapping");
+
+        // 2. Activate a map via Main.OnMapActivatedWithMods
+        var mapDef = new MapDefinition("canyon", "Canyon Map", 8, 75, false, 15, 80, "Gore Beak", "A dusty red canyon.");
+        main.OnMapActivatedWithMods(mapDef, Array.Empty<RolledMapModifier>(), "Rare");
+
+        // 3. Verify Battle Viewport & Header are actively displaying the combat map
+        AssertEqual(Arena2D.ViewportMode.ExpeditionCombat, battleViewport.CurrentMode, "Viewport mode must be ExpeditionCombat");
+        AssertFalse(header.IsInSanctuary, "Header must NOT be in Sanctuary mode while actively mapping");
+        AssertEqual("Canyon Map", header.CurrentMapName, "Header current map name must match activated map");
+        AssertEqual(8, header.CurrentTier, "Header current tier must match activated map tier 8");
+        AssertEqual("Rare", header.CurrentRarity, "Header current rarity must match activated map rarity");
+        AssertEqual(0f, header.CurrentProgress, "Initial progress must be 0%");
+
+        var tierBadgeLabel = header.GetNodeOrNull<Label>("%TierBadgeLabel");
+        AssertNotNull(tierBadgeLabel, "TierBadgeLabel must exist");
+        AssertEqual("T8", tierBadgeLabel.Text, "Tier badge label must display 'T8'");
+
+        var mapNameLabel = header.GetNodeOrNull<Label>("%MapNameLabel");
+        AssertNotNull(mapNameLabel, "MapNameLabel must exist");
+        AssertTrue(mapNameLabel.Text.Contains("Canyon Map"), $"MapNameLabel should contain 'Canyon Map', got '{mapNameLabel.Text}'");
+        AssertTrue(mapNameLabel.Text.Contains("Rare"), $"MapNameLabel should show 'Rare' rarity, got '{mapNameLabel.Text}'");
+
+        var bossIndicatorLabel = header.GetNodeOrNull<Label>("%BossIndicatorLabel");
+        AssertNotNull(bossIndicatorLabel, "BossIndicatorLabel must exist");
+        AssertTrue(bossIndicatorLabel.Text.Contains("BOSS"), "Boss indicator must show 'BOSS' instead of 'SAFE'");
+
+        // 4. Simulate combat tick progression (50% progress)
+        main.Engine?.Update(1.0f);
+        battleViewport.SetMapProgress(50f);
+        AssertFalse(header.IsInSanctuary, "Header must remain in combat mode during combat progression");
+        AssertEqual(50f, header.CurrentProgress, "Header progress must update to 50%");
+        AssertEqual("T8", tierBadgeLabel.Text, "Tier badge label must stay T8");
+
+        // 5. Trigger emergency portal escape to return to Sanctuary
+        main.OnEmergencyPortalTriggered();
+        AssertEqual(Arena2D.ViewportMode.SanctuaryIdle, battleViewport.CurrentMode, "Viewport mode must return to SanctuaryIdle");
+        AssertTrue(header.IsInSanctuary, "Header must return to Sanctuary mode after emergency portal");
+        AssertTrue(tierBadgeLabel.Text.StartsWith("S"), $"Tier badge label must start with 'S' in sanctuary, got '{tierBadgeLabel.Text}'");
+        AssertTrue(mapNameLabel.Text.Contains("Sanctuary"), $"Map name label must display Sanctuary title, got '{mapNameLabel.Text}'");
+        AssertTrue(bossIndicatorLabel.Text.Contains("SAFE"), "Boss indicator must return to SAFE");
+
+        GD.Print("[Tests] Battle View Header Map Telemetry during mapping PASSED!");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)
