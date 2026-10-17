@@ -76,12 +76,15 @@ public partial class BattleViewport : Control
             }
             if (value == Arena2D.ViewportMode.SanctuaryIdle)
             {
-                SetSanctuaryStatus();
+                SetSanctuaryStatus(BoundPlayer?.Sanctuary);
             }
         }
     }
 
     public void SetViewportMode(Arena2D.ViewportMode mode) => CurrentMode = mode;
+
+    public PlayerState? BoundPlayer { get; private set; }
+    public SkillLoadout? BoundLoadout { get; private set; }
 
     // --- Quick Footer Telemetry Controls (Prompt 4) ---
     private Label? _dpsLabel;
@@ -193,8 +196,8 @@ public partial class BattleViewport : Control
             LootToastOverlay.Visible = false;
         }
 
-        // Default initial display for UI preview
-        UpdateMapInfo("Twilight Strand", 1, "Normal", 0, 0, 0, 0f);
+        // Default initial display for UI preview: Sanctuary Safe Haven
+        SetSanctuaryStatus();
         UpdateVitals(100, 100, 0, 0, 50, 50, 0.0, "Life: 100 / 100 | EHP: 100");
     }
 
@@ -333,7 +336,16 @@ public partial class BattleViewport : Control
     /// <summary>
     /// Binds player state and skill loadout directly to the Vitometer for reactive combat telemetry.
     /// </summary>
-    public void BindPlayer(PlayerState player, SkillLoadout loadout) => Vitometer?.Bind(player, loadout);
+    public void BindPlayer(PlayerState player, SkillLoadout loadout)
+    {
+        BoundPlayer = player;
+        BoundLoadout = loadout;
+        Vitometer?.Bind(player, loadout);
+        if (CurrentMode == Arena2D.ViewportMode.SanctuaryIdle)
+        {
+            SetSanctuaryStatus(player.Sanctuary);
+        }
+    }
 
     /// <summary>
     /// Configures the status of the Guard Skill golden layer.
@@ -577,10 +589,12 @@ public partial class BattleViewport : Control
     }
 
     /// <summary>
-    /// Sets Sanctuary safe haven status in the Quick Footer and vitals telemetry (Prompt 4).
+    /// Sets Sanctuary safe haven status in the Quick Footer and Header telemetry (Prompt 4 & Sanctuary Update).
     /// </summary>
-    public void SetSanctuaryStatus()
+    public void SetSanctuaryStatus(SanctuaryState? sanctuary = null, int queueCount = 0, string? tierName = null)
     {
+        sanctuary ??= BoundPlayer?.Sanctuary;
+
         if (_statusLabel != null)
         {
             _statusLabel.Text = "Crucible Online • Sanctuary Safe Haven (100% Recovered)";
@@ -590,6 +604,48 @@ public partial class BattleViewport : Control
             _dpsLabel.Text = "DPS: 0 • Peak: 0";
             _dpsLabel.Modulate = new Color(0.70f, 0.75f, 0.82f);
             _dpsLabel.TooltipText = "The Crucible Sanctuary • Safe Haven\nAll vitals fully restored (100%). Zero combat threat.";
+        }
+
+        if (HeaderBar != null)
+        {
+            if (sanctuary != null)
+            {
+                HeaderBar.SetSanctuary(sanctuary, queueCount, tierName);
+            }
+            else
+            {
+                HeaderBar.SetSanctuary(1, "Hollow Crypt", 0, queueCount);
+            }
+        }
+        else
+        {
+            int tier = sanctuary?.CurrentTier ?? 1;
+            string tName = tierName ?? MapHeaderBar.GetDefaultSanctuaryTierName(tier);
+            long dust = sanctuary?.ThaumaturgicDust ?? 0;
+
+            if (_tierBadgeLabel != null)
+            {
+                _tierBadgeLabel.Text = $"S{tier}";
+                _tierBadgeLabel.Modulate = MapHeaderBar.GetSanctuaryTierColor(tier);
+            }
+
+            if (_mapNameLabel != null)
+            {
+                _mapNameLabel.Text = Loc.Tr("UI_SANCTUARY_HEADER_NAME");
+                _mapNameLabel.Modulate = new Color(0.40f, 0.85f, 1.0f);
+            }
+
+            if (_quantityBonusLabel != null)
+            {
+                string queueStr = queueCount > 0 ? Loc.Format("UI_SANCTUARY_QUEUE_COUNT", queueCount) : Loc.Tr("UI_SANCTUARY_QUEUE_IDLE");
+                _quantityBonusLabel.Text = $"Dust: {dust:N0} • {queueStr}";
+                _quantityBonusLabel.Modulate = new Color(0.45f, 0.90f, 0.65f);
+            }
+
+            if (_mapProgressBar != null)
+            {
+                _mapProgressBar.Value = 100f;
+            }
         }
     }
 

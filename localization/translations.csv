@@ -227,4 +227,12 @@ UI_ABYSS_DESCEND_BTN,"⛏ Descend to Endless Abyss (250 Sulphite)","⛏ Xuống 
 UI_RELICS_TITLE,"Atlas Relics & Pinnacle Hall","Đài Cổ Tích & Vinh Danh Pinnacle"
 UI_RELICS_SUBTITLE,"Voidstones & Pinnacle Boss Trophies","Voidstones & Tượng Đài Boss Tối Thượng"
 UI_SANCTUARY_TIER_LABEL,"Sanctuary Tier {0}: {1}","Cấp Độ Thánh Địa {0}: {1}"
+UI_SANCTUARY_HEADER_NAME,"The Crucible Sanctuary • Safe Haven","Thánh Địa Lò Luyện • Khu Vực An Toàn"
+UI_SANCTUARY_BADGE_SAFE,"Safe","An Toàn"
+UI_SANCTUARY_BADGE_TOOLTIP,"Safe Haven Sanctuary: All vitals 100% recovered. No monsters or damage threats.","Thánh Địa An Toàn: Mọi chỉ số sinh tồn hồi phục 100%. Không có quái vật hay hiểm họa sát thương."
+UI_SANCTUARY_BOSS_SAFE,"🕊 SAFE","🕊 AN TOÀN"
+UI_SANCTUARY_BOSS_SAFE_TOOLTIP,"Sanctuary Safe Haven: No hostile monsters or combat threats present.","Khu Vực An Toàn: Không có quái vật hay đe dọa giao tranh."
+UI_SANCTUARY_QUEUE_COUNT,"Queue: {0} Maps","Hàng đợi: {0} Map"
+UI_SANCTUARY_QUEUE_IDLE,"Queue: Idle","Hàng đợi: Nghỉ"
+UI_SANCTUARY_PROGRESS_TOOLTIP,"The Crucible Sanctuary: Safe Haven (100% Vitals Replenished)","Thánh Địa Lò Luyện: Khu Vực An Toàn (Đã Hồi Phục 100% Sinh Lực)"
 

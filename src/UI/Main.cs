@@ -120,8 +120,9 @@ public partial class Main : Control
         {
             _battleViewport.DpsLabel = _dpsLabel;
             _battleViewport.StatusLabel = _statusLabel;
+            _battleViewport.BindPlayer(Player, Loadout);
             _battleViewport.CurrentMode = Arena2D.ViewportMode.SanctuaryIdle;
-            _battleViewport.SetSanctuaryStatus();
+            _battleViewport.SetSanctuaryStatus(Player.Sanctuary, MapQueue.Count);
         }
         _mapDeviceBar = GetNodeOrNull<MapDeviceBar>("%MapDeviceBar");
         _atlasView = GetNodeOrNull<AtlasView>("%AtlasView");
@@ -277,6 +278,22 @@ public partial class Main : Control
                 _battleViewport?.ShowLootToast("⛏ Subterranean Endless Abyss initiated!", new Color(0.95f, 0.85f, 0.3f));
             };
         }
+
+        Player.Sanctuary.OnSanctuaryUpdated += () =>
+        {
+            if (_battleViewport?.CurrentMode == Arena2D.ViewportMode.SanctuaryIdle)
+            {
+                _battleViewport.SetSanctuaryStatus(Player.Sanctuary, MapQueue.Count);
+            }
+        };
+
+        MapQueue.OnQueueChanged += () =>
+        {
+            if (_battleViewport?.CurrentMode == Arena2D.ViewportMode.SanctuaryIdle)
+            {
+                _battleViewport.SetSanctuaryStatus(Player.Sanctuary, MapQueue.Count);
+            }
+        };
 
         if (_stashView != null)
         {
@@ -770,7 +787,7 @@ public partial class Main : Control
                 }
                 Player.Position = new Vector2D(ExileMovementController.DefaultStartX, ExileMovementController.DefaultCenterY);
                 _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
-                _battleViewport?.SetSanctuaryStatus();
+                _battleViewport?.SetSanctuaryStatus(Player.Sanctuary, MapQueue.Count);
             }
         };
 
@@ -814,7 +831,7 @@ public partial class Main : Control
         }
         Player.Position = new Vector2D(ExileMovementController.DefaultStartX, ExileMovementController.DefaultCenterY);
         _battleViewport?.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
-        _battleViewport?.SetSanctuaryStatus();
+        _battleViewport?.SetSanctuaryStatus(Player.Sanctuary, MapQueue.Count);
 
 #if DEBUG
         if (_statsLabel != null)

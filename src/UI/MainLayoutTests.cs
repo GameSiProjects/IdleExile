@@ -39,6 +39,7 @@ public static class MainLayoutTests
             TestDualStateViewportAndCombatDpsMeter(existingMain);
             TestSanctuaryViewIntegration(existingMain);
             TestArenaAndBattleViewportResetForNewMap(existingMain);
+            TestBattleViewportSanctuaryHeader(existingMain);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
             return;
         }
@@ -76,6 +77,7 @@ public static class MainLayoutTests
             TestDualStateViewportAndCombatDpsMeter(main);
             TestSanctuaryViewIntegration(main);
             TestArenaAndBattleViewportResetForNewMap(main);
+            TestBattleViewportSanctuaryHeader(main);
             GD.Print("[Tests] All MainLayoutTests PASSED successfully!");
         }
         finally
@@ -1628,7 +1630,7 @@ public static class MainLayoutTests
         AssertEqual(0, arena.ActiveProjectileCount, "Projectiles must be 0 in Sanctuary mode");
 
         // 3. Verify Sanctuary status label and DPS label in Quick Footer
-        battleViewport.SetSanctuaryStatus();
+        battleViewport.SetSanctuaryStatus(main.Player.Sanctuary, main.MapQueue.Count);
         var statusLabel = main.GetNodeOrNull<Label>("%StatusLabel");
         AssertNotNull(statusLabel, "StatusLabel must exist in Quick Footer");
         AssertTrue(statusLabel.Text.Contains("Sanctuary Safe Haven (100% Recovered)"),
@@ -1637,6 +1639,12 @@ public static class MainLayoutTests
         var dpsLabel = main.GetNodeOrNull<Label>("%DpsLabel");
         AssertNotNull(dpsLabel, "DpsLabel must exist in Quick Footer (%DpsLabel)");
         AssertEqual("DPS: 0 • Peak: 0", dpsLabel.Text, "DpsLabel should show 0 in Sanctuary mode");
+
+        // Verify Battle View Header displays Sanctuary safe haven telemetry
+        AssertNotNull(battleViewport.HeaderBar, "HeaderBar must exist in BattleViewport");
+        AssertTrue(battleViewport.HeaderBar.IsInSanctuary, "HeaderBar.IsInSanctuary must be true in Sanctuary mode");
+        AssertTrue(battleViewport.HeaderBar.CurrentMapName.Contains("Sanctuary"), $"HeaderBar map name should contain 'Sanctuary', got '{battleViewport.HeaderBar.CurrentMapName}'");
+        AssertEqual(100f, battleViewport.HeaderBar.CurrentProgress, "HeaderBar progress must be 100% (safe haven recovery)");
 
         // 4. Switch to ExpeditionCombat mode
         battleViewport.SetViewportMode(Arena2D.ViewportMode.ExpeditionCombat);
@@ -1786,6 +1794,87 @@ public static class MainLayoutTests
         AssertEqual(0f, battleViewport.HeaderBar?.CurrentProgress ?? 0f, "Map progress must reset to 0%");
 
         GD.Print("[Tests] Arena & BattleViewport ResetForNewMap PASSED!");
+    }
+
+    private static void TestBattleViewportSanctuaryHeader(Main main)
+    {
+        GD.Print("[Tests] Verifying Battle View Header Sanctuary Telemetry upon leaving map...");
+
+        var battleViewport = main.BattleViewport;
+        AssertNotNull(battleViewport, "BattleViewport must exist");
+        var header = battleViewport.HeaderBar;
+        AssertNotNull(header, "HeaderBar must exist on BattleViewport");
+
+        // 1. Initial / Default Sanctuary State
+        battleViewport.SetSanctuaryStatus(main.Player.Sanctuary, main.MapQueue.Count);
+        AssertTrue(header.IsInSanctuary, "Header must be in Sanctuary mode");
+        AssertEqual(1, header.SanctuaryTier, "Initial sanctuary tier should be 1");
+        AssertEqual("Hollow Crypt", header.SanctuaryTierName, "Tier 1 name should be Hollow Crypt");
+        AssertEqual(100f, header.CurrentProgress, "Sanctuary progress bar must be 100%");
+        AssertEqual(1, header.ActiveThreatCount, "Should have 1 Safe Haven badge");
+
+        var tierBadgeLabel = header.GetNodeOrNull<Label>("%TierBadgeLabel");
+        AssertNotNull(tierBadgeLabel, "TierBadgeLabel must exist");
+        AssertEqual("S1", tierBadgeLabel.Text, "Tier badge text must be S1 in Sanctuary Tier 1");
+
+        var mapNameLabel = header.GetNodeOrNull<Label>("%MapNameLabel");
+        AssertNotNull(mapNameLabel, "MapNameLabel must exist");
+        AssertTrue(mapNameLabel.Text.Contains("Sanctuary"), "MapNameLabel must display Sanctuary title");
+
+        var bossIndicatorLabel = header.GetNodeOrNull<Label>("%BossIndicatorLabel");
+        AssertNotNull(bossIndicatorLabel, "BossIndicatorLabel must exist");
+        AssertTrue(bossIndicatorLabel.Text.Contains("SAFE"), "BossIndicatorLabel must show SAFE in sanctuary");
+
+        var quantityLabel = header.GetNodeOrNull<Label>("%QuantityBonusLabel");
+        AssertNotNull(quantityLabel, "QuantityBonusLabel must exist");
+        AssertTrue(quantityLabel.Text.Contains("Dust:"), "Quantity label must display Thaumaturgic Dust");
+
+        // 2. Custom Sanctuary State update (Tier 3 Eldritch Sanctum, 24,000 Dust, 6 Queued Maps, 10% Infused IIQ)
+        header.SetSanctuary(
+            tier: 3,
+            tierName: "Eldritch Sanctum",
+            thaumaturgicDust: 24000,
+            queuedMaps: 6,
+            infusedBonus: 10f,
+            infusedMapsRemaining: 4,
+            sulphite: 8500,
+            maxSulphite: 15000,
+            deepestDepth: 210,
+            voidstones: 2
+        );
+        AssertTrue(header.IsInSanctuary, "Header must remain in Sanctuary mode");
+        AssertEqual(3, header.SanctuaryTier, "Sanctuary tier must be 3");
+        AssertEqual("Eldritch Sanctum", header.SanctuaryTierName, "Tier 3 name must be Eldritch Sanctum");
+        AssertEqual(24000L, header.SanctuaryDust, "Sanctuary dust must be 24,000");
+        AssertEqual(6, header.QueuedMapCount, "Queued maps must be 6");
+        AssertEqual("S3", tierBadgeLabel.Text, "Tier badge must update to S3");
+        AssertTrue(quantityLabel.Text.Contains("Dust: 24,000"), "Quantity label must display updated dust");
+        AssertTrue(quantityLabel.Text.Contains("Queue: 6"), "Quantity label must display queued maps");
+        AssertTrue(quantityLabel.Text.Contains("+10% IIQ"), "Quantity label must display active map infusion bonus");
+        AssertNotNull(quantityLabel.TooltipText, "TooltipText must not be null");
+        AssertTrue(quantityLabel.TooltipText.Contains("THE CRUCIBLE SANCTUARY"), "Tooltip must contain Sanctuary header");
+        AssertTrue(quantityLabel.TooltipText.Contains("Eldritch Sanctum"), "Tooltip must list tier name");
+
+        // 3. Transition to Combat Map (e.g. SetMap) -> verifies header reverts to combat telemetry
+        var testMap = new MapDefinition("test_dunes", "Dunes", 5, 72, false, 10, 80, "The Dune Boss", "Sand");
+        var testConfig = new MapRunConfig(testMap, Array.Empty<RolledMapModifier>());
+        battleViewport.SetMap(testConfig, 35f, "Magic");
+        AssertFalse(header.IsInSanctuary, "Header must NOT be in Sanctuary mode while mapping");
+        AssertEqual(5, header.CurrentTier, "Current tier should be map tier 5");
+        AssertEqual("T5", tierBadgeLabel.Text, "Tier badge should be T5 in combat map");
+        AssertTrue(mapNameLabel.Text.Contains("Dunes"), "Map name should show Dunes");
+        AssertEqual(35f, header.CurrentProgress, "Progress should be 35%");
+        AssertTrue(bossIndicatorLabel.Text.Contains("BOSS"), "Boss indicator should be BOSS in combat map");
+
+        // 4. Leaving map via Emergency Portal / SetSanctuaryStatus
+        battleViewport.SetViewportMode(Arena2D.ViewportMode.SanctuaryIdle);
+        battleViewport.SetSanctuaryStatus(main.Player.Sanctuary, main.MapQueue.Count);
+        AssertTrue(header.IsInSanctuary, "Header must return to Sanctuary mode after leaving map");
+        AssertTrue(mapNameLabel.Text.Contains("Sanctuary"), "Header map name must return to Sanctuary title");
+        AssertEqual(100f, header.CurrentProgress, "Progress bar must return to 100%");
+        AssertTrue(bossIndicatorLabel.Text.Contains("SAFE"), "Boss indicator must return to SAFE");
+
+        GD.Print("[Tests] Battle View Header Sanctuary Telemetry PASSED!");
     }
 
     private static void AssertEqual<T>(T expected, T actual, string? message = null)

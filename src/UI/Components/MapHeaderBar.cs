@@ -219,7 +219,14 @@ public partial class MapHeaderBar : PanelContainer
     public float CurrentProgress { get; private set; } = 0f;
     public string? CurrentBossName { get; private set; }
     public bool IsBossActive => CurrentProgress >= 100f;
-    public int ActiveThreatCount => _threatBadgesHBox?.GetChildCount() ?? 0;
+    public int ActiveThreatCount => _activeThreats.Count;
+
+    // --- Sanctuary State & Telemetry ---
+    public bool IsInSanctuary { get; private set; } = false;
+    public int SanctuaryTier { get; private set; } = 1;
+    public string SanctuaryTierName { get; private set; } = "Hollow Crypt";
+    public long SanctuaryDust { get; private set; } = 0;
+    public int QueuedMapCount { get; private set; } = 0;
 
     private readonly List<ThreatBadgeInfo> _activeThreats = new();
     private readonly List<string> _activeModifierDescriptions = new();
@@ -327,6 +334,221 @@ public partial class MapHeaderBar : PanelContainer
     }
 
     /// <summary>
+    /// Displays The Crucible Sanctuary safe haven status in the header bar when leaving a map.
+    /// Updates tier badge to show Sanctuary tier (S1-S4), replaces map name with Sanctuary name,
+    /// clears dangerous threats, displays Thaumaturgic Dust & Map Queue count, sets 100% recovery bar,
+    /// and switches boss badge to Safe Haven indicator.
+    /// </summary>
+    public void SetSanctuary(
+        int tier = 1,
+        string tierName = "Hollow Crypt",
+        long thaumaturgicDust = 0,
+        int queuedMaps = 0,
+        float infusedBonus = 0f,
+        int infusedMapsRemaining = 0,
+        long sulphite = 0,
+        long maxSulphite = 10000,
+        int deepestDepth = 0,
+        int voidstones = 0
+    )
+    {
+        IsInSanctuary = true;
+        SanctuaryTier = tier;
+        SanctuaryTierName = tierName;
+        SanctuaryDust = thaumaturgicDust;
+        QueuedMapCount = queuedMaps;
+        CurrentMapName = Loc.Tr("UI_SANCTUARY_HEADER_NAME");
+        CurrentTier = tier;
+        CurrentRarity = "Sanctuary";
+        CurrentBossName = null;
+        CurrentProgress = 100f;
+        CurrentIIQ = 0;
+        CurrentIIR = 0;
+        CurrentPackSize = 0;
+        _activeModifierDescriptions.Clear();
+
+        // 1. Update Tier Badge to Sanctuary Tier (S1, S2, S3, S4)
+        if (_tierBadgeLabel != null)
+        {
+            _tierBadgeLabel.Text = $"S{tier}";
+            Color sanColor = GetSanctuaryTierColor(tier);
+            _tierBadgeLabel.Modulate = sanColor;
+
+            if (_tierBadge != null)
+            {
+                var badgeStyle = _tierBadge.GetThemeStylebox("panel") as StyleBoxFlat;
+                if (badgeStyle != null)
+                {
+                    badgeStyle.BorderColor = sanColor;
+                }
+                _tierBadge.TooltipText = $"The Crucible Sanctuary (Tier {tier}: {tierName})\nSafe Haven • 100% Vitals Recovery\nZero Combat Threat";
+            }
+        }
+
+        // 2. Update Map Name to Sanctuary Name
+        if (_mapNameLabel != null)
+        {
+            _mapNameLabel.Text = Loc.Tr("UI_SANCTUARY_HEADER_NAME");
+            _mapNameLabel.Modulate = new Color(0.40f, 0.85f, 1.0f); // Serene Azure / Cyan
+            _mapNameLabel.TooltipText = $"The Crucible Sanctuary (Tier {tier}: {tierName})\nZone Type: Safe Haven\nAll vitals fully restored (100%). Zero hostiles.";
+        }
+
+        // 3. Update Threat Badges to show Safe Haven badge
+        _activeThreats.Clear();
+        if (_threatBadgesHBox != null)
+        {
+            foreach (Node child in _threatBadgesHBox.GetChildren())
+            {
+                _threatBadgesHBox.RemoveChild(child);
+                child.QueueFree();
+            }
+
+            var safeBadge = new ThreatBadgeInfo(
+                Key: "safe_haven",
+                IconText: "🛡️",
+                ShortText: Loc.Tr("UI_SANCTUARY_BADGE_SAFE"),
+                BadgeColor: new Color(0.35f, 0.85f, 0.55f),
+                TooltipDescription: Loc.Tr("UI_SANCTUARY_BADGE_TOOLTIP")
+            );
+            _activeThreats.Add(safeBadge);
+            _threatBadgesHBox.AddChild(CreateThreatBadgeNode(safeBadge));
+        }
+
+        // 4. Update Quantity & Sanctuary Telemetry label
+        if (_quantityBonusLabel != null)
+        {
+            string queueStr = queuedMaps > 0 ? Loc.Format("UI_SANCTUARY_QUEUE_COUNT", queuedMaps) : Loc.Tr("UI_SANCTUARY_QUEUE_IDLE");
+            string dustStr = $"Dust: {thaumaturgicDust:N0}";
+            if (infusedBonus > 0f && infusedMapsRemaining > 0)
+            {
+                _quantityBonusLabel.Text = $"{dustStr} • +{infusedBonus:F0}% IIQ ({infusedMapsRemaining}m) • {queueStr}";
+            }
+            else
+            {
+                _quantityBonusLabel.Text = $"{dustStr} • {queueStr}";
+            }
+            _quantityBonusLabel.Modulate = new Color(0.45f, 0.90f, 0.65f); // Mint Green
+            _quantityBonusLabel.TooltipText = BuildSanctuaryTelemetryTooltip(
+                tier, tierName, thaumaturgicDust, queuedMaps, infusedBonus, infusedMapsRemaining, sulphite, maxSulphite, deepestDepth, voidstones
+            );
+        }
+
+        // 5. Update Progress Bar to 100% Safe Haven
+        if (_mapProgressBar != null)
+        {
+            _mapProgressBar.Value = 100f;
+            var fillStyle = _mapProgressBar.GetThemeStylebox("fill") as StyleBoxFlat;
+            if (fillStyle != null)
+            {
+                fillStyle.BgColor = new Color(0.25f, 0.75f, 0.65f); // Tranquil emerald/teal
+            }
+            _mapProgressBar.TooltipText = Loc.Tr("UI_SANCTUARY_PROGRESS_TOOLTIP");
+        }
+
+        if (_progressPercentLabel != null)
+        {
+            _progressPercentLabel.Text = "100%";
+            _progressPercentLabel.Modulate = new Color(0.40f, 0.85f, 0.70f);
+        }
+
+        // 6. Update Boss Indicator to Safe Haven Indicator
+        if (_bossIndicator != null && _bossIndicatorLabel != null)
+        {
+            _bossIndicatorLabel.Text = Loc.Tr("UI_SANCTUARY_BOSS_SAFE");
+            _bossIndicatorLabel.Modulate = new Color(0.45f, 0.85f, 0.65f);
+            _bossIndicator.TooltipText = Loc.Tr("UI_SANCTUARY_BOSS_SAFE_TOOLTIP");
+
+            var safeStyle = new StyleBoxFlat
+            {
+                BgColor = new Color(0.06f, 0.12f, 0.10f, 0.90f),
+                BorderColor = new Color(0.25f, 0.75f, 0.55f),
+                BorderWidthLeft = 1,
+                BorderWidthTop = 1,
+                BorderWidthRight = 1,
+                BorderWidthBottom = 1,
+                CornerRadiusTopLeft = 2,
+                CornerRadiusTopRight = 2,
+                CornerRadiusBottomRight = 2,
+                CornerRadiusBottomLeft = 2,
+                ContentMarginLeft = 4,
+                ContentMarginRight = 4,
+                ContentMarginTop = 1,
+                ContentMarginBottom = 1
+            };
+            _bossIndicator.AddThemeStyleboxOverride("panel", safeStyle);
+        }
+    }
+
+    /// <summary>
+    /// Overload that configures Sanctuary header telemetry from a <see cref="SanctuaryState"/> object.
+    /// </summary>
+    public void SetSanctuary(SanctuaryState sanctuary, int queuedMaps = 0, string? tierName = null)
+    {
+        tierName ??= GetDefaultSanctuaryTierName(sanctuary.CurrentTier);
+        SetSanctuary(
+            tier: sanctuary.CurrentTier,
+            tierName: tierName,
+            thaumaturgicDust: sanctuary.ThaumaturgicDust,
+            queuedMaps: queuedMaps,
+            infusedBonus: sanctuary.InfusedQuantityBonus,
+            infusedMapsRemaining: sanctuary.InfusedMapsRemaining,
+            sulphite: sanctuary.VoltaxicSulphite,
+            maxSulphite: sanctuary.MaxVoltaxicSulphite,
+            deepestDepth: sanctuary.DeepestDepth,
+            voidstones: sanctuary.VoidstonesCount
+        );
+    }
+
+    public static string GetDefaultSanctuaryTierName(int tier) => tier switch
+    {
+        >= 4 => "Celestial Void",
+        3 => "Eldritch Sanctum",
+        2 => "Awakened Foundry",
+        _ => "Hollow Crypt"
+    };
+
+    public static Color GetSanctuaryTierColor(int tier) => tier switch
+    {
+        >= 4 => new Color(1.0f, 0.85f, 0.30f),   // Celestial Gold
+        3 => new Color(0.75f, 0.45f, 1.0f),     // Eldritch Cosmic Violet
+        2 => new Color(0.35f, 0.90f, 0.70f),     // Awakened Runic Emerald/Cyan
+        _ => new Color(0.65f, 0.78f, 0.88f)      // Hollow Crypt Slate Cyan
+    };
+
+    public static string BuildSanctuaryTelemetryTooltip(
+        int tier,
+        string tierName,
+        long thaumaturgicDust,
+        int queuedMaps,
+        float infusedBonus,
+        int infusedMapsRemaining,
+        long sulphite,
+        long maxSulphite,
+        int deepestDepth,
+        int voidstones
+    )
+    {
+        var lines = new List<string>
+        {
+            "═════ THE CRUCIBLE SANCTUARY ═════",
+            $"Sanctuary Tier: Tier {tier} ({tierName})",
+            "Zone Status: Safe Haven (100% Recovered)",
+            "─────────────────────────────────",
+            $"• Thaumaturgic Dust: {thaumaturgicDust:N0}",
+            $"• Map Queue: {queuedMaps} Maps Ready",
+            infusedBonus > 0f && infusedMapsRemaining > 0
+                ? $"• Map Infusion: +{infusedBonus:F0}% IIQ ({infusedMapsRemaining} maps remaining)"
+                : "• Map Infusion: Inactive",
+            $"• Voltaxic Sulphite: {sulphite:N0} / {maxSulphite:N0}",
+            $"• Deepest Abyss Depth: {deepestDepth}m",
+            $"• Voidstones Unlocked: {voidstones}/4",
+            "─────────────────────────────────",
+            "Press [Space] to Launch Map • [H] Sanctuary"
+        };
+        return string.Join("\n", lines);
+    }
+
+    /// <summary>
     /// Configures the Map Header using a complete <see cref="MapRunConfig"/> from the combat core.
     /// Automatically extracts map definitions, rolled modifiers, item quantity/pack size bonuses,
     /// and generates relevant Threat Badges.
@@ -401,6 +623,7 @@ public partial class MapHeaderBar : PanelContainer
         CurrentIIR = iir;
         CurrentPackSize = packSize;
         CurrentBossName = bossName;
+        IsInSanctuary = false;
 
         _activeModifierDescriptions.Clear();
         if (modifierLines != null)
@@ -507,6 +730,7 @@ public partial class MapHeaderBar : PanelContainer
         // Clear existing badge nodes
         foreach (Node child in _threatBadgesHBox.GetChildren())
         {
+            _threatBadgesHBox.RemoveChild(child);
             child.QueueFree();
         }
 

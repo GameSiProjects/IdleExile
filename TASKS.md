@@ -285,7 +285,8 @@ Tài liệu này theo dõi tiến độ thực hiện các tính năng của **I
   - [x] Mở rộng `Arena2D.cs`: Chuyển đổi 2 trạng thái `ExpeditionCombat` vs `SanctuaryIdle`.
   - [x] Trình diễn không gian tĩnh mịch Sanctuary: Nền đá hoa cương, cỗ máy Map Device xoay nhẹ ở tọa độ (320, 86), ngọn lửa trại Eldritch với than hồng bay lơ lửng, nhân vật thiền định (240, 86) với aura dịu nhẹ.
   - [x] Tích hợp nhãn DPS trên thanh Quick Footer trong `BattleViewport.cs` kèm chẩn đoán tỷ lệ 5 hệ sát thương qua Tooltip.
-  - [x] *Vị trí:* `src/UI/Components/Arena2D.cs`, `src/UI/BattleViewport.cs`, `scenes/Main.tscn`
+  - [x] **Header của Battle View hiển thị thông tin Sanctuary khi rời khỏi map:** Cập nhật `MapHeaderBar.cs` hiển thị Sanctuary Tier badge (`S1`-`S4`), tên Sanctuary Safe Haven, lượng Thaumaturgic Dust & số Map trong Queue, thanh sinh mệnh hồi phục 100%, huy hiệu an toàn `[🛡️ Safe]` và bảng Tooltip chi tiết toàn diện của Hub.
+  - [x] *Vị trí:* `src/UI/Components/Arena2D.cs`, `src/UI/Components/MapHeaderBar.cs`, `src/UI/BattleViewport.cs`, `scenes/Main.tscn`
 
 - [x] **Task 6.5: Giao Diện Sanctuary View & The Crucible Anvil (Prompt 5)**
   - [x] Tạo `src/Core/Services/TheCrucibleAnvilService.cs`: Hỗ trợ đập đồ thuần túy qua tiền tệ (*Transmute, Alteration, Chaos, Exalt, Annul, Divine, Vaal*) và 1-4 Fossils Resonators; tính toán Smart Stat Delta (`AnvilCraftResult`) tức thì. Tuyệt đối không có công thức ép mod cố định (Zero Deterministic Crafting).
