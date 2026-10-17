@@ -168,13 +168,12 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [node name="AtlasView" type="Control"]
-custom_minimum_size = Vector2(0, 390)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+grow_horizontal = 1
+grow_vertical = 1
 script = ExtResource("1_atlas_view")
 
 [node name="AtlasBg" type="PanelContainer" parent="."]
@@ -182,8 +181,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+grow_horizontal = 1
+grow_vertical = 1
 theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
 
 [node name="AtlasMargin" type="MarginContainer" parent="AtlasBg"]
@@ -257,7 +256,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_tier_pill")
 text = "T16+ Pinnacle"
 
 [node name="AltarPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
-custom_minimum_size = Vector2(0, 142)
+custom_minimum_size = Vector2(0, 130)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_altar_card")
 
@@ -270,16 +269,16 @@ script = ExtResource("2_runic_canvas")
 [node name="AltarMargin" type="MarginContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 6
+theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_bottom = 4
 
 [node name="AltarHBox" type="HBoxContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin"]
 layout_mode = 2
 theme_override_constants/separation = 10
 
 [node name="SlottedPlateCard" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout/AltarPanel/AltarMargin/AltarHBox"]
-custom_minimum_size = Vector2(175, 128)
+custom_minimum_size = Vector2(175, 120)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_slotted_plate")
 
@@ -477,7 +476,7 @@ layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="InspectorPanel" type="PanelContainer" parent="AtlasBg/AtlasMargin/AtlasLayout"]
-custom_minimum_size = Vector2(0, 118)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_subpanel")

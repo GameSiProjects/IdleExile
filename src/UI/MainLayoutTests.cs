@@ -877,9 +877,18 @@ public static class MainLayoutTests
         AssertNotNull(mapSlatesHBox, "MapSlatesHBox must exist in Available Maps drawer");
 
         // 2. Tab Navigation to Atlas
-        main.SwitchWorkspaceTab(Main.WorkspaceTab.Atlas);
+        main.SwitchWorkspaceTab(Main.WorkspaceTab.Atlas, animated: false);
         AssertTrue(main.MapDeviceMargin?.Visible ?? false, "MapDeviceMargin must be visible on Atlas tab");
         AssertTrue(atlasView.Visible, "AtlasView must be visible on Atlas tab");
+
+        // Regression check: TierFilterHBox must NOT be obscured by TopHeaderBar
+        var headerNode = main.GetNodeOrNull<Control>("%TopHeaderBar");
+        AssertNotNull(headerNode, "TopHeaderBar must exist");
+        float headerBottom = headerNode.GlobalPosition.Y + headerNode.Size.Y;
+        AssertTrue(tierFilterBar.GlobalPosition.Y >= headerBottom || tierFilterBar.Position.Y >= 0,
+            $"TierFilterHBox must not be obscured by TopHeaderBar (HeaderBottom={headerBottom}, TierFilterGlobalY={tierFilterBar.GlobalPosition.Y}, LocalY={tierFilterBar.Position.Y})");
+        AssertTrue(tierFilterBar.GlobalPosition.X >= 0, $"TierFilterHBox must not have negative horizontal offset, was {tierFilterBar.GlobalPosition.X}");
+
 
         // 3. Test Slotted Map and Modifiers Breakdown
         var testMap = new MapDefinition("strand_test", "Strand Test", 1, 1, false, 10, 100, "Tidal Behemoth", "Coast");
